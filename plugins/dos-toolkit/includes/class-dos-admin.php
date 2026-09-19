@@ -160,7 +160,7 @@ final class DOS_Admin {
 		exit;
 	}
 
-	private static function notice() {
+	public static function notice() {
 		$notice = isset( $_GET['dos_notice'] ) ? sanitize_key( wp_unslash( $_GET['dos_notice'] ) ) : '';
 
 		$messages = array(

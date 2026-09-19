@@ -108,6 +108,44 @@ define( 'DOS_TOOLKIT_GITHUB_TOKEN', 'ghp_…' );
 The updater fails quietly. If GitHub is unreachable the Plugins screen behaves
 exactly as it would without this plugin.
 
+## WordPress integration notes
+
+Constraints learned from running this on a real site. Each of these looks
+like a detail and is actually load-bearing; changing one silently breaks
+something that will not show up in the tests.
+
+**The updater must write to both update lists.** WordPress decides a plugin
+supports updates by finding it in the `update_plugins` transient's `response`
+list *or* its `no_update` list. Write only to `response` and the plugin
+vanishes from both lists whenever the site is current — at which point
+WordPress hides the auto-update toggle and reports that auto-updates are
+unavailable.
+
+**Failed update checks must cache separately from successful ones.** GitHub
+allows 60 unauthenticated API requests an hour per IP, which shared hosting
+reaches. If a failure is cached for as long as a success, one rate-limited
+request means the site believes there are no updates for hours.
+
+**`Update URI` is deliberate.** It stops WordPress asking wordpress.org about
+this plugin, which matters because a public plugin sharing the slug
+`dos-toolkit` would otherwise be offered as an update and installed over this
+one. The cost is that nothing else populates the update lists on our behalf,
+which is why the point above matters.
+
+**The ZIP's top-level folder must be the plugin slug.** WordPress installs
+whatever folder the archive contains. GitHub's own source archives unpack to
+`owner-repo-sha`, which would install as a second, differently-named plugin;
+`upgrader_source_selection` renames it back.
+
+**robots.txt filters only apply when WordPress generates the file.** A real
+`robots.txt` in the web root is served by the web server and never reaches
+PHP, so the AI module checks for one and says the rules are not live rather
+than showing settings that do nothing.
+
+**The batch runner's deletion job pages from the front.** Deleting removes
+rows from the set being paged through, so an advancing offset skips records. A
+dry run changes nothing and therefore advances normally.
+
 ## Conventions
 
 - Prefix everything `dos_` / `DOS_`. No legacy `breanm_`, `ptt_`, `saab_`.

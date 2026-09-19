@@ -17,3 +17,9 @@
 
 .dos-log { width: 100%; max-width: 70em; }
 .dos-log .dos-dry { color: #8a6d24; }
+
+.dos-media-field { margin: .25em 0 .5em; }
+.dos-media-preview img { max-width: 260px; height: auto; display: block; border: 1px solid #dcdcde; border-radius: 3px; margin-bottom: .5em; }
+.dos-media-actions { margin: .25em 0; }
+.dos-media-meta { color: #50575e; font-size: 12px; margin: .25em 0; }
+.dos-media-warning { color: #8a2424; }

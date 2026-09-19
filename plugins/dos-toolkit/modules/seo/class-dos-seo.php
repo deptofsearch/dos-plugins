@@ -38,6 +38,20 @@ final class DOS_Module_SEO extends DOS_Module {
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ), 10, 2 );
 
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+	}
+
+	/**
+	 * The media picker is needed on this module's settings screen and on any
+	 * editor screen carrying the Search & Social box.
+	 */
+	public static function enqueue( $hook ) {
+		$on_settings = isset( $_GET['page'] ) && 'dos-seo' === $_GET['page'];
+		$on_editor   = in_array( $hook, array( 'post.php', 'post-new.php' ), true );
+
+		if ( $on_settings || $on_editor ) {
+			DOS_Media_Field::enqueue();
+		}
 	}
 
 	/**
@@ -566,13 +580,18 @@ final class DOS_Module_SEO extends DOS_Module {
 				<em><?php echo esc_html( $auto ); ?></em>
 			</span>
 		</p>
-		<p>
-			<label for="dos_seo_image"><strong><?php esc_html_e( 'Social share image', 'dos-toolkit' ); ?></strong></label><br>
-			<input type="number" id="dos_seo_image" name="dos_seo_image" value="<?php echo $image_id ? (int) $image_id : ''; ?>" style="width:120px" placeholder="<?php esc_attr_e( 'Media ID', 'dos-toolkit' ); ?>">
-			<span class="description">
-				<?php esc_html_e( 'Optional. Leave blank to use the featured image, then the first photo in the post.', 'dos-toolkit' ); ?>
-			</span>
-		</p>
+		<p><strong><?php esc_html_e( 'Social share image', 'dos-toolkit' ); ?></strong></p>
+		<?php
+		DOS_Media_Field::render(
+			'dos_seo_image',
+			$image_id,
+			array(
+				'description' => __( 'Optional. Leave empty to use the featured image, then the first photo in the post.', 'dos-toolkit' ),
+				'min_width'   => 1200,
+				'min_height'  => 630,
+			)
+		);
+		?>
 		<?php
 	}
 
@@ -677,12 +696,19 @@ final class DOS_Module_SEO extends DOS_Module {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="fallback_image"><?php esc_html_e( 'Fallback share image', 'dos-toolkit' ); ?></label></th>
+						<th scope="row"><?php esc_html_e( 'Fallback share image', 'dos-toolkit' ); ?></th>
 						<td>
-							<input type="number" id="fallback_image" name="fallback_image" value="<?php echo self::setting( 'fallback_image', 0 ) ? (int) self::setting( 'fallback_image', 0 ) : ''; ?>" class="small-text">
-							<p class="description">
-								<?php esc_html_e( 'Media library ID, 1200×630 or larger. Used on archives and on posts with no photo, and becomes the schema publisher logo.', 'dos-toolkit' ); ?>
-							</p>
+							<?php
+							DOS_Media_Field::render(
+								'fallback_image',
+								(int) self::setting( 'fallback_image', 0 ),
+								array(
+									'description' => __( 'Used on archives and on posts with no photo, and becomes the schema publisher logo.', 'dos-toolkit' ),
+									'min_width'   => 1200,
+									'min_height'  => 630,
+								)
+							);
+							?>
 						</td>
 					</tr>
 					<tr>

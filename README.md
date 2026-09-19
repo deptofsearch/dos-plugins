@@ -71,6 +71,17 @@ before confirming — the report is the only record of what is about to happen.
 last scan recorded. Deleting against a stale scan is how an image that is in
 use gets removed.
 
+**Expect the replaced plugins to switch themselves off.** On a site still
+running one of the one-off plugins this toolkit absorbed, enabling the module
+that replaces it deactivates that plugin and says so in an admin notice.
+Nothing is deleted, so it can be reactivated from the Plugins screen if
+something turns out to be missing. It happens on enabling the module rather
+than on activating the toolkit, so a site is never left with neither.
+
+Third-party plugins are never deactivated. If a site runs Yoast, Rank Math or
+SEOPress, the SEO module stands down instead and reports that it has, on the
+Modules screen and on its own.
+
 **Carry settings rather than retyping them.** Configure one site, then use
 **Utilities → Export settings** and import the file elsewhere. Access tokens
 are never included, so an exported file is safe to move around.

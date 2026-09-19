@@ -47,6 +47,7 @@ final class DOS_Toolkit {
 		DOS_Log::boot();
 		DOS_Batch::boot();
 		DOS_Admin::boot();
+		DOS_Conflicts::boot();
 		DOS_Updater::boot();
 
 		foreach ( self::$modules as $key => $module ) {

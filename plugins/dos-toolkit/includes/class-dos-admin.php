@@ -14,6 +14,7 @@ final class DOS_Admin {
 	public static function boot() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
+		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss' ), 6 );
 		add_filter( 'plugin_action_links_' . DOS_TOOLKIT_BASENAME, array( __CLASS__, 'action_links' ) );
 	}
 
@@ -95,6 +96,19 @@ final class DOS_Admin {
 		);
 	}
 
+	public static function handle_dismiss() {
+		if ( empty( $_GET['dos_dismiss_conflicts'] ) || ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'dos_dismiss_conflicts' );
+
+		DOS_Conflicts::dismiss_notice();
+
+		wp_safe_redirect( admin_url( 'admin.php?page=' . self::MENU_SLUG ) );
+		exit;
+	}
+
 	public static function handle_post() {
 		if ( empty( $_POST['dos_action'] ) || ! current_user_can( DOS_Settings::capability() ) ) {
 			return;
@@ -160,6 +174,7 @@ final class DOS_Admin {
 				'log_retention_days' => isset( $_POST['log_retention_days'] ) ? max( 0, (int) $_POST['log_retention_days'] ) : 90,
 				'github_repo'        => isset( $_POST['github_repo'] ) ? sanitize_text_field( wp_unslash( $_POST['github_repo'] ) ) : '',
 				'github_token'       => isset( $_POST['github_token'] ) ? sanitize_text_field( wp_unslash( $_POST['github_token'] ) ) : '',
+				'deactivate_superseded' => empty( $_POST['deactivate_superseded'] ) ? 0 : 1,
 			)
 		);
 
@@ -245,6 +260,52 @@ final class DOS_Admin {
 
 				<?php submit_button( __( 'Save modules', 'dos-toolkit' ) ); ?>
 			</form>
+
+			<?php
+			$superseded  = DOS_Conflicts::active_superseded();
+			$third_party = DOS_Conflicts::active_third_party();
+			?>
+
+			<?php if ( $superseded || $third_party ) : ?>
+				<hr>
+				<h2><?php esc_html_e( 'Other plugins on this site', 'dos-toolkit' ); ?></h2>
+
+				<table class="dos-modules widefat">
+					<tbody>
+					<?php foreach ( $superseded as $entry ) : ?>
+						<tr>
+							<td><strong><?php echo esc_html( $entry['name'] ); ?></strong></td>
+							<td class="dos-blurb">
+								<?php echo esc_html( $entry['detail'] ); ?>
+							</td>
+							<td>
+								<?php if ( DOS_Toolkit::is_active( $entry['module'] ) ) : ?>
+									<span class="dos-badge dos-badge-missing"><?php esc_html_e( 'Conflict', 'dos-toolkit' ); ?></span>
+								<?php else : ?>
+									<span class="dos-badge dos-badge-off"><?php esc_html_e( 'Superseded', 'dos-toolkit' ); ?></span>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+
+					<?php foreach ( $third_party as $entry ) : ?>
+						<tr>
+							<td><strong><?php echo esc_html( $entry['name'] ); ?></strong></td>
+							<td class="dos-blurb">
+								<?php
+								printf(
+									/* translators: %s: module name */
+									esc_html__( 'Handles this already, so the %s module stands down and emits nothing. This plugin is left alone.', 'dos-toolkit' ),
+									esc_html( $entry['module'] )
+								);
+								?>
+							</td>
+							<td><span class="dos-badge dos-badge-off"><?php esc_html_e( 'Deferring', 'dos-toolkit' ); ?></span></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -318,6 +379,18 @@ final class DOS_Admin {
 								<input type="checkbox" name="dry_run_default" value="1" <?php checked( DOS_Settings::dry_run_default() ); ?> />
 								<?php esc_html_e( 'New batch jobs start in report-only mode', 'dos-toolkit' ); ?>
 							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Replaced plugins', 'dos-toolkit' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="deactivate_superseded" value="1" <?php checked( DOS_Conflicts::auto_deactivate_enabled() ); ?> />
+								<?php esc_html_e( 'Deactivate the one-off plugins this toolkit replaces', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Only applies once the module that replaces a plugin is switched on, so a site is never left with neither. Nothing is deleted, and third-party plugins are never touched — the SEO module stands down for those instead.', 'dos-toolkit' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>

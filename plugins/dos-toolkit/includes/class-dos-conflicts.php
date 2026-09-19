@@ -67,6 +67,13 @@ final class DOS_Conflicts {
 				'severity'    => 'duplicate',
 				'detail'      => __( 'Duplicate Tools page doing the same thing.', 'dos-toolkit' ),
 			),
+			'last-updated-column/last-updated-column.php' => array(
+				'name'        => 'Last Updated Column',
+				'module'      => 'utilities',
+				'replaced_by' => __( 'the Utilities module', 'dos-toolkit' ),
+				'severity'    => 'harmful',
+				'detail'      => __( 'It filters get_the_date on every singular view, including the machine-readable timestamps the SEO module puts in structured data.', 'dos-toolkit' ),
+			),
 			'page-tags-tools/page-tags-tools.php' => array(
 				'name'        => 'Page Tags Tools',
 				'module'      => 'utilities',

@@ -44,6 +44,9 @@ function get_the_author_meta( $f, $id ) { return 'Ryan Rose'; }
 function get_post_field( $f, $id ) { return 7; }
 function get_the_title( $id = 0 ) { return 'A Post Title'; }
 function get_the_date( $f, $id = 0 ) { return '2026-01-15T09:00:00+00:00'; }
+// The unfiltered pair the SEO module uses for anything machine-readable.
+function get_post_time( $f, $gmt = false, $post = null, $translate = false ) { return '2026-01-15T09:00:00+00:00'; }
+function get_post_modified_time( $f, $gmt = false, $post = null, $translate = false ) { return '2026-02-01T11:30:00+00:00'; }
 function get_the_modified_date( $f, $id = 0 ) { return '2026-02-01T11:30:00+00:00'; }
 function get_the_category( $id = 0 ) { return array( (object) array( 'name' => 'News' ) ); }
 function get_the_archive_description() { return ''; }

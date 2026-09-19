@@ -22,7 +22,7 @@ Installing adds a top-level **DoS Tools** menu:
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
 | `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
-| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, permalink and cache flush, settings export/import. |
+| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, permalink flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when
 it is both available and enabled. The shell can therefore be deployed before
@@ -189,6 +189,14 @@ under the site's own name. Targets are either absolute `http`/`https` or a
 path, and everything else — protocol-relative, `javascript:`, `data:`,
 `mailto:` — is refused rather than repaired into something that looks safe.
 
+**`get_the_date()` is a display function and can be filtered; `get_post_time()`
+cannot.** Anything machine-readable — a schema date, an Open Graph timestamp,
+a feed — must use the latter. The Last Updated feature prepends "Updated:" to
+dates through the `get_the_date` filter, and before the SEO module was moved
+off that function it would have published `<span>Updated: …</span> | 2026-…`
+inside `article:published_time` on every post. The feature also refuses to
+touch a format that looks machine-readable, so both ends are covered.
+
 **Redirects run before WordPress guesses.** Core will redirect a near-miss URL
 to whatever it thinks was meant. The router hooks `template_redirect` at
 priority 1 so a configured rule wins, and never touches admin, login, cron,
@@ -226,6 +234,7 @@ reference; none of it is built or shipped.
 | `media-usage-manager` | `modules/images/` (usage scan and deletion) |
 | `breanm-clear-image-titles` | `modules/images/` (batch job) |
 | `breanm-plugin-downloader` | `modules/utilities/` |
+| `last-updated-column` | `modules/utilities/` (admin column and front-end date) |
 | `page-tags-tools` | `modules/utilities/` |
 
 `ai` was written from scratch and has no legacy counterpart.

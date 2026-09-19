@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-dos-plugin-download.php';
 require_once __DIR__ . '/class-dos-page-tags.php';
+require_once __DIR__ . '/class-dos-last-updated.php';
 
 final class DOS_Module_Utilities extends DOS_Module {
 
@@ -30,6 +31,7 @@ final class DOS_Module_Utilities extends DOS_Module {
 	public static function init() {
 		DOS_Plugin_Download::init();
 		DOS_Page_Tags::init();
+		DOS_Last_Updated::init();
 
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
 		add_action( 'admin_post_dos_export_settings', array( __CLASS__, 'handle_export' ) );
@@ -176,7 +178,13 @@ final class DOS_Module_Utilities extends DOS_Module {
 			case 'save_utilities':
 				check_admin_referer( 'dos_save_utilities' );
 
-				DOS_Settings::set( 'utilities_page_tags', empty( $_POST['page_tags'] ) ? 0 : 1 );
+				DOS_Settings::update(
+					array(
+						'utilities_page_tags'      => empty( $_POST['page_tags'] ) ? 0 : 1,
+						'utilities_updated_column' => empty( $_POST['updated_column'] ) ? 0 : 1,
+						'utilities_updated_front'  => empty( $_POST['updated_front'] ) ? 0 : 1,
+					)
+				);
 				self::log( 'settings_saved', 'Utility settings updated.' );
 				self::redirect( 'saved' );
 				break;
@@ -282,6 +290,22 @@ final class DOS_Module_Utilities extends DOS_Module {
 								<?php esc_html_e( 'Let Pages use tags', 'dos-toolkit' ); ?>
 							</label>
 							<p class="description"><?php esc_html_e( 'Attaches the existing post tag taxonomy to Pages, so the tags are the same tags posts already use. Turning this off hides the UI but leaves every tag assignment in place.', 'dos-toolkit' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Last updated dates', 'dos-toolkit' ); ?></th>
+						<td>
+							<label style="display:block;margin-bottom:.4em">
+								<input type="checkbox" name="updated_column" value="1" <?php checked( DOS_Last_Updated::column_enabled() ); ?> />
+								<?php esc_html_e( 'Add a sortable Last Updated column to the post and page lists', 'dos-toolkit' ); ?>
+							</label>
+							<label style="display:block">
+								<input type="checkbox" name="updated_front" value="1" <?php checked( DOS_Last_Updated::front_end_enabled() ); ?> />
+								<?php esc_html_e( 'Show “Updated:” before the published date on the front end', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Both only appear when a post was genuinely edited after publishing — WordPress records a modified time a second or two after publishing everything, so anything less than a minute apart is ignored. The front-end option depends on the theme calling the_date or get_the_date; some themes print the date another way and will not change.', 'dos-toolkit' ); ?>
+							</p>
 						</td>
 					</tr>
 				</table>

@@ -146,11 +146,11 @@ final class DOS_Module_SEO extends DOS_Module {
 		if ( 'article' === $ctx['og_type'] && $ctx['post_id'] ) {
 			printf(
 				'<meta property="article:published_time" content="%s">' . "\n",
-				esc_attr( get_the_date( DATE_W3C, $ctx['post_id'] ) )
+				esc_attr( get_post_time( DATE_W3C, false, $ctx['post_id'] ) )
 			);
 			printf(
 				'<meta property="article:modified_time" content="%s">' . "\n",
-				esc_attr( get_the_modified_date( DATE_W3C, $ctx['post_id'] ) )
+				esc_attr( get_post_modified_time( DATE_W3C, false, $ctx['post_id'] ) )
 			);
 
 			$terms = get_the_category( $ctx['post_id'] );
@@ -381,6 +381,11 @@ final class DOS_Module_SEO extends DOS_Module {
 
 	/* ---------------------------------------------------------------------
 	 * Schema
+	 *
+	 * Dates here use get_post_time() rather than get_the_date(). The latter
+	 * passes through the_date filters, which themes and plugins use to dress
+	 * a date up for display — and a machine-readable timestamp with "Updated:"
+	 * prepended to it is not a timestamp any more.
 	 * ------------------------------------------------------------------- */
 
 	private static function render_schema( $ctx ) {
@@ -440,8 +445,8 @@ final class DOS_Module_SEO extends DOS_Module {
 			}
 
 			if ( $ctx['post_id'] ) {
-				$page['datePublished'] = get_the_date( DATE_W3C, $ctx['post_id'] );
-				$page['dateModified']  = get_the_modified_date( DATE_W3C, $ctx['post_id'] );
+				$page['datePublished'] = get_post_time( DATE_W3C, false, $ctx['post_id'] );
+				$page['dateModified']  = get_post_modified_time( DATE_W3C, false, $ctx['post_id'] );
 			}
 
 			$graph[] = $page;
@@ -456,8 +461,8 @@ final class DOS_Module_SEO extends DOS_Module {
 				'@id'              => $ctx['canonical'] . '#article',
 				'headline'         => self::plain( get_the_title( $post_id ) ),
 				'description'      => $ctx['description'],
-				'datePublished'    => get_the_date( DATE_W3C, $post_id ),
-				'dateModified'     => get_the_modified_date( DATE_W3C, $post_id ),
+				'datePublished'    => get_post_time( DATE_W3C, false, $post_id ),
+				'dateModified'     => get_post_modified_time( DATE_W3C, false, $post_id ),
 				'mainEntityOfPage' => array( '@type' => 'WebPage', '@id' => $ctx['canonical'] ),
 				'publisher'        => array( '@id' => $org_id ),
 				'isPartOf'         => array( '@id' => $site_id ),

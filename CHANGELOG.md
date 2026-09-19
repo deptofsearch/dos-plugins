@@ -5,6 +5,26 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.8.1
+
+Absorbs the Last Updated Column plugin into Utilities: a sortable Last Updated
+column in the admin list tables, and an optional "Updated:" line in front of
+the published date on the front end. Both only appear when a post was
+genuinely edited after publishing, since WordPress records a modified time a
+second or two after publishing everything.
+
+Two faults were fixed on the way in. The original shared one callback between
+the `the_date` and `get_the_date` filters, which pass different arguments, so
+`the_date` silently did nothing on any theme that passed a `$before` string.
+
+More seriously, it filtered `get_the_date` on every singular view — and the
+SEO module reads its schema and Open Graph timestamps through that same
+function. Installed as it was, every post would have published
+`<span>Updated: …</span> | 2026-01-15T…` inside `article:published_time` and
+`datePublished`. The SEO module now reads dates through `get_post_time()`,
+which display filters never see, and the feature refuses to decorate a
+machine-readable format regardless.
+
 ## 0.8.0
 
 Adds the Redirects & 404s module.

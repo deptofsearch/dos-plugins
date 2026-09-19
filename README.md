@@ -210,7 +210,7 @@ The tag convention exists for this, but nothing else is automatic.
 
 ## Legacy
 
-`legacy/` holds the five plugins this toolkit replaced. All of them have been
+`legacy/` holds the six plugins this toolkit replaced. All of them have been
 absorbed; the source is kept as reference for the ports and for anything that
 turns out to have been missed. None of it is built, released or installed.
 
@@ -226,4 +226,5 @@ out to be missing.
 | `media-usage-manager` | `images` module |
 | `breanm-clear-image-titles` | `images` module |
 | `breanm-plugin-downloader` | `utilities` module |
+| `last-updated-column` | `utilities` module |
 | `page-tags-tools` | `utilities` module |

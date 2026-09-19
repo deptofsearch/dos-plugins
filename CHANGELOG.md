@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.5
+
+A finished run left the panel describing the previous one. The "last run"
+line and the destructive-job clearance line are written when the page loads
+and were never refreshed, so after a dry run that found nothing the panel
+still read "cleared for a live run: found 1 items". Both now update from the
+result, and a dry run that finds nothing says so rather than appearing to
+authorise a deletion.
+
 ## 0.7.4
 
 Corrects the token guidance, which was wrong in the settings screen and in

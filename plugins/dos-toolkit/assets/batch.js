@@ -7,6 +7,10 @@
 
 	var config = window.dosBatch;
 
+	function format( template, a, b ) {
+		return String( template ).replace( '%1$d', a ).replace( '%2$d', b );
+	}
+
 	function post( body ) {
 		return fetch( config.ajaxUrl, {
 			method: 'POST',
@@ -70,6 +74,27 @@
 			if ( data.done ) {
 				status.textContent = config.strings.done + ' ' + data.processed + ' scanned, ' + data.changed + ' changed' + ( data.dryRun ? ' (dry run)' : '' ) + '.';
 				button.disabled = false;
+
+				// These two lines were written when the page loaded. Leaving
+				// them describing the previous run is how somebody confirms a
+				// deletion they did not mean.
+				var last = panel.querySelector( '.dos-job-last' );
+
+				if ( last ) {
+					last.textContent = format( config.strings.lastRun, data.processed, data.changed );
+				}
+
+				var guard = panel.querySelector( '.dos-job-guard' );
+
+				if ( guard && data.destructive ) {
+					if ( ! data.dryRun ) {
+						guard.textContent = config.strings.stale;
+					} else if ( data.changed > 0 ) {
+						guard.textContent = format( config.strings.cleared, data.processed, data.changed );
+					} else {
+						guard.textContent = config.strings.nothing;
+					}
+				}
 
 				return;
 			}

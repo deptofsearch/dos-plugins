@@ -121,6 +121,10 @@ final class DOS_Batch {
 				'action'  => self::AJAX_ACTION,
 				'nonce'   => wp_create_nonce( self::NONCE ),
 				'strings' => array(
+					'lastRun'  => __( 'Last run: %1$d scanned, %2$d changed.', 'dos-toolkit' ),
+					'cleared'  => __( 'Cleared for a live run: a dry run just now found %1$d items, %2$d of which would change.', 'dos-toolkit' ),
+					'nothing'  => __( 'Nothing to do — the last dry run found no items.', 'dos-toolkit' ),
+					'stale'    => __( 'A live run has been made. Run a dry run again before another one.', 'dos-toolkit' ),
 					'running'  => __( 'Running…', 'dos-toolkit' ),
 					'done'     => __( 'Finished.', 'dos-toolkit' ),
 					'failed'   => __( 'Failed. See the log for details.', 'dos-toolkit' ),
@@ -314,12 +318,13 @@ final class DOS_Batch {
 
 		wp_send_json_success(
 			array(
-				'done'      => $done,
-				'total'     => (int) $state['total'],
-				'processed' => (int) $state['processed'],
-				'changed'   => (int) $state['changed'],
-				'dryRun'    => (bool) $state['dry_run'],
-				'notes'     => array_map( 'strval', (array) $result['notes'] ),
+				'done'        => $done,
+				'total'       => (int) $state['total'],
+				'processed'   => (int) $state['processed'],
+				'changed'     => (int) $state['changed'],
+				'dryRun'      => (bool) $state['dry_run'],
+				'destructive' => (bool) $job['destructive'],
+				'notes'       => array_map( 'strval', (array) $result['notes'] ),
 			)
 		);
 	}
@@ -384,8 +389,8 @@ final class DOS_Batch {
 				</p>
 			<?php endif; ?>
 
-			<?php if ( $state['processed'] ) : ?>
-				<p class="description dos-job-last">
+			<p class="description dos-job-last">
+				<?php if ( $state['processed'] ) : ?>
 					<?php
 					printf(
 						/* translators: 1: items scanned, 2: items changed */
@@ -394,8 +399,8 @@ final class DOS_Batch {
 						(int) $state['changed']
 					);
 					?>
-				</p>
-			<?php endif; ?>
+				<?php endif; ?>
+			</p>
 
 			<ul class="dos-job-notes"></ul>
 		</div>

@@ -39,7 +39,7 @@ final class DOS_Module_Images extends DOS_Module {
 			'images_usage_scan' => array(
 				'label'       => __( 'Scan media usage', 'dos-toolkit' ),
 				'description' => __( 'Walks every post, page and custom post type and records which images are referenced, in post content and in post meta, so page-builder layouts are covered. Run this before anything else on this screen — the other jobs read what it writes.', 'dos-toolkit' ),
-				'batch_size'  => 20,
+				'batch_size'  => DOS_Images_Usage::SCAN_BATCH,
 				'always_live' => true,
 				'count'       => array( 'DOS_Images_Usage', 'scan_total' ),
 				'step'        => array( 'DOS_Images_Usage', 'scan_step' ),

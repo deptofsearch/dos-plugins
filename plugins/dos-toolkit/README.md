@@ -165,6 +165,13 @@ It still does not read widgets, menus, theme options or stylesheets. An image
 used only in one of those reads as unused, which is why the delete job says so
 in its own description and why its dry run exists.
 
+**The runner advances by a fixed stride, not by what a step processed.** A job
+that divides one offset space into phases must align each boundary to a whole
+number of batches, or the offset steps straight over it: the next phase starts
+partway in and everything before that point is never visited. The usage scan
+pads its first phase for exactly this reason, and the arithmetic uses the
+constant the job is registered with rather than whatever size is passed in.
+
 **A job that changes nothing has no useful dry run.** The usage scan only
 records state for other jobs to read, so offering it a dry run meant offering
 an option that did no work while looking like it had — and left the delete job

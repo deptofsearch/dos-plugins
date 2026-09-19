@@ -22,6 +22,13 @@ final class DOS_Images_Usage {
 	const META_STATUS  = '_dos_usage_status';
 	const META_USED_IN = '_dos_usage_used_in';
 
+	/**
+	 * Items per scan request. The scan does its own boundary arithmetic, so
+	 * this has to be the value the job is registered with rather than
+	 * whatever the runner happens to pass.
+	 */
+	const SCAN_BATCH = 20;
+
 	/* ---------------------------------------------------------------------
 	 * What the scan walks
 	 * ------------------------------------------------------------------- */
@@ -84,20 +91,40 @@ final class DOS_Images_Usage {
 	 * phase two.
 	 */
 	public static function scan_total() {
-		return self::count_attachments() + self::count_posts();
+		return self::phase_two_starts_at() + self::count_posts();
+	}
+
+	/**
+	 * The offset at which the reset phase ends and the content phase begins,
+	 * rounded up to a whole number of batches.
+	 *
+	 * The runner advances by a fixed stride regardless of how many items a
+	 * step actually handled, so a boundary that is not a multiple of that
+	 * stride is stepped straight over: the first content request would start
+	 * at (offset - attachments) instead of at zero, and that many posts would
+	 * never be scanned at all. Their images would then be marked unused and
+	 * offered for deletion.
+	 */
+	private static function phase_two_starts_at() {
+		$attachments = self::count_attachments();
+
+		return (int) ceil( $attachments / self::SCAN_BATCH ) * self::SCAN_BATCH;
 	}
 
 	public static function scan_step( $offset, $size, $dry_run ) {
 		$attachments = self::count_attachments();
+		$boundary    = self::phase_two_starts_at();
 		$notes       = array();
 
-		if ( $offset < $attachments ) {
+		if ( $offset < $boundary ) {
 			if ( $dry_run ) {
 				// Nothing to report from the reset phase, and it must not
 				// write. Skip straight through it.
 				return array( 'processed' => $size, 'changed' => 0, 'notes' => array() );
 			}
 
+			// Past the real attachment count this returns nothing, which is
+			// correct: the padding exists only to keep the boundary aligned.
 			$ids = get_posts( array(
 				'post_type'              => 'attachment',
 				'post_status'            => 'inherit',
@@ -124,7 +151,7 @@ final class DOS_Images_Usage {
 			'post_type'              => self::scannable_post_types(),
 			'post_status'            => 'any',
 			'posts_per_page'         => $size,
-			'offset'                 => $offset - $attachments,
+			'offset'                 => $offset - $boundary,
 			'orderby'                => 'ID',
 			'order'                  => 'ASC',
 			'no_found_rows'          => true,

@@ -5,6 +5,24 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.3
+
+The usage scan skipped posts, and reported the images in them as unused.
+
+The scan runs two phases through one offset space, and the batch runner
+advances that offset by a fixed stride whatever a step actually processed. The
+boundary between phases sat at the raw attachment count, which is almost never
+a multiple of the stride, so the offset stepped over it and the content phase
+began partway in. Every post before that point was never scanned, and its
+featured and inline images were left marked unused and offered for deletion.
+
+Found on the canary: a dry run proposed deleting an image that was the
+featured image of a published post and appeared on three category archives.
+
+The first phase is now padded to a whole number of batches. A test drives the
+real scan through the real runner across seven library shapes and asserts that
+no post is missed.
+
 ## 0.7.2
 
 Two faults in the media jobs, both found before anything was deleted.

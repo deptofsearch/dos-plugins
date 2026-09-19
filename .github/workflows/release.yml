@@ -55,6 +55,14 @@ jobs:
           SLUG="${{ steps.meta.outputs.slug }}"
           find "plugins/${SLUG}" -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          for t in tests/test-*.php; do
+            echo "### $t"
+            php "$t"
+          done
+
       - name: Build the ZIP
         run: |
           set -euo pipefail

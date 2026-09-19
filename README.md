@@ -7,8 +7,22 @@ one update path for every site we run.
 plugins/
   dos-toolkit/      The standard toolkit: SEO, AI Search, Images, Utilities
 legacy/             The one-off plugins being folded into dos-toolkit
-.github/workflows/  Tag -> build ZIP -> publish release
+tests/              Stubbed-WordPress tests, run on every release
+.github/workflows/  Tag -> lint -> test -> build ZIP -> publish release
 ```
+
+## Tests
+
+```bash
+docker run --rm -v "$PWD":/app -w /app php:8.2-cli \
+  bash -c 'for t in tests/test-*.php; do php "$t"; done'
+```
+
+They stub the WordPress functions each unit touches, so they run anywhere PHP
+runs, with no database and no WordPress install. `test-batch-guard.php` is the
+one that matters most: it asserts that a destructive job cannot be made to run
+live by a forged request, only by a deliberate one that follows a recent dry
+run.
 
 ## Installing on a site
 

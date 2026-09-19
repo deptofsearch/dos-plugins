@@ -18,6 +18,13 @@ final class DOS_Batch {
 	const NONCE       = 'dos_batch';
 	const STATE_PREFIX = 'dos_batch_state_';
 
+	// A destructive job may only run live once a dry run of the same job has
+	// finished, and only while that dry run is still recent enough to
+	// describe the current state of the site.
+	const RECEIPT_PREFIX = 'dos_batch_receipt_';
+	const RECEIPT_TTL    = DAY_IN_SECONDS;
+	const CONFIRM_PHRASE = 'RUN';
+
 	private static $jobs = array();
 
 	public static function boot() {
@@ -141,6 +148,72 @@ final class DOS_Batch {
 		delete_option( self::STATE_PREFIX . $key );
 	}
 
+	/**
+	 * The record of the last completed dry run. Kept in its own option, since
+	 * reset() wipes the run state at the start of every run and the receipt
+	 * has to outlive that.
+	 */
+	public static function receipt( $key ) {
+		$receipt = get_option( self::RECEIPT_PREFIX . $key, array() );
+
+		if ( ! is_array( $receipt ) || empty( $receipt['at'] ) ) {
+			return null;
+		}
+
+		return $receipt;
+	}
+
+	public static function receipt_is_fresh( $key ) {
+		$receipt = self::receipt( $key );
+
+		return $receipt && ( time() - (int) $receipt['at'] ) <= self::RECEIPT_TTL;
+	}
+
+	private static function save_receipt( $key, array $state ) {
+		update_option(
+			self::RECEIPT_PREFIX . $key,
+			array(
+				'at'        => time(),
+				'processed' => (int) $state['processed'],
+				'changed'   => (int) $state['changed'],
+				'user_id'   => get_current_user_id(),
+			),
+			false
+		);
+	}
+
+	/**
+	 * Why a live run of this job must be refused, or '' if it may proceed.
+	 *
+	 * The browser asks for the confirmation phrase too, but that check is a
+	 * courtesy — this one is the guard. Anything that can reach admin-ajax
+	 * with a valid nonce, including a CSRF'd admin or a compromised plugin,
+	 * gets stopped here instead.
+	 */
+	public static function live_run_blocker( $key, $confirm ) {
+		$job = self::job( $key );
+
+		if ( ! $job || ! $job['destructive'] ) {
+			return '';
+		}
+
+		if ( self::CONFIRM_PHRASE !== $confirm ) {
+			return __( 'This job changes site data. It cannot run live without the typed confirmation.', 'dos-toolkit' );
+		}
+
+		$receipt = self::receipt( $key );
+
+		if ( ! $receipt ) {
+			return __( 'Run this as a dry run first. A live run is only allowed once a dry run has reported what it would change.', 'dos-toolkit' );
+		}
+
+		if ( ! self::receipt_is_fresh( $key ) ) {
+			return __( 'The last dry run is more than a day old and may no longer describe this site. Run another dry run first.', 'dos-toolkit' );
+		}
+
+		return '';
+	}
+
 	public static function handle_step() {
 		if ( ! current_user_can( DOS_Settings::capability() ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'dos-toolkit' ) ), 403 );
@@ -157,6 +230,20 @@ final class DOS_Batch {
 
 		$restart = ! empty( $_POST['restart'] );
 		$dry_run = ! empty( $_POST['dry_run'] );
+		$confirm = isset( $_POST['confirm'] ) ? sanitize_text_field( wp_unslash( $_POST['confirm'] ) ) : '';
+
+		// Only the opening request of a run can choose live or dry; every
+		// later step reads the mode back out of the stored state, so this
+		// check cannot be stepped around by forging a continuation request.
+		if ( $restart && ! $dry_run ) {
+			$blocker = self::live_run_blocker( $key, $confirm );
+
+			if ( $blocker ) {
+				DOS_Log::add( $job['module'], 'batch_refused', sprintf( '%s: live run refused. %s', $job['label'], $blocker ) );
+
+				wp_send_json_error( array( 'message' => $blocker ), 403 );
+			}
+		}
 
 		if ( $restart ) {
 			self::reset( $key );
@@ -169,7 +256,13 @@ final class DOS_Batch {
 			$state['dry_run'] = $dry_run;
 			$state['started'] = time();
 
-			DOS_Log::add( $job['module'], 'batch_start', sprintf( '%s started (%d items).', $job['label'], $state['total'] ), 0, $dry_run );
+			DOS_Log::add(
+				$job['module'],
+				$job['destructive'] && ! $dry_run ? 'batch_live_start' : 'batch_start',
+				sprintf( '%s started (%d items).', $job['label'], $state['total'] ),
+				0,
+				$dry_run
+			);
 		}
 
 		$size   = max( 1, (int) $job['batch_size'] );
@@ -193,6 +286,14 @@ final class DOS_Batch {
 		self::save_state( $key, $state );
 
 		if ( $done ) {
+			if ( $state['dry_run'] ) {
+				self::save_receipt( $key, $state );
+			} else {
+				// A completed live run consumes its receipt, so a second live
+				// pass needs a fresh dry run rather than riding the first one.
+				delete_option( self::RECEIPT_PREFIX . $key );
+			}
+
 			DOS_Log::add(
 				$job['module'],
 				'batch_finish',
@@ -229,7 +330,7 @@ final class DOS_Batch {
 		$state   = self::state( $key );
 		$dry_run = DOS_Settings::dry_run_default();
 		?>
-		<div class="dos-job" data-job="<?php echo esc_attr( $key ); ?>" data-destructive="<?php echo $job['destructive'] ? '1' : '0'; ?>">
+		<div class="dos-job" data-job="<?php echo esc_attr( $key ); ?>" data-destructive="<?php echo $job['destructive'] ? '1' : '0'; ?>" data-confirm-phrase="<?php echo esc_attr( self::CONFIRM_PHRASE ); ?>">
 			<h3><?php echo esc_html( $job['label'] ); ?></h3>
 
 			<?php if ( $job['description'] ) : ?>
@@ -249,6 +350,26 @@ final class DOS_Batch {
 			</p>
 
 			<div class="dos-job-progress"><div class="dos-job-bar"></div></div>
+
+			<?php if ( $job['destructive'] ) : ?>
+				<?php $receipt = self::receipt( $key ); ?>
+				<p class="description dos-job-guard">
+					<?php if ( self::receipt_is_fresh( $key ) ) : ?>
+						<?php
+						printf(
+							/* translators: 1: items scanned, 2: items that would change, 3: human time difference */
+							esc_html__( 'Cleared for a live run: a dry run %3$s ago found %1$d items, %2$d of which would change.', 'dos-toolkit' ),
+							(int) $receipt['processed'],
+							(int) $receipt['changed'],
+							esc_html( human_time_diff( (int) $receipt['at'] ) )
+						);
+						?>
+					<?php else : ?>
+						<strong><?php esc_html_e( 'Dry run required.', 'dos-toolkit' ); ?></strong>
+						<?php esc_html_e( 'This job changes site data, so a live run is refused until a dry run has reported what it would change. The dry run stays valid for 24 hours.', 'dos-toolkit' ); ?>
+					<?php endif; ?>
+				</p>
+			<?php endif; ?>
 
 			<?php if ( $state['processed'] ) : ?>
 				<p class="description dos-job-last">

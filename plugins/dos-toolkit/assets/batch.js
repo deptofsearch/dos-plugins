@@ -18,7 +18,7 @@
 		} );
 	}
 
-	function run( panel, job, dryRun, restart ) {
+	function run( panel, job, dryRun, restart, confirm ) {
 		var status = panel.querySelector( '.dos-job-status' );
 		var bar    = panel.querySelector( '.dos-job-bar' );
 		var notes  = panel.querySelector( '.dos-job-notes' );
@@ -36,6 +36,13 @@
 
 		if ( restart ) {
 			params.set( 'restart', '1' );
+		}
+
+		// The server re-checks this; sending it is not what makes the run
+		// safe, it is what lets the server tell a deliberate run from a
+		// forged one.
+		if ( confirm ) {
+			params.set( 'confirm', confirm );
 		}
 
 		status.textContent = config.strings.running;
@@ -69,7 +76,7 @@
 
 			status.textContent = config.strings.running + ' ' + data.processed + ' / ' + data.total;
 
-			run( panel, job, dryRun, false );
+			run( panel, job, dryRun, false, '' );
 		} ).catch( function () {
 			status.textContent = config.strings.failed;
 			button.disabled = false;
@@ -88,19 +95,27 @@
 		var dryRun = panel.querySelector( '.dos-job-dry-run' ).checked;
 
 		// A live run of a destructive job has to be typed out. A misclick
-		// should not be able to delete media on a client site.
+		// should not be able to delete media on a client site. The server
+		// enforces this again, along with requiring a recent dry run.
+		var confirm = '';
+
 		if ( ! dryRun && '1' === panel.getAttribute( 'data-destructive' ) ) {
-			if ( 'RUN' !== window.prompt( config.strings.confirm ) ) {
+			var phrase = panel.getAttribute( 'data-confirm-phrase' ) || 'RUN';
+			var typed  = window.prompt( config.strings.confirm );
+
+			if ( typed !== phrase ) {
 				panel.querySelector( '.dos-job-status' ).textContent = config.strings.canceled;
 
 				return;
 			}
+
+			confirm = typed;
 		}
 
 		button.disabled = true;
 		panel.querySelector( '.dos-job-notes' ).innerHTML = '';
 		panel.querySelector( '.dos-job-bar' ).style.width = '0%';
 
-		run( panel, job, dryRun, true );
+		run( panel, job, dryRun, true, confirm );
 	} );
 }() );

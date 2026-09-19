@@ -1,0 +1,81 @@
+name: Release plugin
+
+# Tag `<slug>-v<version>` and this builds that plugin's ZIP and publishes it as
+# a release asset. Sites running the plugin pick the update up from there.
+#
+#   git tag dos-toolkit-v0.1.0 && git push origin dos-toolkit-v0.1.0
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve plugin and version from the tag
+        id: meta
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          SLUG="${TAG%-v*}"
+          VERSION="${TAG##*-v}"
+
+          if [ ! -f "plugins/${SLUG}/${SLUG}.php" ]; then
+            echo "::error::No plugin at plugins/${SLUG}/${SLUG}.php for tag ${TAG}"
+            exit 1
+          fi
+
+          echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check the plugin header matches the tag
+        run: |
+          set -euo pipefail
+          SLUG="${{ steps.meta.outputs.slug }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' "plugins/${SLUG}/${SLUG}.php" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+
+          if [ "$HEADER" != "$VERSION" ]; then
+            echo "::error::Tag says ${VERSION}, plugin header says ${HEADER}. Bump the header before tagging."
+            exit 1
+          fi
+
+      - name: Lint PHP
+        run: |
+          set -euo pipefail
+          SLUG="${{ steps.meta.outputs.slug }}"
+          find "plugins/${SLUG}" -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Build the ZIP
+        run: |
+          set -euo pipefail
+          SLUG="${{ steps.meta.outputs.slug }}"
+
+          # WordPress installs the ZIP's top-level folder as the plugin
+          # directory, so it has to be the slug and nothing else.
+          mkdir -p build
+          cp -R "plugins/${SLUG}" "build/${SLUG}"
+          find build -name '.DS_Store' -delete
+          ( cd build && zip -rq "../${SLUG}.zip" "${SLUG}" )
+          unzip -l "${SLUG}.zip"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SLUG="${{ steps.meta.outputs.slug }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+
+          gh release create "${GITHUB_REF_NAME}" "${SLUG}.zip" \
+            --title "${SLUG} ${VERSION}" \
+            --generate-notes

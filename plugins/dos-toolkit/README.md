@@ -21,6 +21,7 @@ Installing adds a top-level **DoS Tools** menu:
 | `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Stands down if Yoast, Rank Math or SEOPress is active. |
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
 | `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
+| `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, permalink and cache flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when
@@ -179,6 +180,20 @@ number of batches, or the offset steps straight over it: the next phase starts
 partway in and everything before that point is never visited. The usage scan
 pads its first phase for exactly this reason, and the arithmetic uses the
 constant the job is registered with rather than whatever size is passed in.
+
+**A redirect target that starts with a slash is not necessarily internal.**
+`//evil.example/x` is protocol-relative: it begins with a slash, so any check
+of the form "starts with `/`" accepts it, and the browser then loads a
+different origin. A redirect table that accepts one hands out an open redirect
+under the site's own name. Targets are either absolute `http`/`https` or a
+path, and everything else — protocol-relative, `javascript:`, `data:`,
+`mailto:` — is refused rather than repaired into something that looks safe.
+
+**Redirects run before WordPress guesses.** Core will redirect a near-miss URL
+to whatever it thinks was meant. The router hooks `template_redirect` at
+priority 1 so a configured rule wins, and never touches admin, login, cron,
+REST, or anything that is not a GET or HEAD — a redirected POST loses its body
+and the sender never learns why.
 
 **A job that changes nothing has no useful dry run.** The usage scan only
 records state for other jobs to read, so offering it a dry run meant offering

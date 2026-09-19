@@ -35,6 +35,12 @@ final class DOS_Toolkit {
 			'label' => 'Images & Media',
 			'blurb' => 'Responsive srcset/sizes on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, and a media usage scan with cleanup of what nothing references. Never rewrites an image file.',
 		),
+		'redirects' => array(
+			'class' => 'DOS_Module_Redirects',
+			'file'  => 'redirects/class-dos-redirects.php',
+			'label' => 'Redirects & 404s',
+			'blurb' => 'Logs requests that hit nothing, and redirects the ones worth keeping. Renaming a published page redirects its old URL automatically.',
+		),
 		'utilities' => array(
 			'class' => 'DOS_Module_Utilities',
 			'file'  => 'utilities/class-dos-utilities.php',

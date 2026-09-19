@@ -5,6 +5,34 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.8.0
+
+Adds the Redirects & 404s module.
+
+The 404 log and the redirect table are one feature: the log is where
+redirects come from, and a log you have to retype into a form is busywork.
+Each logged 404 has a button that opens the redirect form prefilled and
+clears the log row once the rule exists.
+
+Matching is exact paths only, compared lowercase without a trailing slash,
+with any query string on the incoming URL carried across to the target. That
+covers what the log actually produces — a specific dead URL — and cannot
+swallow a section of the site the way a bad wildcard can.
+
+Renaming a published page creates the redirect automatically, which heads off
+the most common way a site breaks its own links. Each one is marked as such
+and can be removed.
+
+Two things the module refuses rather than repairs. A rule that would close a
+loop, checked by walking the existing chain. And a target that is neither an
+absolute http/https URL nor a path: `//evil.example/x` begins with a slash and
+passes any "is it internal" test that looks for one, then sends the visitor to
+another origin under this site's name.
+
+The log records one row per path with a counter rather than one row per hit,
+and filters the probe traffic every public site receives, so that what is left
+is broken links rather than somebody fishing for wp-config.
+
 ## 0.7.6
 
 Documentation pass. The Images module's description promised alt-text bulk

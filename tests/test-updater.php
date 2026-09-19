@@ -127,5 +127,28 @@ $GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.5.2' ) );
 $t = DOS_Updater::inject_update( (object) array( 'response' => array() ) );
 check( 'offers nothing when the newest release is the installed one', ! isset( $t->response[ DOS_TOOLKIT_BASENAME ] ) );
 
+echo "\n--- cache is dropped when this plugin is updated ---\n";
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
+DOS_Updater::status( true );
+set_site_transient( 'update_plugins', (object) array( 'response' => array( DOS_TOOLKIT_BASENAME => 'stale' ) ), 0 );
+
+DOS_Updater::after_update( null, array( 'type' => 'plugin', 'plugin' => DOS_TOOLKIT_BASENAME ) );
+check( 'clears the cached release', false === get_site_transient( 'dos_toolkit_release' ) );
+check( "  and WordPress's stale update entry", false === get_site_transient( 'update_plugins' ) );
+
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
+DOS_Updater::status( true );
+DOS_Updater::after_update( null, array( 'type' => 'plugin', 'plugins' => array( 'other/other.php' ) ) );
+check( 'leaves the cache alone when a different plugin updates', false !== get_site_transient( 'dos_toolkit_release' ) );
+
+DOS_Updater::after_update( null, array( 'type' => 'theme', 'themes' => array( 'twentytwentyfive' ) ) );
+check( 'ignores theme updates', false !== get_site_transient( 'dos_toolkit_release' ) );
+
+check( 'handles a bulk update that includes this plugin', ( function () {
+    DOS_Updater::after_update( null, array( 'type' => 'plugin', 'plugins' => array( 'a/a.php', DOS_TOOLKIT_BASENAME ) ) );
+    return false === get_site_transient( 'dos_toolkit_release' );
+} )() );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

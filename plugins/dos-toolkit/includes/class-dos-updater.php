@@ -33,6 +33,35 @@ final class DOS_Updater {
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject_update' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_source_dir' ), 10, 4 );
+		add_action( 'upgrader_process_complete', array( __CLASS__, 'after_update' ), 10, 2 );
+	}
+
+	/**
+	 * Drop the cached release as soon as this plugin is updated.
+	 *
+	 * Without this, the cache still describes the version that was just
+	 * installed, and WordPress's own update list keeps its now-satisfied
+	 * entry until the next check — so the Plugins screen can offer an update
+	 * to the version already running.
+	 */
+	public static function after_update( $upgrader, $options ) {
+		if ( empty( $options['type'] ) || 'plugin' !== $options['type'] ) {
+			return;
+		}
+
+		$plugins = isset( $options['plugins'] ) ? (array) $options['plugins'] : array();
+
+		// Single-plugin updates report under 'plugin', bulk under 'plugins'.
+		if ( ! empty( $options['plugin'] ) ) {
+			$plugins[] = $options['plugin'];
+		}
+
+		if ( ! in_array( DOS_TOOLKIT_BASENAME, $plugins, true ) ) {
+			return;
+		}
+
+		self::flush();
+		delete_site_transient( 'update_plugins' );
 	}
 
 	public static function flush() {

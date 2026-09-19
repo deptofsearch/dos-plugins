@@ -412,7 +412,9 @@ final class DOS_Admin {
 						<td>
 							<input type="password" name="github_token" value="<?php echo esc_attr( DOS_Settings::get( 'github_token', '' ) ); ?>" class="regular-text" autocomplete="new-password" />
 							<p class="description">
-								<?php esc_html_e( 'Only needed for a private repository. Leave blank for a public one. Define DOS_TOOLKIT_GITHUB_TOKEN in wp-config.php to keep it out of the database.', 'dos-toolkit' ); ?>
+								<?php esc_html_e( 'Not needed to read a public repository, but worth setting anyway: unauthenticated requests are limited to 60 an hour per IP address, which on shared hosting is an address shared with every other site on the server. An authenticated request gets 5,000. A token with no permissions at all is enough — it only identifies the request.', 'dos-toolkit' ); ?>
+								<br>
+								<?php esc_html_e( 'Define DOS_TOOLKIT_GITHUB_TOKEN in wp-config.php to keep it out of the database and out of backups.', 'dos-toolkit' ); ?>
 							</p>
 						</td>
 					</tr>

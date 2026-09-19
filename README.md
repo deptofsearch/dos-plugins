@@ -35,7 +35,23 @@ WordPress would install as a differently-named plugin.
 That first install has to be manual. The updater ships inside the plugin, so
 it cannot install itself. Afterwards the site updates itself: the plugin
 checks this repository's releases and offers new versions on the normal
-Plugins screen. The repository is public, so no access token is needed.
+Plugins screen.
+
+The repository is public, so no token is needed to read it — but set one
+anyway. GitHub allows **60 unauthenticated API requests an hour per IP**, and
+on shared hosting that IP belongs to every site on the server, so update
+checks fail with HTTP 403 for reasons that have nothing to do with this site.
+An authenticated request gets 5,000 an hour.
+
+A token with **no permissions at all** is enough; it only identifies the
+request. Create one under Settings → Developer settings → Fine-grained tokens
+with read-only access to public repositories and no permissions added, then
+put it in `wp-config.php` rather than the settings field, so it stays out of
+database backups:
+
+```php
+define( 'DOS_TOOLKIT_GITHUB_TOKEN', 'github_pat_...' );
+```
 
 ## Rollout
 
@@ -108,9 +124,13 @@ hours.
 
 A failed check is normal and self-correcting: GitHub allows 60 unauthenticated
 requests an hour per IP, and shared hosting reaches that. The plugin retries
-within fifteen minutes. A check that keeps failing with a transport error
-usually means the host blocks outbound requests to `api.github.com`, which is
-a hosting setting rather than a plugin problem.
+within fifteen minutes. **An HTTP 403 means the rate limit** — set a token as
+described under [Installing on a site](#installing-on-a-site) and it stops
+happening.
+
+A check that keeps failing with a *transport* error rather than a 403 usually
+means the host blocks outbound requests to `api.github.com`, which is a
+hosting setting rather than a plugin problem.
 
 ## Cutting a release
 

@@ -5,6 +5,16 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.4
+
+Corrects the token guidance, which was wrong in the settings screen and in
+the README. Both said a token was only needed for a private repository. That
+is true of access and false of rate limits: unauthenticated requests are
+capped at 60 an hour per IP, and on shared hosting that IP is shared with
+every other site on the server. The canary hit HTTP 403 for exactly this
+reason. A token with no permissions at all raises the cap to 5,000, since it
+only identifies the request.
+
 ## 0.7.3
 
 The usage scan skipped posts, and reported the images in them as unused.

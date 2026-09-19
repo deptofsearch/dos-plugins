@@ -1,0 +1,18 @@
+DoS Toolkit and everything else in this repository
+Copyright (C) 2026 Department of Search
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+The full text of the GNU General Public License version 2 is available at
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+WordPress itself is GPL, so a plugin distributed for it is GPL in practice.
+The plugin headers declare GPL-2.0-or-later; this file is what makes that
+declaration true of the repository as a whole.

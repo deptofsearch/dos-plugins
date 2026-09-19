@@ -114,23 +114,79 @@ a hosting setting rather than a plugin problem.
 
 ## Cutting a release
 
-1. Bump `Version:` in the plugin header **and** the matching `DOS_TOOLKIT_VERSION`
-   constant.
-2. Commit.
-3. Tag and push:
+1. Bump `Version:` in the plugin header **and** the matching
+   `DOS_TOOLKIT_VERSION` constant. They must agree or the workflow refuses the
+   tag.
+2. Add a `CHANGELOG.md` entry saying **why**, not only what.
+3. Commit.
+4. Tag and push:
 
    ```bash
    git tag dos-toolkit-v0.1.0
    git push origin dos-toolkit-v0.1.0
    ```
 
-The workflow lints the PHP, refuses the tag if the header version disagrees
-with it, builds a ZIP whose top-level folder is the plugin slug, and publishes
-the release with generated notes.
+Pushing the tag is what publishes. Pushing to `main` alone releases nothing,
+which is why documentation-only changes need no version bump.
 
 Tags are `<slug>-v<version>`. The prefix is what lets several plugins live in
 one repository without their updaters confusing each other — each plugin only
 considers releases carrying its own prefix and its own named asset.
+
+### What the workflow does
+
+`.github/workflows/release.yml`, triggered by any tag matching `*-v*`:
+
+1. Reads the slug and version out of the tag, and fails if
+   `plugins/<slug>/<slug>.php` does not exist.
+2. Refuses the tag if the plugin header's version disagrees with it. This is
+   the check that stops a release whose sites would never see it, since the
+   updater compares the header against the tag.
+3. Lints every PHP file in that plugin.
+4. Runs every `tests/test-*.php`.
+5. Builds a ZIP whose **top-level folder is the plugin slug**, because
+   WordPress installs whatever folder the archive contains.
+6. Publishes the release with generated notes and the ZIP attached.
+
+It authenticates with the automatic `github.token` and needs
+`permissions: contents: write`. There are no repository secrets to configure,
+and nothing breaks if the repository is transferred or cloned.
+
+### If a release goes out wrong
+
+**Never reuse a version number.** Sites cache the release lookup for six hours
+and WordPress caches its own update list for twelve, so a replaced ZIP under
+an existing tag reaches some sites and not others, and you cannot tell which.
+Ship a higher version instead, even for a one-character fix.
+
+Deleting the release and tag on GitHub is fine and sometimes tidy, but it is
+not a rollback: sites that already installed it stay installed. Rolling a site
+back is a manual upload of the previous ZIP, covered under
+[When a release misbehaves](#when-a-release-misbehaves).
+
+## Adding another plugin to this repository
+
+The tag convention exists for this, but nothing else is automatic.
+
+1. Create `plugins/<slug>/<slug>.php`. The folder name, the main file name and
+   the tag prefix must all be the same slug.
+2. Give it its own updater, or copy `class-dos-updater.php` and change `SLUG`
+   and `TAG_PREFIX` to match. Those two constants are the whole of what keeps
+   one plugin's releases from being offered to another.
+3. Set `Update URI` in its header to this repository.
+4. Add tests as `tests/test-<something>.php`. The workflow globs
+   `tests/test-*.php`, so a file named anything else is never run and its
+   absence is silent.
+5. Tag `<slug>-v0.1.0`. The workflow resolves everything else from the tag.
+
+## Working in this repository
+
+- Work happens on `main`. There is no release branch; the tag is the release.
+- Commit messages explain the reasoning, not the diff. The diff is already in
+  the commit; what cannot be recovered later is why a thing was done that way.
+- Tests live at the repository root, not inside the plugin, so they are never
+  shipped to a site.
+- `legacy/` is reference only. Nothing there is built, released or installed.
 
 ## Legacy
 

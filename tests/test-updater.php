@@ -122,10 +122,28 @@ check( 'adds the plugin under its basename', isset( $t->response[ DOS_TOOLKIT_BA
 check( '  with the new version', '0.6.0' === $t->response[ DOS_TOOLKIT_BASENAME ]->new_version );
 check( '  and a package URL', false !== strpos( $t->response[ DOS_TOOLKIT_BASENAME ]->package, '.zip' ) );
 
+check( '  and marks it update-supported, which is what shows the auto-update toggle', ! empty( $t->response[ DOS_TOOLKIT_BASENAME ]->{'update-supported'} ) );
+
 $GLOBALS['transients'] = array();
 $GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.5.2' ) );
-$t = DOS_Updater::inject_update( (object) array( 'response' => array() ) );
+$t = DOS_Updater::inject_update( (object) array( 'response' => array(), 'no_update' => array() ) );
 check( 'offers nothing when the newest release is the installed one', ! isset( $t->response[ DOS_TOOLKIT_BASENAME ] ) );
+check( '  but still lists it as up to date', isset( $t->no_update[ DOS_TOOLKIT_BASENAME ] ) );
+check( '    so WordPress keeps offering auto-updates', ! empty( $t->no_update[ DOS_TOOLKIT_BASENAME ]->{'update-supported'} ) );
+check( '    reporting the installed version', DOS_TOOLKIT_VERSION === $t->no_update[ DOS_TOOLKIT_BASENAME ]->new_version );
+
+// A stale entry on the wrong side must not survive a later check.
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.5.2' ) );
+$stale = (object) array( 'response' => array( DOS_TOOLKIT_BASENAME => 'stale' ), 'no_update' => array() );
+$t = DOS_Updater::inject_update( $stale );
+check( 'clears a stale pending update once it is no longer newer', ! isset( $t->response[ DOS_TOOLKIT_BASENAME ] ), 'phantom update survived' );
+
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
+$stale = (object) array( 'response' => array(), 'no_update' => array( DOS_TOOLKIT_BASENAME => 'stale' ) );
+$t = DOS_Updater::inject_update( $stale );
+check( 'moves it out of no_update when a release does arrive', ! isset( $t->no_update[ DOS_TOOLKIT_BASENAME ] ) && isset( $t->response[ DOS_TOOLKIT_BASENAME ] ) );
 
 echo "\n--- cache is dropped when this plugin is updated ---\n";
 $GLOBALS['transients'] = array();

@@ -287,19 +287,41 @@ final class DOS_Updater {
 			return $transient;
 		}
 
-		if ( ! version_compare( $release['version'], DOS_TOOLKIT_VERSION, '>' ) ) {
+		$item = (object) array(
+			'id'               => self::SLUG,
+			'slug'             => self::SLUG,
+			'plugin'           => DOS_TOOLKIT_BASENAME,
+			'new_version'      => $release['version'],
+			'url'              => $release['url'],
+			'package'          => $release['package'],
+			'tested'           => get_bloginfo( 'version' ),
+			'requires_php'     => '7.4',
+			'icons'            => array(),
+			'banners'          => array(),
+			'banners_rtl'      => array(),
+			// WordPress offers the auto-update toggle only for plugins it
+			// believes have a working update mechanism, which it decides by
+			// looking for them in this transient.
+			'update-supported' => true,
+		);
+
+		if ( version_compare( $release['version'], DOS_TOOLKIT_VERSION, '>' ) ) {
+			$transient->response[ DOS_TOOLKIT_BASENAME ] = $item;
+
+			unset( $transient->no_update[ DOS_TOOLKIT_BASENAME ] );
+
 			return $transient;
 		}
 
-		$transient->response[ DOS_TOOLKIT_BASENAME ] = (object) array(
-			'id'          => self::SLUG,
-			'slug'        => self::SLUG,
-			'plugin'      => DOS_TOOLKIT_BASENAME,
-			'new_version' => $release['version'],
-			'url'         => $release['url'],
-			'package'     => $release['package'],
-			'tested'      => get_bloginfo( 'version' ),
-		);
+		// Up to date. This has to be recorded too: a plugin that appears in
+		// neither list reads to WordPress as one with no update mechanism at
+		// all, and the Plugins screen then hides the auto-update toggle and
+		// says auto-updates are unavailable for it.
+		$item->new_version = DOS_TOOLKIT_VERSION;
+
+		$transient->no_update[ DOS_TOOLKIT_BASENAME ] = $item;
+
+		unset( $transient->response[ DOS_TOOLKIT_BASENAME ] );
 
 		return $transient;
 	}

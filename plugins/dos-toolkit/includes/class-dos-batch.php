@@ -70,6 +70,12 @@ final class DOS_Batch {
 	 *                                 => array( processed, changed, notes ).
 	 *     @type int      $batch_size  Items per request. Default 50.
 	 *     @type bool     $destructive Adds a typed confirmation before running live.
+	 *     @type bool     $always_live Job writes nothing a dry run could
+	 *                                 preview — it only records state other
+	 *                                 jobs read. Hides the dry-run choice
+	 *                                 rather than offering one that would do
+	 *                                 no work and leave the caller believing
+	 *                                 it had run.
 	 * }
 	 */
 	public static function register( $key, array $args ) {
@@ -83,6 +89,7 @@ final class DOS_Batch {
 				'step'        => null,
 				'batch_size'  => 50,
 				'destructive' => false,
+				'always_live' => false,
 			)
 		);
 
@@ -229,7 +236,7 @@ final class DOS_Batch {
 		}
 
 		$restart = ! empty( $_POST['restart'] );
-		$dry_run = ! empty( $_POST['dry_run'] );
+		$dry_run = ! empty( $_POST['dry_run'] ) && empty( $job['always_live'] );
 		$confirm = isset( $_POST['confirm'] ) ? sanitize_text_field( wp_unslash( $_POST['confirm'] ) ) : '';
 
 		// Only the opening request of a run can choose live or dry; every
@@ -337,12 +344,18 @@ final class DOS_Batch {
 				<p class="description"><?php echo esc_html( $job['description'] ); ?></p>
 			<?php endif; ?>
 
-			<p>
-				<label>
-					<input type="checkbox" class="dos-job-dry-run" <?php checked( $dry_run ); ?> />
-					<?php esc_html_e( 'Dry run (report what would change, change nothing)', 'dos-toolkit' ); ?>
-				</label>
-			</p>
+			<?php if ( $job['always_live'] ) : ?>
+				<p class="description">
+					<?php esc_html_e( 'This job records what it finds and changes nothing else, so it always runs for real. Other jobs read what it writes.', 'dos-toolkit' ); ?>
+				</p>
+			<?php else : ?>
+				<p>
+					<label>
+						<input type="checkbox" class="dos-job-dry-run" <?php checked( $dry_run ); ?> />
+						<?php esc_html_e( 'Dry run (report what would change, change nothing)', 'dos-toolkit' ); ?>
+					</label>
+				</p>
+			<?php endif; ?>
 
 			<p>
 				<button type="button" class="button button-primary dos-job-start"><?php esc_html_e( 'Run', 'dos-toolkit' ); ?></button>

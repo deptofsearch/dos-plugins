@@ -5,6 +5,25 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.2
+
+Two faults in the media jobs, both found before anything was deleted.
+
+The usage scan read `post_content` only. Page builders — Themify, Elementor,
+Beaver Builder, WPBakery, ACF — keep their layouts in post meta, so on a
+builder site almost every image would have been reported as unused. The scan
+now reads post meta too, skipping its own bookkeeping keys.
+
+The usage scan also offered a dry run, which for that job does no work at all:
+it writes nothing but the usage records other jobs read. Running it as a dry
+run therefore left the delete job with no data while appearing to have
+scanned. Jobs like it now declare `always_live` and the runner hides the
+choice.
+
+The delete job's description now states what the scan does not cover —
+widgets, menus, theme options, stylesheets — rather than leaving that to be
+discovered.
+
 ## 0.7.1
 
 Three things found by auditing the first live site, openhousesinphoenix.com.

@@ -141,7 +141,7 @@ final class DOS_Images_Usage {
 				$marked += self::mark_used( $featured, $post->ID, 'featured', $dry_run ) ? 1 : 0;
 			}
 
-			foreach ( self::attachment_ids_in_content( $post->post_content ) as $attachment_id ) {
+			foreach ( self::attachment_ids_in_content( self::scannable_text( $post ) ) as $attachment_id ) {
 				$marked += self::mark_used( $attachment_id, $post->ID, 'content', $dry_run ) ? 1 : 0;
 			}
 		}
@@ -156,6 +156,58 @@ final class DOS_Images_Usage {
 		}
 
 		return array( 'processed' => count( $posts ), 'changed' => $marked, 'notes' => $notes );
+	}
+
+	/**
+	 * Everything about a post that could reference an image.
+	 *
+	 * Reading post_content alone is wrong on any site with a page builder.
+	 * Themify, Elementor, Beaver Builder, WPBakery and ACF all keep their
+	 * layouts in post meta, so an image placed through the builder never
+	 * appears in post_content and a content-only scan concludes it is unused.
+	 * On a builder site that is most of the library.
+	 *
+	 * Meta values are JSON-encoded rather than unserialised and walked: the
+	 * detection patterns work on text, and encoding handles arrays, nested
+	 * structures and escaped slashes in one step.
+	 */
+	public static function scannable_text( $post ) {
+		$text = (string) $post->post_content;
+
+		$meta = get_post_meta( $post->ID );
+
+		if ( ! is_array( $meta ) ) {
+			return $text;
+		}
+
+		$skip = array(
+			'_edit_lock',
+			'_edit_last',
+			'_wp_old_slug',
+			'_wp_old_date',
+			self::META_STATUS,
+			self::META_USED_IN,
+		);
+
+		$parts = array( $text );
+
+		foreach ( $meta as $key => $values ) {
+			// Our own bookkeeping would otherwise make every image look used
+			// on the second pass.
+			if ( in_array( $key, $skip, true ) ) {
+				continue;
+			}
+
+			foreach ( (array) $values as $value ) {
+				if ( ! is_string( $value ) ) {
+					continue;
+				}
+
+				$parts[] = $value;
+			}
+		}
+
+		return implode( ' ', $parts );
 	}
 
 	private static function mark_used( $attachment_id, $post_id, $type, $dry_run = false ) {

@@ -154,6 +154,22 @@ sets on a page and nothing warns about it. The SEO module has an Organization
 only mode for this. Check any new site by searching its source for
 `application/ld+json` — more than one block is the sign.
 
+**Page builders keep their layouts in post meta, not post content.** Themify,
+Elementor, Beaver Builder, WPBakery and ACF all store what a page contains
+outside `post_content`. Anything that asks "is this image used" by reading
+`post_content` alone concludes that almost every image on a builder site is
+unused. The usage scan reads post meta as well, and skips its own bookkeeping
+keys so a second pass does not mark everything used.
+
+It still does not read widgets, menus, theme options or stylesheets. An image
+used only in one of those reads as unused, which is why the delete job says so
+in its own description and why its dry run exists.
+
+**A job that changes nothing has no useful dry run.** The usage scan only
+records state for other jobs to read, so offering it a dry run meant offering
+an option that did no work while looking like it had — and left the delete job
+with no data. Such jobs set `always_live` and the runner hides the choice.
+
 **The batch runner's deletion job pages from the front.** Deleting removes
 rows from the set being paged through, so an advancing offset skips records. A
 dry run changes nothing and therefore advances normally.

@@ -92,7 +92,8 @@
 
 		var panel  = button.closest( '.dos-job' );
 		var job    = panel.getAttribute( 'data-job' );
-		var dryRun = panel.querySelector( '.dos-job-dry-run' ).checked;
+		var dryBox = panel.querySelector( '.dos-job-dry-run' );
+		var dryRun = dryBox ? dryBox.checked : false;
 
 		// A live run of a destructive job has to be typed out. A misclick
 		// should not be able to delete media on a client site. The server

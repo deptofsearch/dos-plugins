@@ -38,8 +38,9 @@ final class DOS_Module_Images extends DOS_Module {
 		return array(
 			'images_usage_scan' => array(
 				'label'       => __( 'Scan media usage', 'dos-toolkit' ),
-				'description' => __( 'Walks every post, page and custom post type and records which images are referenced. Run this before anything else on this screen — the other jobs read what it writes.', 'dos-toolkit' ),
+				'description' => __( 'Walks every post, page and custom post type and records which images are referenced, in post content and in post meta, so page-builder layouts are covered. Run this before anything else on this screen — the other jobs read what it writes.', 'dos-toolkit' ),
 				'batch_size'  => 20,
+				'always_live' => true,
 				'count'       => array( 'DOS_Images_Usage', 'scan_total' ),
 				'step'        => array( 'DOS_Images_Usage', 'scan_step' ),
 			),
@@ -60,7 +61,7 @@ final class DOS_Module_Images extends DOS_Module {
 			),
 			'images_delete_unused' => array(
 				'label'       => __( 'Delete unused images', 'dos-toolkit' ),
-				'description' => __( 'Permanently deletes every image the last scan found no reference to, and its files on disk. Site logo, site icon, header image and the SEO share image are kept regardless.', 'dos-toolkit' ),
+				'description' => __( 'Permanently deletes every image the last scan found no reference to, and its files on disk. Site logo, site icon, header image and the SEO share image are kept regardless. The scan reads posts and their meta; it does not read widgets, menus, theme options or stylesheets, so an image used only in one of those reads as unused. Read the dry run before confirming.', 'dos-toolkit' ),
 				'batch_size'  => 50,
 				'destructive' => true,
 				'count'       => array( 'DOS_Images_Usage', 'count_unused' ),

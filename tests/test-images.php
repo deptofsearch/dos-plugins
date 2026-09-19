@@ -48,7 +48,15 @@ function is_embed() { return false; } function is_preview() { return false; }
 function wp_doing_ajax() { return false; }
 function human_time_diff( $a, $b = 0 ) { return '1 minute'; }
 
-function get_post_meta( $id, $k, $single = false ) { return $GLOBALS['meta'][ $id ][ $k ] ?? ''; }
+function get_post_meta( $id, $k = '', $single = false ) {
+    if ( '' === $k ) {
+        // All-meta form: WordPress returns every value as an array.
+        $out = array();
+        foreach ( $GLOBALS['meta'][ $id ] ?? array() as $key => $val ) { $out[ $key ] = array( $val ); }
+        return $out;
+    }
+    return $GLOBALS['meta'][ $id ][ $k ] ?? '';
+}
 function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; return true; }
 function wp_delete_attachment( $id, $force = false ) { $GLOBALS['deleted'][] = (int) $id; $GLOBALS['unused'] = array_values( array_diff( $GLOBALS['unused'], array( (int) $id ) ) ); return true; }
 
@@ -178,6 +186,38 @@ foreach ( $cases as $label => $case ) {
 check( 'finds nothing in empty content', array() === DOS_Images_Usage::attachment_ids_in_content( '' ) );
 
 /* ===================================================================== */
+echo "\n--- page-builder layouts live in post meta, not post_content ---\n";
+
+$GLOBALS['attachments'] = array( 11 => 'hero.jpg', 12 => '2026/01/beach.jpg', 13 => 'logo.png' );
+$GLOBALS['meta'] = array();
+
+// A Themify-style builder post: empty content, the whole layout in meta.
+$GLOBALS['meta'][50] = array(
+    '_themify_builder_settings_json' => '{"modules":[{"mod_name":"image","img_url":"https:\\/\\/example.com\\/wp-content\\/uploads\\/2026\\/01\\/beach.jpg"}]}',
+    '_edit_lock' => '1700000000:1',
+);
+$builder_post = (object) array( 'ID' => 50, 'post_content' => '' );
+
+$text  = DOS_Images_Usage::scannable_text( $builder_post );
+$found = DOS_Images_Usage::attachment_ids_in_content( $text );
+
+check( 'finds an image referenced only in builder meta', in_array( 12, $found, true ), 'got ' . json_encode( $found ) );
+check( '  which post_content alone would have missed', array() === DOS_Images_Usage::attachment_ids_in_content( $builder_post->post_content ) );
+
+// An ACF-style field holding a bare attachment ID.
+$GLOBALS['meta'][51] = array( 'hero_image' => '{"id":13}' );
+$found = DOS_Images_Usage::attachment_ids_in_content( DOS_Images_Usage::scannable_text( (object) array( 'ID' => 51, 'post_content' => '' ) ) );
+check( 'finds an image referenced by ID in a custom field', in_array( 13, $found, true ), json_encode( $found ) );
+
+// Our own bookkeeping must not make everything look used on a second pass.
+$GLOBALS['meta'][52] = array(
+    '_dos_usage_used_in' => 'a:1:{i:0;a:2:{s:7:"post_id";i:11;s:4:"type";s:7:"content";}}',
+);
+$text = DOS_Images_Usage::scannable_text( (object) array( 'ID' => 52, 'post_content' => '' ) );
+check( 'skips the scan\'s own meta keys', false === strpos( $text, 'post_id' ), $text );
+
+$GLOBALS['meta'] = array();
+
 echo "\n--- deletion: paging and protection ---\n";
 
 $GLOBALS['attachments'] = array();

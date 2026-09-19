@@ -1,6 +1,6 @@
 # DoS Plugins
 
-Department of Search WordPress plugins. One repository, one release workflow,
+[Department of Search](https://departmentofsearch.com) WordPress plugins. One repository, one release workflow,
 one update path for every site we run.
 
 ```

@@ -217,7 +217,7 @@ final class DOS_Updater {
 			'name'          => 'DoS Toolkit',
 			'slug'          => self::SLUG,
 			'version'       => $release['version'],
-			'author'        => 'Department of Search',
+			'author'        => '<a href="https://departmentofsearch.com">Department of Search</a>',
 			'homepage'      => $release['url'],
 			'download_link' => $release['package'],
 			'last_updated'  => $release['date'],

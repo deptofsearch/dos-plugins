@@ -197,7 +197,7 @@ final class DOS_Module_SEO extends DOS_Module {
 
 	private static function context() {
 		$ctx = array(
-			'title'       => wp_get_document_title(),
+			'title'       => self::plain( wp_get_document_title() ),
 			'description' => '',
 			'canonical'   => '',
 			'image'       => null,
@@ -406,21 +406,27 @@ final class DOS_Module_SEO extends DOS_Module {
 			);
 		}
 
-		$graph = array(
-			$organization,
-			array(
+		$graph = array( $organization );
+
+		// Some themes emit their own WebSite and WebPage nodes. Two sets on
+		// one page is worse than one, and which of them wins is not ours to
+		// decide, so this can be reduced to the Organization node alone.
+		$minimal = 'minimal' === self::setting( 'schema_mode', 'full' );
+
+		if ( ! $minimal ) {
+			$graph[] = array(
 				'@type'     => 'WebSite',
 				'@id'       => $site_id,
 				'url'       => $site_url,
 				'name'      => get_bloginfo( 'name' ),
 				'publisher' => array( '@id' => $org_id ),
-			),
-		);
+			);
+		}
 
 		// A WebPage node gives every view — not just posts — a node the rest
 		// of the graph can point at, and is what AI crawlers read to work out
 		// what a page is about.
-		if ( $ctx['canonical'] ) {
+		if ( $ctx['canonical'] && ! $minimal ) {
 			$page = array(
 				'@type'    => 'WebPage',
 				'@id'      => $ctx['canonical'],
@@ -448,7 +454,7 @@ final class DOS_Module_SEO extends DOS_Module {
 			$article = array(
 				'@type'            => 'BlogPosting',
 				'@id'              => $ctx['canonical'] . '#article',
-				'headline'         => wp_strip_all_tags( get_the_title( $post_id ) ),
+				'headline'         => self::plain( get_the_title( $post_id ) ),
 				'description'      => $ctx['description'],
 				'datePublished'    => get_the_date( DATE_W3C, $post_id ),
 				'dateModified'     => get_the_modified_date( DATE_W3C, $post_id ),
@@ -489,6 +495,23 @@ final class DOS_Module_SEO extends DOS_Module {
 	/* ---------------------------------------------------------------------
 	 * Helpers
 	 * ------------------------------------------------------------------- */
+
+	/**
+	 * Decode and tidy without truncating.
+	 *
+	 * wp_get_document_title() and get_the_title() return text containing HTML
+	 * entities. That is correct for markup, and wrong for JSON-LD, which is
+	 * data rather than HTML — a consumer reads the literal characters, so an
+	 * en dash arrives as "&#8211;". Titles go through this; descriptions go
+	 * through clean(), which also cuts them to length.
+	 */
+	private static function plain( $text ) {
+		$text = wp_strip_all_tags( (string) $text );
+		$text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
+		$text = preg_replace( '/\s+/u', ' ', $text );
+
+		return trim( $text );
+	}
 
 	/**
 	 * Collapse entities and whitespace, then cut on a word boundary.
@@ -648,6 +671,7 @@ final class DOS_Module_SEO extends DOS_Module {
 				'seo_fallback_image'   => isset( $_POST['fallback_image'] ) ? absint( $_POST['fallback_image'] ) : 0,
 				'seo_twitter'          => isset( $_POST['twitter'] ) ? sanitize_text_field( wp_unslash( $_POST['twitter'] ) ) : '',
 				'seo_noindex_author'   => empty( $_POST['noindex_author'] ) ? 0 : 1,
+				'seo_schema_mode'      => isset( $_POST['schema_mode'] ) && 'minimal' === $_POST['schema_mode'] ? 'minimal' : 'full',
 			)
 		);
 
@@ -715,6 +739,22 @@ final class DOS_Module_SEO extends DOS_Module {
 						<th scope="row"><label for="twitter"><?php esc_html_e( 'X / Twitter handle', 'dos-toolkit' ); ?></label></th>
 						<td>
 							<input type="text" id="twitter" name="twitter" value="<?php echo esc_attr( self::setting( 'twitter', '' ) ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'handle, without the @', 'dos-toolkit' ); ?>">
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Schema', 'dos-toolkit' ); ?></th>
+						<td>
+							<label style="display:block;margin-bottom:.4em">
+								<input type="radio" name="schema_mode" value="full" <?php checked( 'full', self::setting( 'schema_mode', 'full' ) ); ?> />
+								<?php esc_html_e( 'Full graph — Organization, WebSite and WebPage', 'dos-toolkit' ); ?>
+							</label>
+							<label style="display:block">
+								<input type="radio" name="schema_mode" value="minimal" <?php checked( 'minimal', self::setting( 'schema_mode', 'full' ) ); ?> />
+								<?php esc_html_e( 'Organization only', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Choose Organization only when the theme already outputs WebSite and WebPage schema of its own. View source and search for application/ld+json — more than one block is the sign.', 'dos-toolkit' ); ?>
+							</p>
 						</td>
 					</tr>
 					<tr>

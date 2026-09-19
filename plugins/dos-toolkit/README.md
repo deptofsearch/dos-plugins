@@ -142,6 +142,18 @@ whatever folder the archive contains. GitHub's own source archives unpack to
 PHP, so the AI module checks for one and says the rules are not live rather
 than showing settings that do nothing.
 
+**Titles come out of WordPress as HTML, not as data.** `wp_get_document_title()`
+and `get_the_title()` return text containing HTML entities, which is correct
+for markup and wrong for JSON-LD — a consumer of structured data reads the
+literal characters, so an en dash arrives as `&#8211;`. Titles used in schema
+go through `plain()`; descriptions go through `clean()`, which also truncates.
+
+**A theme can emit its own schema.** Conflict detection only knows about
+plugins, so a theme outputting its own WebSite and WebPage nodes produces two
+sets on a page and nothing warns about it. The SEO module has an Organization
+only mode for this. Check any new site by searching its source for
+`application/ld+json` — more than one block is the sign.
+
 **The batch runner's deletion job pages from the front.** Deleting removes
 rows from the set being paged through, so an advancing offset skips records. A
 dry run changes nothing and therefore advances normally.

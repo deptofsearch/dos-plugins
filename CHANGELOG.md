@@ -5,6 +5,21 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.1
+
+Three things found by auditing the first live site, openhousesinphoenix.com.
+
+Titles reached JSON-LD still carrying HTML entities, so structured data
+consumers read `&#8211;` where an en dash was meant. Entities are correct in
+markup and wrong in data; titles now decode before they are used in schema.
+
+`llms.txt` printed a section heading with nothing under it when a section's
+only entries were skipped. Entries are built before the heading is written.
+
+The site's theme emits its own WebSite and WebPage schema, so those pages
+carried two sets. Conflict detection only knows about plugins, so nothing
+warned. The SEO module gained an Organization only mode for exactly this.
+
 ## 0.7.0
 
 Conflict detection. Plugins this toolkit absorbed are deactivated

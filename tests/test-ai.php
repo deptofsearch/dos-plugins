@@ -141,5 +141,19 @@ check( 'neutralises brackets that would break a link', false === strpos( $txt, '
 check( 'collapses newlines that would break a list item', false === strpos( trim( $txt ), "Multi\nline" ) );
 check( 'ends with a newline', "\n" === substr( $txt, -1 ) );
 
+echo "\n--- llms.txt with nothing to list ---\n";
+$GLOBALS['posts'] = array(
+    1 => (object) array( 'ID' => 1, 'post_title' => 'About Us', 'post_type' => 'page', 'post_excerpt' => '' ),
+);
+$txt = DOS_AI_Llms::generate();
+check( 'lists the pages it has', false !== strpos( $txt, '## Pages' ) );
+check( 'omits a section with no posts rather than leaving a bare heading', false === strpos( $txt, '## Posts' ), $txt );
+
+$GLOBALS['posts'] = array(
+    2 => (object) array( 'ID' => 2, 'post_title' => '', 'post_type' => 'post', 'post_excerpt' => '' ),
+);
+$txt = DOS_AI_Llms::generate();
+check( 'a section whose only entry is untitled is omitted too', false === strpos( $txt, '## Posts' ), $txt );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

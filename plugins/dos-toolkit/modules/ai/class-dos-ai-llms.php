@@ -94,9 +94,10 @@ final class DOS_AI_Llms {
 				continue;
 			}
 
-			$lines[] = '';
-			$lines[] = '## ' . $heading;
-			$lines[] = '';
+			// Build the entries first. An untitled post is skipped, and a
+			// section where everything was skipped must not leave a heading
+			// standing over nothing.
+			$entries = array();
 
 			foreach ( $items as $item ) {
 				$title = self::clean( get_the_title( $item ) );
@@ -107,9 +108,21 @@ final class DOS_AI_Llms {
 
 				$summary = self::summary( $item );
 
-				$lines[] = $summary
+				$entries[] = $summary
 					? sprintf( '- [%s](%s): %s', $title, get_permalink( $item ), $summary )
 					: sprintf( '- [%s](%s)', $title, get_permalink( $item ) );
+			}
+
+			if ( ! $entries ) {
+				continue;
+			}
+
+			$lines[] = '';
+			$lines[] = '## ' . $heading;
+			$lines[] = '';
+
+			foreach ( $entries as $entry ) {
+				$lines[] = $entry;
 			}
 		}
 

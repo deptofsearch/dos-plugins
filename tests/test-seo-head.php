@@ -83,5 +83,36 @@ render( 'CATEGORY page 2', array(
     '<link rel="next" href="https://example.com/page/3/">',
 ) );
 
+// WordPress returns titles containing HTML entities. That is right for
+// markup and wrong for JSON-LD, which is data.
+render( 'TITLE WITH AN ENTITY', array(
+    'view'      => 'singular',
+    'post_type' => 'page',
+    'queried_id'=> 9,
+    'title'     => 'Open Houses &#8211; Phoenix',
+    'post'      => (object) array( 'ID' => 9, 'post_excerpt' => 'Short excerpt.', 'post_content' => '' ),
+), array(
+    '"name":"Open Houses – Phoenix"',
+) );
+
+$GLOBALS['state'] = array(
+    'view' => 'singular', 'post_type' => 'page', 'queried_id' => 9,
+    'title' => 'Open Houses &#8211; Phoenix',
+    'post' => (object) array( 'ID' => 9, 'post_excerpt' => 'Short excerpt.', 'post_content' => '' ),
+);
+ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();
+check( '  and the raw entity never reaches the schema', false === strpos( $out, '&#8211;' ), $out );
+
+echo "SCHEMA MODE\n";
+DOS_Settings::set( 'seo_schema_mode', 'minimal' );
+ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();
+check( '  minimal mode keeps Organization', false !== strpos( $out, '"@type":"Organization"' ) );
+check( '  minimal mode drops WebSite, which a theme may already emit', false === strpos( $out, '"@type":"WebSite"' ), $out );
+check( '  minimal mode drops WebPage too', false === strpos( $out, '"@type":"WebPage"' ) );
+DOS_Settings::set( 'seo_schema_mode', 'full' );
+ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();
+check( '  full mode restores them', false !== strpos( $out, '"@type":"WebSite"' ) && false !== strpos( $out, '"@type":"WebPage"' ) );
+echo "\n";
+
 echo "$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

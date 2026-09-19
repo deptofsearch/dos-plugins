@@ -28,11 +28,78 @@ run.
 
 Download the `dos-toolkit.zip` asset from the latest
 [release](https://github.com/deptofsearch/dos-plugins/releases) and upload it
-under **Plugins → Add New → Upload Plugin**.
+under **Plugins → Add New → Upload Plugin**. Take the named asset, not the
+"Source code" links — those unpack to a folder named after the tag, which
+WordPress would install as a differently-named plugin.
 
-After that the site updates itself: the plugin checks this repository's
-releases and offers new versions on the normal Plugins screen. The repository
-is public, so no access token is needed.
+That first install has to be manual. The updater ships inside the plugin, so
+it cannot install itself. Afterwards the site updates itself: the plugin
+checks this repository's releases and offers new versions on the normal
+Plugins screen. The repository is public, so no access token is needed.
+
+## Rollout
+
+Releases reach every site running this plugin, so a bad one reaches every site
+too. The order below exists to make sure something breaks somewhere cheap
+first.
+
+**One canary site.** Pick the lowest-stakes site and keep it a version ahead
+of the rest. Turn auto-updates **on** there and leave them off everywhere
+else. A release that is going to cause trouble causes it on the canary, days
+before it reaches a client.
+
+**Enable modules one at a time.** Every module ships disabled and nothing
+changes until a box is ticked, which is only useful if you actually use it
+that way. Turn one on, look at the site, then turn on the next. The two worth
+the most care:
+
+- **SEO** writes to `wp_head`. View source on a post, a page, an archive and
+  the homepage, and confirm there is exactly one canonical, one meta
+  description and one JSON-LD block. If Yoast, Rank Math or SEOPress is
+  active, the module stands down and says so on its own screen — that is
+  expected, not a failure.
+- **Images** buffers the whole page to rewrite markup. It has two switches for
+  a reason: turn on inspection first, load a few pages, read the report on the
+  module screen, and only then turn on rewriting.
+
+**Dry run before any destructive job.** The delete and clear-titles jobs
+refuse to run live until a dry run of the same job has finished within the
+last 24 hours, and they ask for a typed confirmation. Read the dry-run report
+before confirming — the report is the only record of what is about to happen.
+
+**Run the usage scan before deleting media.** The delete job acts on what the
+last scan recorded. Deleting against a stale scan is how an image that is in
+use gets removed.
+
+**Carry settings rather than retyping them.** Configure one site, then use
+**Utilities → Export settings** and import the file elsewhere. Access tokens
+are never included, so an exported file is safe to move around.
+
+### When a release misbehaves
+
+Every site can be put back by hand: download the previous release's ZIP and
+upload it over the current one. WordPress replaces the plugin directory and
+settings survive, because they live in the database rather than in the plugin.
+
+If a module rather than the plugin is the problem, untick it on the Modules
+screen. That removes its hooks and its menu entry and leaves its stored data
+alone, which is usually faster than a rollback and always less disruptive.
+
+### If updates stop appearing
+
+**DoS Tools → Settings → Updates** reports the installed version, the latest
+release found, and the reason if a check failed. The **Check for updates now**
+button clears the cached result and asks GitHub again.
+
+Use that button rather than WordPress's own force-check. WordPress's clears
+its cache but not the plugin's, so a stale result can survive it for up to six
+hours.
+
+A failed check is normal and self-correcting: GitHub allows 60 unauthenticated
+requests an hour per IP, and shared hosting reaches that. The plugin retries
+within fifteen minutes. A check that keeps failing with a transport error
+usually means the host blocks outbound requests to `api.github.com`, which is
+a hosting setting rather than a plugin problem.
 
 ## Cutting a release
 

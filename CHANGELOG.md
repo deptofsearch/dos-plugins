@@ -5,6 +5,17 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.7.6
+
+Documentation pass. The Images module's description promised alt-text bulk
+fill and oversized-file reports, neither of which was ever built — the alt
+audit reports and deliberately never writes, because a wrong description is
+worse than none. The plugin's own Updates section still named a repository
+that does not exist and framed the access token as a private-repository
+concern. The porting roadmap still described work that is finished.
+
+No behaviour changes; the version moves so sites pick up the corrected text.
+
 ## 0.7.5
 
 A finished run left the panel describing the previous one. The "last run"

@@ -210,9 +210,14 @@ The tag convention exists for this, but nothing else is automatic.
 
 ## Legacy
 
-`legacy/` holds the plugins this toolkit replaces, kept as reference while
-their features are ported. They are not built or released, and should not be
-installed alongside `dos-toolkit` once the matching module exists.
+`legacy/` holds the five plugins this toolkit replaced. All of them have been
+absorbed; the source is kept as reference for the ports and for anything that
+turns out to have been missed. None of it is built, released or installed.
+
+A site still running one of them has it deactivated automatically once the
+module that replaces it is enabled, and the Modules screen lists what it
+found. Nothing is deleted, so a plugin can be reactivated if something turns
+out to be missing.
 
 | Legacy plugin | Ports into |
 |---|---|

@@ -33,7 +33,7 @@ final class DOS_Toolkit {
 			'class' => 'DOS_Module_Images',
 			'file'  => 'images/class-dos-images.php',
 			'label' => 'Images & Media',
-			'blurb' => 'Responsive srcset/sizes on bare theme images, alt-text audit and bulk fill, oversized-file reports, media usage scan and cleanup. Never rewrites an image file.',
+			'blurb' => 'Responsive srcset/sizes on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, and a media usage scan with cleanup of what nothing references. Never rewrites an image file.',
 		),
 		'utilities' => array(
 			'class' => 'DOS_Module_Utilities',

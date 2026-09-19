@@ -18,9 +18,9 @@ Installing adds a top-level **DoS Tools** menu:
 
 | Key | Name | Scope |
 |---|---|---|
-| `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals, Organization/WebSite/WebPage schema. Stands down if Yoast, Rank Math or SEOPress is active. |
+| `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Stands down if Yoast, Rank Math or SEOPress is active. |
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
-| `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, alt-text audit and bulk fill, oversized-file reports, media usage scan and cleanup. |
+| `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, permalink and cache flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when
@@ -94,19 +94,27 @@ the operator type `RUN` before a live pass.
 
 ## Updates
 
-Set **Settings → Update repository** to `owner/dos-toolkit`. Tag a GitHub
-release whose version is higher than the plugin header, and the update appears
-on every site's Plugins screen.
+**Settings → Update repository** defaults to `deptofsearch/dos-plugins`. Tag a
+release there whose version is higher than the plugin header and the update
+appears on the site's Plugins screen.
 
-For a private repository, either paste a token into Settings or — better — put
-it in `wp-config.php`, which keeps it out of the database and out of backups:
+Set an access token even though the repository is public. Reading it needs no
+token, but GitHub caps unauthenticated requests at 60 an hour per IP address,
+and on shared hosting that address belongs to every site on the server — so
+checks fail with HTTP 403 for reasons unrelated to this site. An authenticated
+request gets 5,000. A token with **no permissions at all** is enough; it only
+identifies the request. Put it in `wp-config.php` rather than the settings
+field, so it stays out of database backups:
 
 ```php
-define( 'DOS_TOOLKIT_GITHUB_TOKEN', 'ghp_…' );
+define( 'DOS_TOOLKIT_GITHUB_TOKEN', 'github_pat_…' );
 ```
 
-The updater fails quietly. If GitHub is unreachable the Plugins screen behaves
-exactly as it would without this plugin.
+The updater never breaks the Plugins screen. A failed check is cached for
+fifteen minutes with the reason recorded, and **Settings → Updates** shows the
+installed version, the latest release and that reason, with a button to clear
+the cache and ask again. Use that button rather than WordPress's own
+force-check, which clears WordPress's cache but not this plugin's.
 
 ## WordPress integration notes
 
@@ -191,17 +199,26 @@ dry run changes nothing and therefore advances normally.
 - The plugin never rewrites an image file. Compression and format conversion
   stay with the host or a dedicated optimizer.
 
-## Porting roadmap
+## What replaced what
 
-The existing one-off plugins fold in as follows:
+All five one-off plugins have been absorbed. `legacy/` keeps their source as
+reference; none of it is built or shipped.
 
-| Existing plugin | Destination |
+| Absorbed plugin | Now lives in |
 |---|---|
 | `saab-toolkit` `class-saab-seo.php` | `modules/seo/` |
 | `saab-toolkit` `class-saab-images.php` | `modules/images/` (responsive markup) |
-| `media-usage-manager` | `modules/images/` (usage scan + cleanup; destructive job) |
+| `media-usage-manager` | `modules/images/` (usage scan and deletion) |
 | `breanm-clear-image-titles` | `modules/images/` (batch job) |
 | `breanm-plugin-downloader` | `modules/utilities/` |
 | `page-tags-tools` | `modules/utilities/` |
 
-`ai` was written from scratch; it has no legacy counterpart.
+`ai` was written from scratch and has no legacy counterpart.
+
+A site still running one of these has it deactivated automatically once the
+module that replaces it is switched on — see `DOS_Conflicts`. Nothing is
+deleted, and third-party plugins are never touched.
+
+Per-post SEO overrides written by SAAB Toolkit are still read: the SEO module
+falls back to the `_saab_seo_*` meta keys, so the site it came from keeps its
+hand-written descriptions.

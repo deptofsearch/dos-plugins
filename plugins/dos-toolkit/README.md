@@ -19,7 +19,7 @@ Installing adds a top-level **DoS Tools** menu:
 | Key | Name | Scope |
 |---|---|---|
 | `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals, Organization/WebSite/WebPage schema. Stands down if Yoast, Rank Math or SEOPress is active. |
-| `ai` | AI Search | `llms.txt`, per-bot crawler policy (GPTBot, ClaudeBot, PerplexityBot, CCBot), FAQ and QAPage schema, author and entity markup, freshness stamps. |
+| `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
 | `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, alt-text audit and bulk fill, oversized-file reports, media usage scan and cleanup. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, permalink and cache flush, settings export/import. |
 
@@ -131,4 +131,4 @@ The existing one-off plugins fold in as follows:
 | `breanm-plugin-downloader` | `modules/utilities/` |
 | `page-tags-tools` | `modules/utilities/` |
 
-`ai` is the only module with no existing code to port.
+`ai` was written from scratch; it has no legacy counterpart.

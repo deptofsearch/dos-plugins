@@ -27,7 +27,7 @@ final class DOS_Toolkit {
 			'class' => 'DOS_Module_AI',
 			'file'  => 'ai/class-dos-ai.php',
 			'label' => 'AI Search',
-			'blurb' => 'llms.txt, per-bot crawler policy for GPTBot / ClaudeBot / PerplexityBot / CCBot, FAQ and QAPage schema, author and entity markup, content freshness stamps.',
+			'blurb' => 'Per-bot crawler policy: block training crawlers while keeping the ones that cite you. Opt-in FAQ schema per page. Optional llms.txt.',
 		),
 		'images' => array(
 			'class' => 'DOS_Module_Images',

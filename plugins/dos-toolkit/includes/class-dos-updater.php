@@ -21,6 +21,12 @@ final class DOS_Updater {
 	const TAG_PREFIX = 'dos-toolkit-v';
 	const TRANSIENT  = 'dos_toolkit_release';
 	const TTL        = 6 * HOUR_IN_SECONDS;
+
+	// A lookup that fails must not be remembered for as long as one that
+	// succeeds. A rate limit, a slow host or a dropped connection would
+	// otherwise read as "no updates exist" for hours, and since WordPress
+	// only checks twice a day, a site could miss a release entirely.
+	const MISS_TTL = 15 * MINUTE_IN_SECONDS;
 	const DEFAULT_REPO = 'deptofsearch/dos-plugins';
 
 	public static function boot() {
@@ -51,21 +57,25 @@ final class DOS_Updater {
 	 * Newest release for this plugin, cached. Returns null when unconfigured
 	 * or unreachable — a GitHub outage must never break the Plugins screen.
 	 */
-	private static function release() {
+	private static function release( $force = false ) {
 		$repo = self::repo();
 
 		if ( ! $repo ) {
+			self::remember_miss( __( 'No update repository is configured.', 'dos-toolkit' ) );
+
 			return null;
 		}
 
-		$cached = get_site_transient( self::TRANSIENT );
+		if ( ! $force ) {
+			$cached = get_site_transient( self::TRANSIENT );
 
-		if ( is_array( $cached ) ) {
-			return empty( $cached ) ? null : $cached;
+			if ( is_array( $cached ) ) {
+				return empty( $cached['version'] ) ? null : $cached;
+			}
 		}
 
 		$args = array(
-			'timeout' => 10,
+			'timeout' => 15,
 			'headers' => array(
 				'Accept'     => 'application/vnd.github+json',
 				'User-Agent' => self::SLUG . '/' . DOS_TOOLKIT_VERSION,
@@ -80,10 +90,20 @@ final class DOS_Updater {
 
 		$response = wp_remote_get( 'https://api.github.com/repos/' . $repo . '/releases?per_page=30', $args );
 
-		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			// Cache the miss briefly, so a broken token or a rate limit does
-			// not mean an API call on every admin page load.
-			set_site_transient( self::TRANSIENT, array(), 15 * MINUTE_IN_SECONDS );
+		if ( is_wp_error( $response ) ) {
+			self::remember_miss( $response->get_error_message() );
+
+			return null;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( 200 !== $code ) {
+			self::remember_miss( sprintf(
+				/* translators: %d: HTTP status code returned by the GitHub API */
+				__( 'GitHub returned HTTP %d. A 403 usually means the request was rate limited.', 'dos-toolkit' ),
+				$code
+			) );
 
 			return null;
 		}
@@ -91,6 +111,8 @@ final class DOS_Updater {
 		$releases = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( ! is_array( $releases ) ) {
+			self::remember_miss( __( 'GitHub returned something that was not a release list.', 'dos-toolkit' ) );
+
 			return null;
 		}
 
@@ -130,9 +152,60 @@ final class DOS_Updater {
 			);
 		}
 
-		set_site_transient( self::TRANSIENT, $best ? $best : array(), self::TTL );
+		if ( ! $best ) {
+			self::remember_miss( sprintf(
+				/* translators: %s: expected release tag prefix */
+				__( 'No release matched the tag prefix %s with a matching ZIP asset.', 'dos-toolkit' ),
+				self::TAG_PREFIX
+			) );
+
+			return null;
+		}
+
+		set_site_transient( self::TRANSIENT, $best, self::TTL );
 
 		return $best;
+	}
+
+	/**
+	 * Record why a lookup came back empty, briefly, and in a form the
+	 * settings screen can show. Silent failure is what made this hard to
+	 * diagnose the first time.
+	 */
+	private static function remember_miss( $reason ) {
+		set_site_transient(
+			self::TRANSIENT,
+			array( 'miss' => true, 'reason' => (string) $reason, 'at' => time() ),
+			self::MISS_TTL
+		);
+	}
+
+	/**
+	 * The last failure, or null if the most recent lookup worked.
+	 */
+	public static function last_miss() {
+		$cached = get_site_transient( self::TRANSIENT );
+
+		return ( is_array( $cached ) && ! empty( $cached['miss'] ) ) ? $cached : null;
+	}
+
+	/**
+	 * Current state for the settings screen: the newest release found, or
+	 * why none was.
+	 */
+	public static function status( $force = false ) {
+		if ( $force ) {
+			self::flush();
+		}
+
+		$release = self::release( $force );
+
+		return array(
+			'installed' => DOS_TOOLKIT_VERSION,
+			'latest'    => $release ? $release['version'] : '',
+			'update'    => $release && version_compare( $release['version'], DOS_TOOLKIT_VERSION, '>' ),
+			'miss'      => self::last_miss(),
+		);
 	}
 
 	/**

@@ -113,6 +113,19 @@ final class DOS_Admin {
 				self::save_settings();
 				break;
 
+			case 'check_updates':
+				check_admin_referer( 'dos_check_updates' );
+
+				DOS_Updater::status( true );
+
+				// Make WordPress rebuild its own update list too, so the
+				// Plugins screen agrees with what we just found.
+				delete_site_transient( 'update_plugins' );
+				wp_update_plugins();
+
+				self::redirect( 'dos-settings', 'checked' );
+				break;
+
 			case 'clear_log':
 				check_admin_referer( 'dos_clear_log' );
 				DOS_Log::clear();
@@ -166,6 +179,7 @@ final class DOS_Admin {
 		$messages = array(
 			'saved'   => __( 'Saved.', 'dos-toolkit' ),
 			'cleared' => __( 'Activity log cleared.', 'dos-toolkit' ),
+			'checked' => __( 'Checked for updates.', 'dos-toolkit' ),
 		);
 
 		if ( isset( $messages[ $notice ] ) ) {
@@ -332,6 +346,47 @@ final class DOS_Admin {
 				</table>
 
 				<?php submit_button(); ?>
+			</form>
+
+			<hr>
+
+			<h2><?php esc_html_e( 'Updates', 'dos-toolkit' ); ?></h2>
+
+			<?php $status = DOS_Updater::status(); ?>
+
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Installed', 'dos-toolkit' ); ?></th>
+					<td><code><?php echo esc_html( $status['installed'] ); ?></code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Latest release', 'dos-toolkit' ); ?></th>
+					<td>
+						<?php if ( $status['latest'] ) : ?>
+							<code><?php echo esc_html( $status['latest'] ); ?></code>
+							<?php if ( $status['update'] ) : ?>
+								<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>"><?php esc_html_e( 'Update available — go to Plugins', 'dos-toolkit' ); ?></a>
+							<?php else : ?>
+								<?php esc_html_e( 'Up to date.', 'dos-toolkit' ); ?>
+							<?php endif; ?>
+						<?php elseif ( $status['miss'] ) : ?>
+							<span class="dos-media-warning"><?php esc_html_e( 'Could not check.', 'dos-toolkit' ); ?></span>
+							<p class="description"><?php echo esc_html( $status['miss']['reason'] ); ?></p>
+							<p class="description">
+								<?php esc_html_e( 'This is retried automatically within 15 minutes. If it keeps failing, the host may be blocking outbound requests to api.github.com.', 'dos-toolkit' ); ?>
+							</p>
+						<?php else : ?>
+							<?php esc_html_e( 'Not checked yet.', 'dos-toolkit' ); ?>
+						<?php endif; ?>
+					</td>
+				</tr>
+			</table>
+
+			<form method="post">
+				<?php wp_nonce_field( 'dos_check_updates' ); ?>
+				<input type="hidden" name="dos_action" value="check_updates" />
+				<button type="submit" class="button"><?php esc_html_e( 'Check for updates now', 'dos-toolkit' ); ?></button>
+				<span class="description"><?php esc_html_e( 'Clears the cached result and asks GitHub again.', 'dos-toolkit' ); ?></span>
 			</form>
 		</div>
 		<?php

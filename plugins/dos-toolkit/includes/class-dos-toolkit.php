@@ -35,6 +35,12 @@ final class DOS_Toolkit {
 			'label' => 'Images & Media',
 			'blurb' => 'Responsive srcset/sizes on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, and a media usage scan with cleanup of what nothing references. Never rewrites an image file.',
 		),
+		'links' => array(
+			'class' => 'DOS_Module_Links',
+			'file'  => 'links/class-dos-links.php',
+			'label' => 'Internal Links',
+			'blurb' => 'Link chosen keyword phrases to chosen pages, written into the content. Never links inside headings, bold, lists, tables or existing links, never links a page to itself, and can be throttled so one phrase does not carry the whole linking profile.',
+		),
 		'redirects' => array(
 			'class' => 'DOS_Module_Redirects',
 			'file'  => 'redirects/class-dos-redirects.php',

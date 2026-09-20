@@ -21,6 +21,7 @@ Installing adds a top-level **DoS Tools** menu:
 | `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Stands down if Yoast, Rank Math or SEOPress is active. |
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
 | `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
+| `links` | Internal Links | Keyword phrases linked to chosen pages, written into the content behind a dry run. Never links inside headings, bold, lists, tables, existing links, code or shortcodes, never links a page to itself, and throttles a phrase by percentage so one does not carry the whole profile. |
 | `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, permalink flush, settings export/import. |
 
@@ -196,6 +197,21 @@ dates through the `get_the_date` filter, and before the SEO module was moved
 off that function it would have published `<span>Updated: …</span> | 2026-…`
 inside `article:published_time` on every post. The feature also refuses to
 touch a format that looks machine-readable, so both ends are covered.
+
+**Content that will be saved is edited as a string, not through DOMDocument.**
+A DOM parse and re-serialise rewrites entities, closes tags the author left
+open and reorders attributes. That is invisible when rendering a page and
+unacceptable when the result is written back over somebody's post. The
+internal-links engine walks the markup once to find which byte ranges are
+ordinary text, then splices into those ranges from the end backwards so
+earlier offsets stay valid.
+
+**An automated content pass must not touch `post_modified`.** `wp_update_post()`
+stamps a post as modified. The SEO module publishes `dateModified` and the
+Utilities module can show a Last Updated column, so a pass that adds links
+across a site would announce that every page had just been revised. Adding a
+link is not a revision, so the links module writes `post_content` directly and
+cleans the cache.
 
 **Redirects run before WordPress guesses.** Core will redirect a near-miss URL
 to whatever it thinks was meant. The router hooks `template_redirect` at

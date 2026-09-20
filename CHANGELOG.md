@@ -5,6 +5,34 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.9.0
+
+Adds the Internal Links module: a keyword phrase, a page it should point at,
+and limits on how often it gets used.
+
+Links are written into post content rather than added as a page renders, so
+both the applying and the removing are destructive jobs and go through the
+guard — a dry run naming every page it would change, then a typed
+confirmation.
+
+What it will not link, because a link there either competes with the author's
+own emphasis or breaks something: headings, bold, lists, tables, existing
+links, code, preformatted text, shortcodes and attributes. A page never links
+to itself. A phrase must be at least two words, since one word matches too
+much in too many senses to say anything about where it points.
+
+Three limits per phrase: how many links from a single page, whether the first
+occurrence is linked or left alone, and a percentage cap on how many of the
+available places are used at all. The last is the one that keeps a single
+phrase from carrying the whole internal-linking profile, and the dashboard
+reports each phrase's share so it is visible when one is.
+
+Two decisions worth knowing. The engine edits the markup as a string rather
+than through DOMDocument, which would rewrite entities and close tags on the
+way back out — tolerable when rendering, not when saving over someone's post.
+And it writes `post_content` directly rather than through `wp_update_post()`,
+so adding a link does not stamp every page on the site as modified today.
+
 ## 0.8.1
 
 Absorbs the Last Updated Column plugin into Utilities: a sortable Last Updated

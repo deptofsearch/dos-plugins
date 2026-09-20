@@ -54,6 +54,7 @@
 		post( params.toString() ).then( function ( payload ) {
 			if ( ! payload || ! payload.success ) {
 				status.textContent = ( payload && payload.data && payload.data.message ) || config.strings.failed;
+				status.classList.add( 'dos-job-refused' );
 				button.disabled = false;
 
 				return;
@@ -72,8 +73,37 @@
 			} );
 
 			if ( data.done ) {
-				status.textContent = config.strings.done + ' ' + data.processed + ' scanned, ' + data.changed + ' changed' + ( data.dryRun ? ' (dry run)' : '' ) + '.';
+				// A dry run changed nothing, and saying "changed" invited
+				// people to believe it had.
+				if ( data.dryRun ) {
+					status.textContent = data.changed
+						? format( config.strings.doneDry, data.processed, data.changed )
+						: config.strings.dryNone;
+				} else {
+					status.textContent = format( config.strings.doneLive, data.processed, data.changed );
+				}
+
 				button.disabled = false;
+
+				var live = panel.querySelector( '.dos-job-live' );
+				var note = panel.querySelector( '.dos-job-pending' );
+
+				if ( live ) {
+					if ( data.dryRun && data.changed > 0 ) {
+						live.removeAttribute( 'hidden' );
+
+						if ( note ) {
+							note.textContent = format( config.strings.doneDry, data.processed, data.changed );
+							note.removeAttribute( 'hidden' );
+						}
+					} else {
+						live.setAttribute( 'hidden', 'hidden' );
+
+						if ( note ) {
+							note.setAttribute( 'hidden', 'hidden' );
+						}
+					}
+				}
 
 				// These two lines were written when the page loaded. Leaving
 				// them describing the previous run is how somebody confirms a
@@ -109,7 +139,7 @@
 	}
 
 	document.addEventListener( 'click', function ( event ) {
-		var button = event.target.closest( '.dos-job-start' );
+		var button = event.target.closest( '.dos-job-start, .dos-job-live' );
 
 		if ( ! button ) {
 			return;
@@ -118,7 +148,14 @@
 		var panel  = button.closest( '.dos-job' );
 		var job    = panel.getAttribute( 'data-job' );
 		var dryBox = panel.querySelector( '.dos-job-dry-run' );
-		var dryRun = dryBox ? dryBox.checked : false;
+
+		// The second button always means live, whatever the checkbox says.
+		var forceLive = button.classList.contains( 'dos-job-live' );
+		var dryRun    = forceLive ? false : ( dryBox ? dryBox.checked : false );
+
+		if ( forceLive && dryBox ) {
+			dryBox.checked = false;
+		}
 
 		// A live run of a destructive job has to be typed out. A misclick
 		// should not be able to delete media on a client site. The server
@@ -141,6 +178,12 @@
 		button.disabled = true;
 		panel.querySelector( '.dos-job-notes' ).innerHTML = '';
 		panel.querySelector( '.dos-job-bar' ).style.width = '0%';
+
+		var refused = panel.querySelector( '.dos-job-status' );
+
+		if ( refused ) {
+			refused.classList.remove( 'dos-job-refused' );
+		}
 
 		run( panel, job, dryRun, true, confirm );
 	} );

@@ -127,6 +127,12 @@ final class DOS_Batch {
 					'stale'    => __( 'A live run has been made. Run a dry run again before another one.', 'dos-toolkit' ),
 					'running'  => __( 'Running…', 'dos-toolkit' ),
 					'done'     => __( 'Finished.', 'dos-toolkit' ),
+					/* translators: 1: items examined, 2: items that would change */
+					'doneDry'  => __( 'Dry run finished: %1$d examined, %2$d would change. Nothing has been changed yet.', 'dos-toolkit' ),
+					/* translators: 1: items examined, 2: items changed */
+					'doneLive' => __( 'Finished: %1$d examined, %2$d changed.', 'dos-toolkit' ),
+					'dryNone'  => __( 'Dry run finished: nothing to change.', 'dos-toolkit' ),
+					'runLive'  => __( 'Run it for real', 'dos-toolkit' ),
 					'failed'   => __( 'Failed. See the log for details.', 'dos-toolkit' ),
 					'confirm'  => __( 'This will change site data. Type RUN to continue.', 'dos-toolkit' ),
 					'canceled' => __( 'Canceled.', 'dos-toolkit' ),
@@ -364,8 +370,14 @@ final class DOS_Batch {
 
 			<p>
 				<button type="button" class="button button-primary dos-job-start"><?php esc_html_e( 'Run', 'dos-toolkit' ); ?></button>
+				<?php if ( $job['destructive'] ) : ?>
+					<?php // Offered only after a dry run has reported something to do. ?>
+					<button type="button" class="button button-primary dos-job-live" hidden><?php esc_html_e( 'Run it for real', 'dos-toolkit' ); ?></button>
+				<?php endif; ?>
 				<span class="dos-job-status"></span>
 			</p>
+
+			<div class="dos-job-pending" hidden></div>
 
 			<div class="dos-job-progress"><div class="dos-job-bar"></div></div>
 

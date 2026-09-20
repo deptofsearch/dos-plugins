@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-dos-images-markup.php';
 require_once __DIR__ . '/class-dos-images-usage.php';
+require_once __DIR__ . '/class-dos-images-compress.php';
 
 final class DOS_Module_Images extends DOS_Module {
 
@@ -20,6 +21,7 @@ final class DOS_Module_Images extends DOS_Module {
 
 	public static function init() {
 		DOS_Images_Markup::init();
+		DOS_Images_Compress::init();
 
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
 	}
@@ -43,6 +45,14 @@ final class DOS_Module_Images extends DOS_Module {
 				'always_live' => true,
 				'count'       => array( 'DOS_Images_Usage', 'scan_total' ),
 				'step'        => array( 'DOS_Images_Usage', 'scan_step' ),
+			),
+			'images_weight_audit' => array(
+				'label'       => __( 'Audit image weight', 'dos-toolkit' ),
+				'description' => __( 'Reports where the library\'s weight actually is: images larger than anything that displays them, photographs saved as PNG, and files carrying more quality than they show. Changes nothing.', 'dos-toolkit' ),
+				'batch_size'  => 100,
+				'always_live' => true,
+				'count'       => array( 'DOS_Images_Usage', 'count_attachments' ),
+				'step'        => array( __CLASS__, 'weight_audit_step' ),
 			),
 			'images_alt_audit' => array(
 				'label'       => __( 'Audit alt text', 'dos-toolkit' ),
@@ -70,26 +80,147 @@ final class DOS_Module_Images extends DOS_Module {
 		);
 	}
 
+	/**
+	 * Walk the library and total up what each kind of problem is costing.
+	 */
+	public static function weight_audit_step( $offset, $size, $dry_run ) {
+		if ( 0 === $offset ) {
+			DOS_Settings::set( 'images_weight', array() );
+		}
+
+		$ids = get_posts(
+			array(
+				'post_type'              => 'attachment',
+				'post_status'            => 'inherit',
+				'post_mime_type'         => 'image',
+				'fields'                 => 'ids',
+				'posts_per_page'         => $size,
+				'offset'                 => $offset,
+				'orderby'                => 'ID',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		$totals = DOS_Settings::get( 'images_weight', array() );
+		$totals = is_array( $totals ) ? $totals : array();
+
+		$totals = wp_parse_args(
+			$totals,
+			array(
+				'files'    => 0,
+				'bytes'    => 0,
+				'buckets'  => array(),
+				'worst'    => array(),
+			)
+		);
+
+		$notes = array();
+		$flagged = 0;
+
+		foreach ( $ids as $id ) {
+			$path = get_attached_file( $id );
+
+			if ( ! $path || ! file_exists( $path ) ) {
+				continue;
+			}
+
+			$meta  = wp_get_attachment_metadata( $id );
+			$bytes = (int) filesize( $path );
+
+			$totals['files']++;
+			$totals['bytes'] += $bytes;
+
+			$class = DOS_Images_Compress::classify(
+				$bytes,
+				isset( $meta['width'] ) ? $meta['width'] : 0,
+				isset( $meta['height'] ) ? $meta['height'] : 0,
+				(string) get_post_mime_type( $id )
+			);
+
+			$bucket = $class['bucket'];
+
+			if ( ! isset( $totals['buckets'][ $bucket ] ) ) {
+				$totals['buckets'][ $bucket ] = array( 'count' => 0, 'bytes' => 0 );
+			}
+
+			$totals['buckets'][ $bucket ]['count']++;
+			$totals['buckets'][ $bucket ]['bytes'] += $bytes;
+
+			if ( 'fine' === $bucket ) {
+				continue;
+			}
+
+			$flagged++;
+
+			// Keep the heaviest offenders, which are where any effort should
+			// start rather than whichever happened to be scanned first.
+			$totals['worst'][] = array(
+				'id'     => (int) $id,
+				'name'   => wp_basename( $path ),
+				'bytes'  => $bytes,
+				'bucket' => $bucket,
+				'note'   => $class['note'],
+			);
+
+			usort(
+				$totals['worst'],
+				function ( $a, $b ) {
+					return $b['bytes'] - $a['bytes'];
+				}
+			);
+
+			$totals['worst'] = array_slice( $totals['worst'], 0, 25 );
+
+			if ( count( $notes ) < 40 ) {
+				$notes[] = sprintf( '%s — %s (%s)', $class['note'], wp_basename( $path ), size_format( $bytes ) );
+			}
+		}
+
+		DOS_Settings::set( 'images_weight', $totals );
+
+		return array( 'processed' => count( $ids ), 'changed' => $flagged, 'notes' => $notes );
+	}
+
 	/* ---------------------------------------------------------------------
 	 * Settings
 	 * ------------------------------------------------------------------- */
 
 	public static function handle_post() {
-		if ( empty( $_POST['dos_action'] ) || 'save_images' !== sanitize_key( wp_unslash( $_POST['dos_action'] ) ) ) {
+		if ( empty( $_POST['dos_action'] ) || ! current_user_can( DOS_Settings::capability() ) ) {
 			return;
 		}
 
-		if ( ! current_user_can( DOS_Settings::capability() ) ) {
+		$action = sanitize_key( wp_unslash( $_POST['dos_action'] ) );
+
+		if ( ! in_array( $action, array( 'save_images', 'sample_quality' ), true ) ) {
 			return;
 		}
 
 		check_admin_referer( 'dos_save_images' );
+
+		if ( 'sample_quality' === $action ) {
+			$sample = DOS_Images_Compress::sample( isset( $_POST['sample_id'] ) ? (int) $_POST['sample_id'] : 0 );
+
+			set_transient(
+				'dos_images_sample',
+				is_wp_error( $sample ) ? array( 'error' => $sample->get_error_message() ) : $sample,
+				300
+			);
+
+			wp_safe_redirect( add_query_arg( array( 'page' => 'dos-images', 'dos_notice' => 'saved' ), admin_url( 'admin.php' ) ) . '#quality' );
+			exit;
+		}
 
 		DOS_Settings::update(
 			array(
 				'images_markup_enabled' => empty( $_POST['markup_enabled'] ) ? 0 : 1,
 				'images_markup_dry_run' => empty( $_POST['markup_live'] ) ? 1 : 0,
 				'images_slot_width'     => isset( $_POST['slot_width'] ) ? absint( $_POST['slot_width'] ) : DOS_Images_Markup::DEFAULT_SLOT,
+				'images_quality'        => isset( $_POST['quality'] ) ? max( 40, min( 100, (int) $_POST['quality'] ) ) : DOS_Images_Compress::DEFAULT_QUALITY,
+				'images_threshold'      => isset( $_POST['threshold'] ) ? max( 0, (int) $_POST['threshold'] ) : DOS_Images_Compress::DEFAULT_THRESHOLD,
+				'images_compress_uploads' => empty( $_POST['compress_uploads'] ) ? 0 : 1,
 			)
 		);
 
@@ -202,6 +333,204 @@ final class DOS_Module_Images extends DOS_Module {
 			<?php endif; ?>
 
 			<hr>
+			<h2 id="quality"><?php esc_html_e( 'Compression', 'dos-toolkit' ); ?></h2>
+
+			<p class="description">
+				<?php esc_html_e( 'Quality is the smaller lever. A file larger than anything that displays it costs far more than the difference between quality 82 and 75, which is what the weight audit below is for. Set the quality against measurements of your own photographs rather than a number from somewhere else.', 'dos-toolkit' ); ?>
+			</p>
+
+			<form method="post">
+				<?php wp_nonce_field( 'dos_save_images' ); ?>
+				<input type="hidden" name="dos_action" value="save_images" />
+				<input type="hidden" name="markup_enabled" value="<?php echo DOS_Images_Markup::is_enabled() ? '1' : ''; ?>" />
+				<input type="hidden" name="markup_live" value="<?php echo DOS_Images_Markup::is_dry_run() ? '' : '1'; ?>" />
+				<input type="hidden" name="slot_width" value="<?php echo (int) DOS_Images_Markup::slot_width(); ?>" />
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="quality"><?php esc_html_e( 'JPEG quality', 'dos-toolkit' ); ?></label></th>
+						<td>
+							<input type="number" id="quality" name="quality" min="40" max="100" class="small-text" value="<?php echo (int) DOS_Images_Compress::quality(); ?>" />
+							<p class="description"><?php esc_html_e( 'Used for every size WordPress generates. Its own default is 82. Below about 70 shows on skies and gradients.', 'dos-toolkit' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="threshold"><?php esc_html_e( 'Scale uploads wider than', 'dos-toolkit' ); ?></label></th>
+						<td>
+							<input type="number" id="threshold" name="threshold" min="0" class="small-text" value="<?php echo (int) DOS_Images_Compress::threshold(); ?>" /> px
+							<p class="description"><?php esc_html_e( 'WordPress keeps the original and serves a scaled copy. 2560 is its default; 1920 is plenty for most sites. 0 leaves WordPress to decide.', 'dos-toolkit' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'New uploads', 'dos-toolkit' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="compress_uploads" value="1" <?php checked( DOS_Images_Compress::compress_uploads() ); ?> />
+								<?php esc_html_e( 'Re-encode JPEG and PNG uploads as they arrive', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Applies to new uploads only; nothing already in the library is touched. A re-encode that would make a file larger is discarded, and an image too large to open safely in memory is skipped and logged rather than half-written.', 'dos-toolkit' ); ?>
+							</p>
+						</td>
+					</tr>
+				</table>
+
+				<?php submit_button( __( 'Save compression settings', 'dos-toolkit' ), 'secondary' ); ?>
+			</form>
+
+			<h3><?php esc_html_e( 'Find the balance', 'dos-toolkit' ); ?></h3>
+
+			<p class="description">
+				<?php esc_html_e( 'Encodes one of your own photographs at a range of qualities and measures each: what it saves, and how far it drifts from the original. Nothing is changed — every version is measured and thrown away.', 'dos-toolkit' ); ?>
+			</p>
+
+			<?php
+			$samples = get_posts(
+				array(
+					'post_type'      => 'attachment',
+					'post_status'    => 'inherit',
+					'post_mime_type' => 'image/jpeg',
+					'posts_per_page' => 50,
+					'orderby'        => 'ID',
+					'order'          => 'DESC',
+					'no_found_rows'  => true,
+				)
+			);
+			?>
+
+			<?php if ( ! $samples ) : ?>
+				<p class="description"><?php esc_html_e( 'No JPEGs in the library to measure.', 'dos-toolkit' ); ?></p>
+			<?php else : ?>
+				<form method="post">
+					<?php wp_nonce_field( 'dos_save_images' ); ?>
+					<input type="hidden" name="dos_action" value="sample_quality" />
+					<select name="sample_id">
+						<?php foreach ( $samples as $sample ) : ?>
+							<option value="<?php echo (int) $sample->ID; ?>"><?php echo esc_html( wp_basename( get_attached_file( $sample->ID ) ) ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<button type="submit" class="button"><?php esc_html_e( 'Measure', 'dos-toolkit' ); ?></button>
+					<span class="description"><?php esc_html_e( 'Pick a photograph rather than a logo or a screenshot — they behave differently.', 'dos-toolkit' ); ?></span>
+				</form>
+			<?php endif; ?>
+
+			<?php $measured = get_transient( 'dos_images_sample' ); ?>
+			<?php if ( $measured ) : ?>
+				<?php delete_transient( 'dos_images_sample' ); ?>
+
+				<?php if ( ! empty( $measured['error'] ) ) : ?>
+					<div class="notice notice-warning inline"><p><?php echo esc_html( $measured['error'] ); ?></p></div>
+				<?php else : ?>
+					<p>
+						<strong><?php echo esc_html( $measured['name'] ); ?></strong>
+						<span class="description">
+							<?php
+							printf(
+								/* translators: 1: width, 2: height, 3: current file size */
+								esc_html__( '%1$dx%2$d · %3$s as it stands', 'dos-toolkit' ),
+								(int) $measured['width'],
+								(int) $measured['height'],
+								esc_html( size_format( $measured['original'] ) )
+							);
+							?>
+						</span>
+					</p>
+
+					<table class="widefat striped" style="max-width:60em">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Quality', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Size', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Saved', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Difference', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'How it looks', 'dos-toolkit' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php foreach ( $measured['rows'] as $row ) : ?>
+							<tr>
+								<td><strong><?php echo (int) $row['quality']; ?></strong></td>
+								<td><?php echo esc_html( size_format( $row['bytes'] ) ); ?></td>
+								<td>
+									<?php echo esc_html( size_format( max( 0, $row['saved'] ) ) ); ?>
+									<span class="description"><?php echo esc_html( $row['percent'] ); ?>%</span>
+								</td>
+								<td><?php echo null === $row['difference'] ? '—' : esc_html( $row['difference'] ); ?></td>
+								<td class="description"><?php echo esc_html( DOS_Images_Compress::verdict( $row['difference'] ) ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+
+					<p class="description">
+						<?php esc_html_e( 'The difference figure is an approximation, not a formal metric: both versions are reduced to a thumbnail and compared channel by channel. It separates “no visible change” from “visible on a gradient”, which is the decision being made. Pick the lowest quality still reading as no visible change.', 'dos-toolkit' ); ?>
+					</p>
+				<?php endif; ?>
+			<?php endif; ?>
+
+			<hr>
+			<h2><?php esc_html_e( 'Where the weight is', 'dos-toolkit' ); ?></h2>
+
+			<?php
+			$weight = DOS_Settings::get( 'images_weight', array() );
+			$weight = is_array( $weight ) ? $weight : array();
+			?>
+
+			<?php if ( empty( $weight['files'] ) ) : ?>
+				<p class="description"><?php esc_html_e( 'Run “Audit image weight” below to build this.', 'dos-toolkit' ); ?></p>
+			<?php else : ?>
+				<p>
+					<?php
+					printf(
+						/* translators: 1: number of images, 2: total size */
+						esc_html__( '%1$d images, %2$s in total.', 'dos-toolkit' ),
+						(int) $weight['files'],
+						esc_html( size_format( (int) $weight['bytes'] ) )
+					);
+					?>
+				</p>
+
+				<?php
+				$labels = array(
+					'oversized'    => __( 'Larger than anything that displays them', 'dos-toolkit' ),
+					'wrong_format' => __( 'Photographs saved as PNG', 'dos-toolkit' ),
+					'heavy'        => __( 'Carrying more quality than they show', 'dos-toolkit' ),
+					'fine'         => __( 'Nothing obviously wrong', 'dos-toolkit' ),
+				);
+				?>
+
+				<table class="widefat striped" style="max-width:60em">
+					<thead><tr><th><?php esc_html_e( 'Finding', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Images', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Weight', 'dos-toolkit' ); ?></th></tr></thead>
+					<tbody>
+					<?php foreach ( $labels as $key => $label ) : ?>
+						<?php if ( empty( $weight['buckets'][ $key ]['count'] ) ) { continue; } ?>
+						<tr>
+							<td><?php echo esc_html( $label ); ?></td>
+							<td><?php echo (int) $weight['buckets'][ $key ]['count']; ?></td>
+							<td><?php echo esc_html( size_format( (int) $weight['buckets'][ $key ]['bytes'] ) ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+
+				<?php if ( ! empty( $weight['worst'] ) ) : ?>
+					<h3><?php esc_html_e( 'Heaviest offenders', 'dos-toolkit' ); ?></h3>
+					<table class="widefat striped" style="max-width:70em">
+						<thead><tr><th><?php esc_html_e( 'File', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Size', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Why', 'dos-toolkit' ); ?></th></tr></thead>
+						<tbody>
+						<?php foreach ( $weight['worst'] as $worst ) : ?>
+							<tr>
+								<td><code><?php echo esc_html( $worst['name'] ); ?></code></td>
+								<td><?php echo esc_html( size_format( (int) $worst['bytes'] ) ); ?></td>
+								<td class="description"><?php echo esc_html( $worst['note'] ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+			<?php endif; ?>
+
+			<hr>
 
 			<h2><?php esc_html_e( 'Media library jobs', 'dos-toolkit' ); ?></h2>
 
@@ -210,7 +539,7 @@ final class DOS_Module_Images extends DOS_Module {
 			</p>
 
 			<?php
-			foreach ( array( 'images_usage_scan', 'images_alt_audit', 'images_clear_titles', 'images_delete_unused' ) as $job ) {
+			foreach ( array( 'images_weight_audit', 'images_usage_scan', 'images_alt_audit', 'images_clear_titles', 'images_delete_unused' ) as $job ) {
 				DOS_Batch::render_runner( $job );
 			}
 			?>

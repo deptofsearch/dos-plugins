@@ -20,7 +20,7 @@ Installing adds a top-level **DoS Tools** menu:
 |---|---|---|
 | `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Stands down if Yoast, Rank Math or SEOPress is active. |
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
-| `images` | Images & Media | Responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
+| `images` | Images & Media | JPEG quality and upload scaling, compression of new uploads, a quality finder that measures the trade-off on your own photographs, a weight audit, responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `links` | Internal Links | Keyword phrases linked to chosen pages, written into the content behind a dry run. Capped at ten links per page by default, with the allowance given to the least-used phrases first. Never links inside headings, bold, lists, tables, existing links, code or shortcodes, never links a page to itself, and throttles a phrase by percentage so one does not carry the whole profile. |
 | `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, permalink flush, settings export/import. |
@@ -182,6 +182,18 @@ partway in and everything before that point is never visited. The usage scan
 pads its first phase for exactly this reason, and the arithmetic uses the
 constant the job is registered with rather than whatever size is passed in.
 
+**GD needs the whole image in memory; ImageMagick does not.** On a host
+without ImageMagick — which is most shared hosting — GD decompresses an image
+to roughly `width x height x 4` bytes, and a re-encode holds a source and a
+destination at once. A 24 megapixel photograph wants over 200MB. Anything
+opening an image estimates that first and declines, because exceeding the
+limit produces a truncated file rather than an error, and a truncated image is
+a corrupt one.
+
+**A re-encode writes to a temporary file and is moved into place.** The same
+reason: a half-written image is corrupt, not absent, and it replaces something
+that cannot be recovered.
+
 **A redirect target that starts with a slash is not necessarily internal.**
 `//evil.example/x` is protocol-relative: it begins with a slash, so any check
 of the form "starts with `/`" accepts it, and the browser then loads a
@@ -235,8 +247,10 @@ dry run changes nothing and therefore advances normally.
 - Any write to site data calls `DOS_Log::add()`.
 - Capability checks go through `DOS_Settings::capability()`, filterable via
   `dos_toolkit_capability`.
-- The plugin never rewrites an image file. Compression and format conversion
-  stay with the host or a dedicated optimizer.
+- Nothing already in the media library is rewritten. New uploads may be
+  re-encoded on the way in, which is opt-in, but no job rewrites a file that
+  is already there: a lossy re-encode is the only irreversible thing this
+  toolkit could do, and the original cannot be recovered from the result.
 
 ## What replaced what
 

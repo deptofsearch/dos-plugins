@@ -369,16 +369,95 @@ final class DOS_Links_Engine {
 	}
 
 	/**
+	 * Choose which candidates to keep when a page has more than it may carry.
+	 *
+	 * Taking them in document order would hand the whole allowance to
+	 * whichever phrases happen to appear near the top, and a phrase already
+	 * carrying most of the site's links would keep taking more. Instead the
+	 * phrases are ordered by how many links they have placed so far, fewest
+	 * first, and given one slot each in turn.
+	 *
+	 * Every phrase therefore gets its first link on a page before any phrase
+	 * gets its second, which is what pulls an unbalanced profile back towards
+	 * the middle over repeated runs. Ties break on rule id so the result is
+	 * the same every time.
+	 *
+	 * @param array $grouped rule_id => list of candidates.
+	 * @param array $weights rule_id => links already placed site-wide.
+	 * @param int   $limit   How many may be kept in total.
+	 */
+	public static function select( array $grouped, array $weights, $limit ) {
+		$order = array_keys( $grouped );
+
+		usort(
+			$order,
+			function ( $a, $b ) use ( $weights ) {
+				$wa = isset( $weights[ $a ] ) ? (int) $weights[ $a ] : 0;
+				$wb = isset( $weights[ $b ] ) ? (int) $weights[ $b ] : 0;
+
+				return $wa === $wb ? $a - $b : $wa - $wb;
+			}
+		);
+
+		$kept  = array();
+		$taken = 0;
+
+		while ( $taken < $limit ) {
+			$moved = false;
+
+			foreach ( $order as $rule_id ) {
+				if ( empty( $grouped[ $rule_id ] ) ) {
+					continue;
+				}
+
+				$kept[] = array_shift( $grouped[ $rule_id ] );
+				$taken++;
+				$moved  = true;
+
+				if ( $taken >= $limit ) {
+					break;
+				}
+			}
+
+			if ( ! $moved ) {
+				break;
+			}
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * Links this module has already placed in a piece of content.
+	 */
+	public static function existing_count( $html ) {
+		return substr_count( (string) $html, 'data-dos-link="' );
+	}
+
+	/**
 	 * Insert links for a set of rules into one post's content.
 	 *
 	 * Replacements are made from the end of the string backwards so that each
 	 * earlier offset is still valid when it is used.
 	 *
-	 * @return array html, added (rule_id => count)
+	 * @param int $cap Most links one page may carry in total, counting any
+	 *                 this module placed on a previous run. 0 for no limit.
+	 *
+	 * @return array html, added (rule_id => count), capped (bool)
 	 */
-	public static function apply( $html, array $rules, $post_id ) {
+	public static function apply( $html, array $rules, $post_id, $cap = 0 ) {
+		$cap = max( 0, (int) $cap );
+
+		// Links placed on an earlier run count against the allowance, or
+		// every pass would add a fresh set.
+		$already = self::existing_count( $html );
+
+		if ( $cap && $already >= $cap ) {
+			return array( 'html' => $html, 'added' => array(), 'capped' => true );
+		}
+
 		$insertions = array();
-		$added      = array();
+		$weights    = array();
 
 		foreach ( $rules as $rule ) {
 			$url = get_permalink( (int) $rule['target_id'] );
@@ -387,9 +466,9 @@ final class DOS_Links_Engine {
 				continue;
 			}
 
-			$placements = self::placements( $html, $rule, $post_id );
+			$weights[ (int) $rule['id'] ] = isset( $rule['links_made'] ) ? (int) $rule['links_made'] : 0;
 
-			foreach ( $placements as $placement ) {
+			foreach ( self::placements( $html, $rule, $post_id ) as $placement ) {
 				$insertions[] = array(
 					'offset'  => $placement['offset'],
 					'length'  => $placement['length'],
@@ -398,14 +477,10 @@ final class DOS_Links_Engine {
 					'rule_id' => (int) $rule['id'],
 				);
 			}
-
-			if ( $placements ) {
-				$added[ (int) $rule['id'] ] = count( $placements );
-			}
 		}
 
 		if ( ! $insertions ) {
-			return array( 'html' => $html, 'added' => array() );
+			return array( 'html' => $html, 'added' => array(), 'capped' => false );
 		}
 
 		// Two rules can match overlapping text; the earlier rule wins and the
@@ -422,13 +497,38 @@ final class DOS_Links_Engine {
 
 		foreach ( $insertions as $insertion ) {
 			if ( $insertion['offset'] < $reach ) {
-				$added[ $insertion['rule_id'] ] = max( 0, $added[ $insertion['rule_id'] ] - 1 );
-
 				continue;
 			}
 
 			$filtered[] = $insertion;
 			$reach      = $insertion['offset'] + $insertion['length'];
+		}
+
+		$capped = false;
+
+		if ( $cap && count( $filtered ) > ( $cap - $already ) ) {
+			$grouped = array();
+
+			foreach ( $filtered as $insertion ) {
+				$grouped[ $insertion['rule_id'] ][] = $insertion;
+			}
+
+			$filtered = self::select( $grouped, $weights, $cap - $already );
+			$capped   = true;
+
+			usort(
+				$filtered,
+				function ( $a, $b ) {
+					return $a['offset'] - $b['offset'];
+				}
+			);
+		}
+
+		$added = array();
+
+		foreach ( $filtered as $insertion ) {
+			$id           = $insertion['rule_id'];
+			$added[ $id ] = isset( $added[ $id ] ) ? $added[ $id ] + 1 : 1;
 		}
 
 		foreach ( array_reverse( $filtered ) as $insertion ) {
@@ -440,7 +540,7 @@ final class DOS_Links_Engine {
 			);
 		}
 
-		return array( 'html' => $html, 'added' => array_filter( $added ) );
+		return array( 'html' => $html, 'added' => $added, 'capped' => $capped );
 	}
 
 	/**

@@ -21,6 +21,15 @@ final class DOS_Module_Links extends DOS_Module {
 	/** Items per pass for jobs that walk the content tables. */
 	const BATCH = 20;
 
+	/** Links one page may carry in total, before anyone changes it. */
+	const DEFAULT_CAP = 10;
+
+	public static function cap() {
+		$value = DOS_Settings::get( 'links_max_per_page', null );
+
+		return null === $value ? self::DEFAULT_CAP : max( 0, (int) $value );
+	}
+
 	public static function init() {
 		add_action( 'admin_init', array( 'DOS_Links_Rules', 'maybe_install' ), 4 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
@@ -240,7 +249,7 @@ final class DOS_Module_Links extends DOS_Module {
 		$count = 0;
 
 		foreach ( $posts as $post ) {
-			$result = DOS_Links_Engine::apply( $post->post_content, $rules, $post->ID );
+			$result = DOS_Links_Engine::apply( $post->post_content, $rules, $post->ID, self::cap() );
 
 			if ( ! $result['added'] ) {
 				continue;
@@ -250,12 +259,24 @@ final class DOS_Module_Links extends DOS_Module {
 			$count += $added;
 
 			if ( count( $notes ) < 60 ) {
-				$notes[] = sprintf(
+				$note = sprintf(
 					/* translators: 1: number of links, 2: post title */
 					$dry_run ? __( 'Would add %1$d link(s) to "%2$s"', 'dos-toolkit' ) : __( 'Added %1$d link(s) to "%2$s"', 'dos-toolkit' ),
 					$added,
 					get_the_title( $post->ID )
 				);
+
+				// Worth saying: the page had more candidates than it is
+				// allowed, and which ones were kept was a decision.
+				if ( ! empty( $result['capped'] ) ) {
+					$note .= ' ' . sprintf(
+						/* translators: %d: the per-page limit */
+						__( '(limit of %d reached; the least-used phrases were preferred)', 'dos-toolkit' ),
+						self::cap()
+					);
+				}
+
+				$notes[] = $note;
 			}
 
 			if ( ! $dry_run ) {
@@ -367,6 +388,12 @@ final class DOS_Module_Links extends DOS_Module {
 
 			case 'links_toggle':
 				DOS_Links_Rules::set_enabled( (int) $_POST['id'], ! empty( $_POST['enabled'] ) );
+				break;
+
+			case 'links_settings':
+				DOS_Settings::set( 'links_max_per_page', isset( $_POST['max_links'] ) ? max( 0, (int) $_POST['max_links'] ) : self::DEFAULT_CAP );
+
+				self::log( 'settings_saved', 'Internal link settings updated.' );
 				break;
 
 			case 'links_import':
@@ -889,6 +916,31 @@ final class DOS_Module_Links extends DOS_Module {
 				DOS_Batch::render_runner( 'links_apply_' . $rescan_id );
 				?>
 			<?php endif; ?>
+
+			<hr>
+			<h2><?php esc_html_e( 'Site-wide limit', 'dos-toolkit' ); ?></h2>
+
+			<form method="post">
+				<?php wp_nonce_field( 'dos_links' ); ?>
+				<input type="hidden" name="dos_action" value="links_settings" />
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="max_links"><?php esc_html_e( 'Most links on one page', 'dos-toolkit' ); ?></label></th>
+						<td>
+							<input type="number" id="max_links" name="max_links" min="0" max="100" class="small-text" value="<?php echo (int) self::cap(); ?>" />
+							<p class="description">
+								<?php esc_html_e( 'Counting every phrase together, and counting links placed on an earlier run. 0 removes the limit.', 'dos-toolkit' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'When a page has more candidates than it may carry, phrases are ordered by how many links they have placed across the site, fewest first, and given one slot each in turn. Every phrase gets its first link on a page before any phrase gets a second, which pulls an unbalanced profile back towards the middle instead of letting the busiest phrase take more.', 'dos-toolkit' ); ?>
+							</p>
+						</td>
+					</tr>
+				</table>
+
+				<?php submit_button( __( 'Save limit', 'dos-toolkit' ), 'secondary' ); ?>
+			</form>
 
 			<hr>
 			<h2><?php esc_html_e( 'Check one page', 'dos-toolkit' ); ?></h2>

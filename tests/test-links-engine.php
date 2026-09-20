@@ -182,5 +182,73 @@ $out = DOS_Links_Engine::apply( $page, $three, 102 );
 check( 'the destination page still links out on its other phrases', 2 === substr_count( $out['html'], '<a ' ), $out['html'] );
 check( '  but not to itself', false === strpos( $out['html'], 'data-dos-link="2"' ), $out['html'] );
 
+echo "\n--- the per-page limit ---\n";
+
+// Twelve phrases, one occurrence each, on one page.
+$body = '';
+$many = array();
+for ( $i = 1; $i <= 12; $i++ ) {
+    $body  .= "<p>Talking about widget number {$i} today.</p>";
+    $many[] = rule( array( 'id' => $i, 'phrase' => "widget number {$i}", 'target_id' => 100 + $i, 'links_made' => 0 ) );
+}
+
+$out = DOS_Links_Engine::apply( $body, $many, 5, 10 );
+check( 'stops at the limit', 10 === substr_count( $out['html'], '<a ' ), substr_count( $out['html'], '<a ' ) . ' links' );
+check( '  and says it was reached', ! empty( $out['capped'] ) );
+check( '  counts add up to the limit', 10 === array_sum( $out['added'] ), json_encode( $out['added'] ) );
+
+$out = DOS_Links_Engine::apply( $body, array_slice( $many, 0, 4 ), 5, 10 );
+check( 'leaves a page under the limit alone', 4 === substr_count( $out['html'], '<a ' ) );
+check( '  and does not claim it was capped', empty( $out['capped'] ) );
+
+$out = DOS_Links_Engine::apply( $body, $many, 5, 0 );
+check( 'a limit of zero means no limit', 12 === substr_count( $out['html'], '<a ' ) );
+
+echo "\n--- links already placed count against the limit ---\n";
+$half = '<p>' . str_repeat( '<a href="/x" class="dos-ilink" data-dos-link="99">x</a> ', 8 ) . '</p>' . $body;
+$out  = DOS_Links_Engine::apply( $half, $many, 5, 10 );
+check( 'only the remaining allowance is used', 2 === count( $out['added'] ) ? true : 2 === array_sum( $out['added'] ), json_encode( $out['added'] ) );
+
+$full = '<p>' . str_repeat( '<a href="/x" class="dos-ilink" data-dos-link="99">x</a> ', 10 ) . '</p>' . $body;
+$out  = DOS_Links_Engine::apply( $full, $many, 5, 10 );
+check( 'a page already at the limit gains nothing', array() === $out['added'], json_encode( $out['added'] ) );
+check( '  and is reported as capped', ! empty( $out['capped'] ) );
+
+echo "\n--- the limit favours the least-used phrases ---\n";
+
+// Three phrases competing for two slots: one has placed 500 links across the
+// site already, the others almost none.
+$grouped = array(
+    1 => array( array( 'offset' => 0, 'rule_id' => 1 ), array( 'offset' => 10, 'rule_id' => 1 ) ),
+    2 => array( array( 'offset' => 20, 'rule_id' => 2 ) ),
+    3 => array( array( 'offset' => 30, 'rule_id' => 3 ) ),
+);
+$weights = array( 1 => 500, 2 => 3, 3 => 0 );
+
+$kept = DOS_Links_Engine::select( $grouped, $weights, 2 );
+$ids  = array_column( $kept, 'rule_id' );
+sort( $ids );
+check( 'the two quietest phrases win the slots', array( 2, 3 ) === $ids, json_encode( $ids ) );
+check( '  and the busiest gets none', ! in_array( 1, $ids, true ) );
+
+$kept = DOS_Links_Engine::select( $grouped, $weights, 3 );
+$ids  = array_column( $kept, 'rule_id' );
+sort( $ids );
+check( 'a third slot goes to the busiest only once the others are served', array( 1, 2, 3 ) === $ids, json_encode( $ids ) );
+
+// Every phrase gets a first link before any gets a second.
+$grouped = array(
+    1 => array( array( 'offset' => 0, 'rule_id' => 1 ), array( 'offset' => 5, 'rule_id' => 1 ), array( 'offset' => 9, 'rule_id' => 1 ) ),
+    2 => array( array( 'offset' => 20, 'rule_id' => 2 ) ),
+);
+$kept = DOS_Links_Engine::select( $grouped, array( 1 => 0, 2 => 0 ), 2 );
+$ids  = array_column( $kept, 'rule_id' );
+sort( $ids );
+check( 'one phrase cannot take the whole allowance', array( 1, 2 ) === $ids, json_encode( $ids ) );
+
+$a = DOS_Links_Engine::select( $grouped, array( 1 => 0, 2 => 0 ), 3 );
+$b = DOS_Links_Engine::select( $grouped, array( 1 => 0, 2 => 0 ), 3 );
+check( 'the same page is decided the same way every run', array_column( $a, 'offset' ) === array_column( $b, 'offset' ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

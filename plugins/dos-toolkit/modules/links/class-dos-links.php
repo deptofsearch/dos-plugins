@@ -642,6 +642,9 @@ final class DOS_Module_Links extends DOS_Module {
 			case 'throttled':
 				return __( 'Excluded by the percentage limit. Raise it towards 100%.', 'dos-toolkit' );
 
+			case 'already_linked':
+				return __( 'This page already has as many links on the phrase as the limit allows, counting ones that were there before.', 'dos-toolkit' );
+
 			case 'absent':
 				return $row['raw']
 					? __( 'Present, but every occurrence is inside a heading, bold text, a list, a table, an existing link or a shortcode.', 'dos-toolkit' )
@@ -757,7 +760,7 @@ final class DOS_Module_Links extends DOS_Module {
 							<td>
 								<label>
 									<input type="number" name="max_per_page" value="1" min="1" max="20" class="small-text" />
-									<?php esc_html_e( 'links per page', 'dos-toolkit' ); ?>
+									<?php esc_html_e( 'links per page, counting any already there', 'dos-toolkit' ); ?>
 								</label>
 								&nbsp;&nbsp;
 								<label>

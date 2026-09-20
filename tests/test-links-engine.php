@@ -308,5 +308,41 @@ check( 'removes all of them when every phrase is gone', 3 === $all['removed'], j
 check( '  still leaving both hand-made links', 2 === substr_count( $all['html'], '<a href="/' ), $all['html'] );
 check( '  and not touching the other hand-made link', false !== strpos( $all['html'], '<a href="/e">something else</a>' ) );
 
+echo "\n--- a link already on the page counts against the limit ---\n";
+
+// The canary page: one hand-made link on the phrase, and a plain mention
+// earlier that the module would otherwise link as well.
+$canary = '<p>Before you tour open houses in Phoenix, get a lender letter.</p>'
+        . '<p>Plenty of buyers first encounter this while walking <a href="/open-houses/">open houses in Phoenix</a> on a Saturday.</p>';
+
+$r = rule( array( 'phrase' => 'open houses in Phoenix', 'target_id' => 99, 'max_per_page' => 1 ) );
+
+check( 'adds nothing when the page already has its one link', array() === DOS_Links_Engine::placements( $canary, $r, 5 ), json_encode( DOS_Links_Engine::placements( $canary, $r, 5 ) ) );
+
+$out = DOS_Links_Engine::apply( $canary, array( $r ), 5 );
+check( '  so the page keeps exactly one link on the phrase', 1 === substr_count( $out['html'], '<a ' ), $out['html'] );
+check( '  and the hand-made one is the one kept', false !== strpos( $out['html'], '<a href="/open-houses/">' ) );
+
+$a = DOS_Links_Engine::analyse( $canary, $r, 5 );
+check( '  and it says why rather than reporting a bare zero', 'already_linked' === $a['reason'], json_encode( $a ) );
+
+// Raising the limit lets it add one more.
+$two = DOS_Links_Engine::placements( $canary, rule( array( 'phrase' => 'open houses in Phoenix', 'max_per_page' => 2 ) ), 5 );
+check( 'a limit of two allows one more alongside the existing link', 1 === count( $two ), count( $two ) . ' placements' );
+
+// A link this module placed earlier counts the same way.
+$ours = '<p>Tour <a href="/x" class="dos-ilink" data-dos-link="1">open houses in Phoenix</a> often.</p>'
+      . '<p>More about open houses in Phoenix here.</p>';
+check( 'its own earlier link counts too', array() === DOS_Links_Engine::placements( $ours, $r, 5 ) );
+
+// A link on different words must not consume the allowance.
+$other = '<p>Ask a <a href="/agents/">Phoenix real estate agent</a> about open houses in Phoenix.</p>';
+check( 'a link on different words does not use up the allowance', 1 === count( DOS_Links_Engine::placements( $other, $r, 5 ) ) );
+
+echo "\n--- counting links that carry a phrase ---\n";
+check( 'counts hand-made and module links together', 2 === DOS_Links_Engine::linked_phrase_count( $ours . $canary, 'open houses in Phoenix' ), (string) DOS_Links_Engine::linked_phrase_count( $ours . $canary, 'open houses in Phoenix' ) );
+check( 'counts only hand-made when asked', 1 === DOS_Links_Engine::manual_count( $ours . $canary, 'open houses in Phoenix' ) );
+check( 'counts none for a phrase nobody linked', 0 === DOS_Links_Engine::linked_phrase_count( $canary, 'solar panel install' ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

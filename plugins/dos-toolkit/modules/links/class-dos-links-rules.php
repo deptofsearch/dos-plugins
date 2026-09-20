@@ -451,12 +451,13 @@ final class DOS_Links_Rules {
 	 */
 	private static function reason_rank( $reason ) {
 		$ranks = array(
-			''           => 0,
-			'absent'     => 1,
-			'self'       => 2,
-			'filtered'   => 3,
-			'throttled'  => 4,
-			'first_only' => 5,
+			''               => 0,
+			'absent'         => 1,
+			'self'           => 2,
+			'filtered'       => 3,
+			'already_linked' => 4,
+			'throttled'      => 5,
+			'first_only'     => 6,
 		);
 
 		return isset( $ranks[ $reason ] ) ? $ranks[ $reason ] : 1;
@@ -513,6 +514,9 @@ final class DOS_Links_Rules {
 
 			case 'first_only':
 				return __( 'The phrase appears once on each page that has it, and this rule is set to leave the first occurrence alone — so there is never a second one to link. Switch it to link the first occurrence.', 'dos-toolkit' );
+
+			case 'already_linked':
+				return __( 'Every page carrying this phrase already has as many links on it as the per-page limit allows, counting links that were there before. Raise the limit if you want more.', 'dos-toolkit' );
 
 			case 'throttled':
 				return __( 'The phrase was found, but the percentage limit excluded every occurrence. Raise it towards 100%.', 'dos-toolkit' );

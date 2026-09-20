@@ -291,6 +291,14 @@ final class DOS_Links_Engine {
 		}
 
 		// It is here, and something the operator configured removed it.
+		$max = isset( $rule['max_per_page'] ) ? (int) $rule['max_per_page'] : 1;
+
+		if ( $max > 0 && self::linked_phrase_count( $html, $rule['phrase'] ) >= $max ) {
+			$out['reason'] = 'already_linked';
+
+			return $out;
+		}
+
 		if ( 'skip' === ( isset( $rule['first_instance'] ) ? $rule['first_instance'] : 'link' ) && 1 === count( $occurrences ) ) {
 			$out['reason'] = 'first_only';
 
@@ -349,7 +357,16 @@ final class DOS_Links_Engine {
 		$max = isset( $rule['max_per_page'] ) ? (int) $rule['max_per_page'] : 1;
 
 		if ( $max > 0 ) {
-			$occurrences = array_slice( $occurrences, 0, $max );
+			// Links already on the page count against the allowance, whoever
+			// put them there. Otherwise a page carrying one link on the
+			// phrase gains a second and the limit reads as satisfied.
+			$allowance = $max - self::linked_phrase_count( $html, $rule['phrase'] );
+
+			if ( $allowance < 1 ) {
+				return array();
+			}
+
+			$occurrences = array_slice( $occurrences, 0, $allowance );
 		}
 
 		return $occurrences;
@@ -599,22 +616,34 @@ final class DOS_Links_Engine {
 	 * actually on the page.
 	 */
 	public static function manual_count( $html, $phrase ) {
+		return self::linked_phrase_count( $html, $phrase, true );
+	}
+
+	/**
+	 * Links on this page whose text is the phrase.
+	 *
+	 * Counting only the ones this module placed would make a per-page limit
+	 * mean "links I added" rather than "links on this page", and a page that
+	 * already carried a link on the phrase would quietly end up with two.
+	 *
+	 * @param bool $only_manual Ignore links this module placed.
+	 */
+	public static function linked_phrase_count( $html, $phrase, $only_manual = false ) {
 		$html = (string) $html;
 
 		if ( '' === trim( $html ) || false === stripos( $html, '<a' ) ) {
 			return 0;
 		}
 
-		$pattern = '/(?<![\w\-])' . self::space_tolerant( $phrase ) . '(?![\w\-])/iu';
-		$count   = 0;
-
 		if ( ! preg_match_all( '#<a\b([^>]*)>(.*?)</a>#is', $html, $links, PREG_SET_ORDER ) ) {
 			return 0;
 		}
 
+		$pattern = '/(?<![\w\-])' . self::space_tolerant( $phrase ) . '(?![\w\-])/iu';
+		$count   = 0;
+
 		foreach ( $links as $link ) {
-			// Ours are counted separately and are not "by hand".
-			if ( false !== stripos( $link[1], 'data-dos-link=' ) ) {
+			if ( $only_manual && false !== stripos( $link[1], 'data-dos-link=' ) ) {
 				continue;
 			}
 

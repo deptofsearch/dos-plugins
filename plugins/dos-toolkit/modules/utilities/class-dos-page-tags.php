@@ -31,8 +31,10 @@ final class DOS_Page_Tags {
 
 		add_action( 'init', array( __CLASS__, 'register' ), 11 );
 
-		add_filter( 'manage_page_posts_columns', array( __CLASS__, 'add_column' ) );
-		add_action( 'manage_page_posts_custom_column', array( __CLASS__, 'render_column' ), 10, 2 );
+		// No column of our own: attaching post_tag to pages makes WordPress
+		// add its own Tags column, and adding a second produced two columns
+		// with the same heading. The filter below is the part core does not
+		// provide for a non-hierarchical taxonomy.
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_filter' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'apply_filter' ) );
 		add_action( 'admin_post_' . self::ACTION, array( __CLASS__, 'handle_apply' ) );
@@ -40,46 +42,6 @@ final class DOS_Page_Tags {
 
 	public static function register() {
 		register_taxonomy_for_object_type( 'post_tag', 'page' );
-	}
-
-	public static function add_column( $columns ) {
-		$out = array();
-
-		foreach ( $columns as $key => $label ) {
-			$out[ $key ] = $label;
-
-			if ( 'title' === $key ) {
-				$out['dos_page_tags'] = __( 'Tags', 'dos-toolkit' );
-			}
-		}
-
-		return $out;
-	}
-
-	public static function render_column( $column, $post_id ) {
-		if ( 'dos_page_tags' !== $column ) {
-			return;
-		}
-
-		$terms = get_the_terms( $post_id, 'post_tag' );
-
-		if ( ! $terms || is_wp_error( $terms ) ) {
-			echo '—';
-
-			return;
-		}
-
-		$links = array();
-
-		foreach ( $terms as $term ) {
-			$links[] = sprintf(
-				'<a href="%s">%s</a>',
-				esc_url( add_query_arg( array( 'post_type' => 'page', 'dos_tag' => $term->term_id ), admin_url( 'edit.php' ) ) ),
-				esc_html( $term->name )
-			);
-		}
-
-		echo wp_kses_post( implode( ', ', $links ) );
 	}
 
 	public static function render_filter( $post_type ) {

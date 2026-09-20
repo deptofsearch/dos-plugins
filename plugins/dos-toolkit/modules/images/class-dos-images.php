@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/class-dos-images-markup.php';
 require_once __DIR__ . '/class-dos-images-usage.php';
 require_once __DIR__ . '/class-dos-images-compress.php';
+require_once __DIR__ . '/class-dos-images-columns.php';
 
 final class DOS_Module_Images extends DOS_Module {
 
@@ -22,6 +23,7 @@ final class DOS_Module_Images extends DOS_Module {
 	public static function init() {
 		DOS_Images_Markup::init();
 		DOS_Images_Compress::init();
+		DOS_Images_Columns::init();
 
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
 	}
@@ -221,6 +223,7 @@ final class DOS_Module_Images extends DOS_Module {
 				'images_quality'        => isset( $_POST['quality'] ) ? max( 40, min( 100, (int) $_POST['quality'] ) ) : DOS_Images_Compress::DEFAULT_QUALITY,
 				'images_threshold'      => isset( $_POST['threshold'] ) ? max( 0, (int) $_POST['threshold'] ) : DOS_Images_Compress::DEFAULT_THRESHOLD,
 				'images_compress_uploads' => empty( $_POST['compress_uploads'] ) ? 0 : 1,
+				'images_featured_column'  => empty( $_POST['featured_column'] ) ? 0 : 1,
 			)
 		);
 
@@ -275,6 +278,16 @@ final class DOS_Module_Images extends DOS_Module {
 								);
 								?>
 							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Post and page lists', 'dos-toolkit' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="featured_column" value="1" <?php checked( DOS_Images_Columns::is_enabled() ); ?> />
+								<?php esc_html_e( 'Show a Featured image column, with a filter for posts missing one', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Reads data and changes nothing. A post with no featured image is invisible in a list of fifty until you open each one.', 'dos-toolkit' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -345,6 +358,7 @@ final class DOS_Module_Images extends DOS_Module {
 				<input type="hidden" name="markup_enabled" value="<?php echo DOS_Images_Markup::is_enabled() ? '1' : ''; ?>" />
 				<input type="hidden" name="markup_live" value="<?php echo DOS_Images_Markup::is_dry_run() ? '' : '1'; ?>" />
 				<input type="hidden" name="slot_width" value="<?php echo (int) DOS_Images_Markup::slot_width(); ?>" />
+				<input type="hidden" name="featured_column" value="<?php echo DOS_Images_Columns::is_enabled() ? '1' : ''; ?>" />
 
 				<table class="form-table" role="presentation">
 					<tr>

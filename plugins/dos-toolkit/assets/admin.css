@@ -35,3 +35,6 @@
 .dos-job-live { margin-left: .4em !important; }
 .dos-job-pending { background: #fcf9e8; border-left: 4px solid #dba617; padding: .6em .9em; margin: .6em 0; }
 .dos-job-refused { display: inline-block; background: #fcf0f1; border-left: 4px solid #8a2424; padding: .4em .8em; color: #8a2424; }
+
+.dos-featured-yes { color: #008a20; font-weight: 600; }
+.dos-featured-no { color: #b32d2e; font-weight: 600; }

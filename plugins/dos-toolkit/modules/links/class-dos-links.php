@@ -762,6 +762,7 @@ final class DOS_Module_Links extends DOS_Module {
 			$all    = DOS_Links_Rules::all();
 			?>
 
+
 			<h2><?php esc_html_e( 'Phrases', 'dos-toolkit' ); ?></h2>
 
 			<form method="get" class="dos-filters">
@@ -838,7 +839,10 @@ final class DOS_Module_Links extends DOS_Module {
 							<tr<?php echo $rule['enabled'] ? '' : ' style="opacity:.5"'; ?>>
 								<th class="check-column"><input type="checkbox" name="ids[]" value="<?php echo (int) $rule['id']; ?>" /></th>
 								<td><strong><?php echo esc_html( $rule['phrase'] ); ?></strong></td>
-								<td><?php echo esc_html( get_the_title( (int) $rule['target_id'] ) ); ?></td>
+								<td>
+									<?php echo esc_html( get_the_title( (int) $rule['target_id'] ) ); ?>
+									<span class="description">#<?php echo (int) $rule['target_id']; ?></span>
+								</td>
 								<td class="description">
 									<?php
 									printf(
@@ -888,6 +892,58 @@ final class DOS_Module_Links extends DOS_Module {
 						<?php endif; ?>
 					</div>
 				<?php endif; ?>
+			</form>
+
+			<?php
+			$rescan_id = isset( $_GET['rescan'] ) ? (int) $_GET['rescan'] : 0;
+			$rescan    = $rescan_id ? DOS_Links_Rules::get( $rescan_id ) : null;
+			?>
+
+			<?php if ( $rescan ) : ?>
+				<hr>
+				<h2 id="rescan">
+					<?php
+					printf(
+						/* translators: %s: keyword phrase */
+						esc_html__( 'Just this phrase: %s', 'dos-toolkit' ),
+						esc_html( $rescan['phrase'] )
+					);
+					?>
+				</h2>
+
+				<p class="description">
+					<?php esc_html_e( 'Rescan when content has been added since this phrase was set up. Applying writes links for this phrase alone and leaves every other phrase untouched.', 'dos-toolkit' ); ?>
+				</p>
+
+				<?php
+				DOS_Batch::render_runner( 'links_scan_' . $rescan_id );
+				DOS_Batch::render_runner( 'links_apply_' . $rescan_id );
+				?>
+			<?php endif; ?>
+
+			<hr>
+			<h2><?php esc_html_e( 'Site-wide limit', 'dos-toolkit' ); ?></h2>
+
+			<form method="post">
+				<?php wp_nonce_field( 'dos_links' ); ?>
+				<input type="hidden" name="dos_action" value="links_settings" />
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="max_links"><?php esc_html_e( 'Most links on one page', 'dos-toolkit' ); ?></label></th>
+						<td>
+							<input type="number" id="max_links" name="max_links" min="0" max="100" class="small-text" value="<?php echo (int) self::cap(); ?>" />
+							<p class="description">
+								<?php esc_html_e( 'Counting every phrase together, and counting links placed on an earlier run. 0 removes the limit.', 'dos-toolkit' ); ?>
+							</p>
+							<p class="description">
+								<?php esc_html_e( 'When a page has more candidates than it may carry, phrases are ordered by how many links they have placed across the site, fewest first, and given one slot each in turn. Every phrase gets its first link on a page before any phrase gets a second, which pulls an unbalanced profile back towards the middle instead of letting the busiest phrase take more.', 'dos-toolkit' ); ?>
+							</p>
+						</td>
+					</tr>
+				</table>
+
+				<?php submit_button( __( 'Save limit', 'dos-toolkit' ), 'secondary' ); ?>
 			</form>
 
 			<?php

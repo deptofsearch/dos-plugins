@@ -250,5 +250,26 @@ $a = DOS_Links_Engine::select( $grouped, array( 1 => 0, 2 => 0 ), 3 );
 $b = DOS_Links_Engine::select( $grouped, array( 1 => 0, 2 => 0 ), 3 );
 check( 'the same page is decided the same way every run', array_column( $a, 'offset' ) === array_column( $b, 'offset' ) );
 
+echo "\n--- whitespace that looks like a space and is not ---\n";
+
+$phrase = 'open houses in Phoenix';
+$nbsp   = "\xC2\xA0";          // U+00A0 non-breaking space
+$narrow = "\xE2\x80\xAF";      // U+202F narrow no-break space
+
+check( 'matches across a non-breaking space in the content', 1 === found( "<p>about open{$nbsp}houses in Phoenix today</p>", $phrase ) );
+check( 'matches when every space is non-breaking', 1 === found( "<p>about open{$nbsp}houses{$nbsp}in{$nbsp}Phoenix today</p>", $phrase ) );
+check( 'matches a narrow no-break space', 1 === found( "<p>about open{$narrow}houses in Phoenix today</p>", $phrase ) );
+check( 'matches when the phrase wraps across lines in the source', 1 === found( "<p>about open houses\nin Phoenix today</p>", $phrase ) );
+check( 'matches when the phrase itself was pasted with one', 1 === found( '<p>about open houses in Phoenix today</p>', "open{$nbsp}houses in Phoenix" ) );
+
+// Tolerance must not turn into matching things that are not the phrase.
+check( 'still does not match a different phrase', 0 === found( '<p>open houses in Tucson</p>', $phrase ) );
+check( 'still respects word boundaries', 0 === found( '<p>open houses in Phoenixville</p>', $phrase ) );
+
+// And the offsets must still be right, since links are spliced in by byte.
+$out = DOS_Links_Engine::apply( "<p>about open{$nbsp}houses in Phoenix today</p>", array( rule( array( 'phrase' => $phrase ) ) ), 5 );
+check( 'splices correctly around a non-breaking space', false !== strpos( $out['html'], '</a> today</p>' ), $out['html'] );
+check( '  and leaves the surrounding text intact', false !== strpos( $out['html'], '<p>about <a ' ), $out['html'] );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

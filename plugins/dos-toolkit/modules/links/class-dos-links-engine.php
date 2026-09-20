@@ -184,7 +184,7 @@ final class DOS_Links_Engine {
 
 		// Not \b: a phrase can legitimately end in punctuation, and \b would
 		// behave differently depending on the last character.
-		$pattern = '/(?<![\w\-])' . preg_quote( $phrase, '/' ) . '(?![\w\-])/iu';
+		$pattern = '/(?<![\w\-])' . self::space_tolerant( $phrase ) . '(?![\w\-])/iu';
 
 		foreach ( self::text_spans( $html ) as $span ) {
 			$text = substr( $html, $span[0], $span[1] );
@@ -220,6 +220,31 @@ final class DOS_Links_Engine {
 		);
 
 		return $found;
+	}
+
+	/**
+	 * Quote a phrase so each space in it matches any run of whitespace.
+	 *
+	 * A phrase typed into the settings screen is separated by ordinary
+	 * spaces. The same words in a page may not be: editors and pasted text
+	 * routinely carry non-breaking spaces, and HTML source wraps lines
+	 * wherever it likes, so "open houses in Phoenix" in a post can contain a
+	 * newline or a U+00A0 and look identical while matching nothing.
+	 *
+	 * The alternative — normalising the content before matching — would move
+	 * every byte offset after the first substitution, and those offsets are
+	 * what the links are spliced in at.
+	 */
+	public static function space_tolerant( $phrase ) {
+		// The phrase can carry exotic spaces too — it was typed or pasted by
+		// a person. Rules saved before these were normalised on the way in
+		// still hold them, and would otherwise never match anything.
+		$phrase = preg_replace( '/[\x{00A0}\x{2007}\x{202F}\x{2009}]/u', ' ', (string) $phrase );
+
+		$quoted = preg_quote( trim( $phrase ), '/' );
+
+		// preg_quote leaves spaces alone, so they are still literal here.
+		return preg_replace( '/[ ]+/', '[\s\x{00A0}\x{2007}\x{202F}\x{2009}]+', $quoted );
 	}
 
 	/* ---------------------------------------------------------------------

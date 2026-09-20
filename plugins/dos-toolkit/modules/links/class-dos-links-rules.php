@@ -318,7 +318,10 @@ final class DOS_Links_Rules {
 	public static function add( $phrase, $target_id, $args = array() ) {
 		global $wpdb;
 
-		$phrase = trim( preg_replace( '/\s+/u', ' ', (string) $phrase ) );
+		// Pasted phrases carry non-breaking and other exotic spaces, which
+		// look identical and match nothing. Store the plain form.
+		$phrase = preg_replace( '/[\x{00A0}\x{2007}\x{202F}\x{2009}]/u', ' ', (string) $phrase );
+		$phrase = trim( preg_replace( '/\s+/u', ' ', $phrase ) );
 
 		if ( '' === $phrase ) {
 			return new WP_Error( 'dos_links_empty', __( 'Enter a keyword phrase.', 'dos-toolkit' ) );
@@ -421,17 +424,39 @@ final class DOS_Links_Rules {
 	}
 
 	/**
-	 * Record why a phrase produced no links, so the dashboard can say so.
-	 * Only the first reason seen is kept: it is a hint, not an audit.
+	 * How useful each reason is as an explanation.
+	 *
+	 * Keeping the first reason seen meant that scanning the destination page
+	 * early in the run recorded "points at itself", and a genuinely different
+	 * reason found on a later page never replaced it. A reason that names a
+	 * setting the operator can change beats one that does not.
 	 */
+	private static function reason_rank( $reason ) {
+		$ranks = array(
+			''           => 0,
+			'absent'     => 1,
+			'self'       => 2,
+			'filtered'   => 3,
+			'throttled'  => 4,
+			'first_only' => 5,
+		);
+
+		return isset( $ranks[ $reason ] ) ? $ranks[ $reason ] : 1;
+	}
+
 	public static function set_reason( $rule_id, $reason ) {
 		global $wpdb;
 
-		$table = self::table();
+		$table   = self::table();
+		$current = $wpdb->get_var( $wpdb->prepare( "SELECT last_reason FROM {$table} WHERE id = %d", (int) $rule_id ) );
+
+		if ( self::reason_rank( $reason ) <= self::reason_rank( (string) $current ) ) {
+			return;
+		}
 
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET last_reason = %s WHERE id = %d AND last_reason = ''",
+				"UPDATE {$table} SET last_reason = %s WHERE id = %d",
 				substr( (string) $reason, 0, 20 ),
 				(int) $rule_id
 			)

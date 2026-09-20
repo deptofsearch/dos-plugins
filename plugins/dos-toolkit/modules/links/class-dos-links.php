@@ -291,10 +291,120 @@ final class DOS_Module_Links extends DOS_Module {
 			case 'links_toggle':
 				DOS_Links_Rules::set_enabled( (int) $_POST['id'], ! empty( $_POST['enabled'] ) );
 				break;
+
+			case 'links_test':
+				set_transient(
+					'dos_links_test',
+					self::test( isset( $_POST['test_target'] ) ? sanitize_text_field( wp_unslash( $_POST['test_target'] ) ) : '' ),
+					120
+				);
+				break;
 		}
 
 		wp_safe_redirect( add_query_arg( array( 'page' => 'dos-links', 'dos_notice' => 'saved' ), admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/**
+	 * Run every rule against one page and report exactly what the engine
+	 * sees.
+	 *
+	 * A count of zero has several causes, and inferring which one from the
+	 * outside took two rounds of guesswork the first time it happened. This
+	 * answers it directly.
+	 */
+	public static function test( $target ) {
+		$target = trim( (string) $target );
+		$out    = array( 'target' => $target, 'post' => null, 'rows' => array(), 'error' => '' );
+
+		if ( '' === $target ) {
+			$out['error'] = __( 'Enter a post ID or a URL on this site.', 'dos-toolkit' );
+
+			return $out;
+		}
+
+		$post_id = ctype_digit( $target ) ? (int) $target : (int) url_to_postid( $target );
+
+		if ( ! $post_id ) {
+			$out['error'] = __( 'Nothing on this site matches that. Use the numeric post ID if the URL will not resolve.', 'dos-toolkit' );
+
+			return $out;
+		}
+
+		$post = get_post( $post_id );
+
+		if ( ! $post ) {
+			$out['error'] = __( 'That post does not exist.', 'dos-toolkit' );
+
+			return $out;
+		}
+
+		$out['post'] = array(
+			'id'     => $post_id,
+			'title'  => get_the_title( $post_id ),
+			'status' => $post->post_status,
+			'type'   => $post->post_type,
+			'length' => strlen( $post->post_content ),
+		);
+
+		$rules = DOS_Links_Rules::all();
+
+		if ( ! $rules ) {
+			$out['error'] = __( 'No phrases are configured yet.', 'dos-toolkit' );
+
+			return $out;
+		}
+
+		foreach ( $rules as $rule ) {
+			$analysis = DOS_Links_Engine::analyse( $post->post_content, $rule, $post_id );
+
+			// Raw count, before any of the exclusions, so "present but never
+			// linkable" is distinguishable from "not present at all".
+			$raw = preg_match_all( '/(?<![\w\-])' . preg_quote( $rule['phrase'], '/' ) . '(?![\w\-])/iu', wp_strip_all_tags( $post->post_content ) );
+
+			$out['rows'][] = array(
+				'phrase'      => $rule['phrase'],
+				'enabled'     => (int) $rule['enabled'],
+				'target'      => (int) $rule['target_id'],
+				'target_name' => get_the_title( (int) $rule['target_id'] ),
+				'raw'         => (int) $raw,
+				'linkable'    => (int) $analysis['occurrences'],
+				'placements'  => (int) $analysis['placements'],
+				'reason'      => $analysis['reason'],
+				'limits'      => sprintf( '%d/page, %s, %d%%', (int) $rule['max_per_page'], 'skip' === $rule['first_instance'] ? 'not first' : 'first ok', (int) $rule['throttle'] ),
+			);
+		}
+
+		return $out;
+	}
+
+	private static function reason_text( $row ) {
+		if ( ! $row['enabled'] ) {
+			return __( 'This phrase is disabled.', 'dos-toolkit' );
+		}
+
+		if ( $row['placements'] ) {
+			return __( 'Would be linked here.', 'dos-toolkit' );
+		}
+
+		switch ( $row['reason'] ) {
+			case 'self':
+				return __( 'This page is the destination, and a page never links to itself.', 'dos-toolkit' );
+
+			case 'first_only':
+				return __( 'Set to leave the first occurrence alone, and there is only one here.', 'dos-toolkit' );
+
+			case 'throttled':
+				return __( 'Excluded by the percentage limit. Raise it towards 100%.', 'dos-toolkit' );
+
+			case 'absent':
+				return $row['raw']
+					? __( 'Present, but every occurrence is inside a heading, bold text, a list, a table, an existing link or a shortcode.', 'dos-toolkit' )
+					: __( 'This phrase does not appear on this page.', 'dos-toolkit' );
+
+			default:
+				return __( 'Excluded by this rule\'s limits.', 'dos-toolkit' );
+		}
 	}
 
 	public static function render_page() {
@@ -462,6 +572,72 @@ final class DOS_Module_Links extends DOS_Module {
 			<p class="description">
 				<?php esc_html_e( '"Links made" counts links currently in your content. "Still available" is how many more the rule could place if applied now. Both come from the scan, so run it after any change to see current numbers.', 'dos-toolkit' ); ?>
 			</p>
+
+			<hr>
+			<h2><?php esc_html_e( 'Check one page', 'dos-toolkit' ); ?></h2>
+
+			<p class="description">
+				<?php esc_html_e( 'Run every phrase against a single page and see exactly what the matcher finds. Nothing is changed.', 'dos-toolkit' ); ?>
+			</p>
+
+			<form method="post">
+				<?php wp_nonce_field( 'dos_links' ); ?>
+				<input type="hidden" name="dos_action" value="links_test" />
+				<input type="text" name="test_target" class="regular-text code" placeholder="<?php esc_attr_e( 'post ID, or a URL on this site', 'dos-toolkit' ); ?>" />
+				<button type="submit" class="button"><?php esc_html_e( 'Check', 'dos-toolkit' ); ?></button>
+			</form>
+
+			<?php $test = get_transient( 'dos_links_test' ); ?>
+			<?php if ( $test ) : ?>
+				<?php delete_transient( 'dos_links_test' ); ?>
+
+				<?php if ( ! empty( $test['error'] ) ) : ?>
+					<div class="notice notice-warning inline"><p><?php echo esc_html( $test['error'] ); ?></p></div>
+				<?php else : ?>
+					<p>
+						<strong><?php echo esc_html( $test['post']['title'] ); ?></strong>
+						<span class="description">
+							<?php
+							printf(
+								/* translators: 1: post ID, 2: post type, 3: post status, 4: content length */
+								esc_html__( 'ID %1$d · %2$s · %3$s · %4$d characters of content', 'dos-toolkit' ),
+								(int) $test['post']['id'],
+								esc_html( $test['post']['type'] ),
+								esc_html( $test['post']['status'] ),
+								(int) $test['post']['length']
+							);
+							?>
+						</span>
+					</p>
+
+					<table class="widefat striped" style="max-width:70em">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Phrase', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Points at', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Limits', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'In the text', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Linkable', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Would link', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Why', 'dos-toolkit' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php foreach ( $test['rows'] as $row ) : ?>
+							<tr>
+								<td><code><?php echo esc_html( $row['phrase'] ); ?></code></td>
+								<td><?php echo esc_html( $row['target_name'] ); ?> <span class="description">#<?php echo (int) $row['target']; ?></span></td>
+								<td class="description"><?php echo esc_html( $row['limits'] ); ?></td>
+								<td><?php echo (int) $row['raw']; ?></td>
+								<td><?php echo (int) $row['linkable']; ?></td>
+								<td><strong><?php echo (int) $row['placements']; ?></strong></td>
+								<td class="description"><?php echo esc_html( self::reason_text( $row ) ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+			<?php endif; ?>
 
 			<hr>
 			<h2><?php esc_html_e( 'Run', 'dos-toolkit' ); ?></h2>

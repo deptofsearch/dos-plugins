@@ -30,6 +30,22 @@ final class DOS_Images_Compress {
 	/** Bytes per pixel above which a JPEG is probably carrying more quality than it shows. */
 	const HEAVY_BPP = 0.30;
 
+	/**
+	 * What a compression left behind, on the attachment itself.
+	 *
+	 * This is the guard as much as it is the record. A JPEG re-encode is
+	 * lossy every time, so running the library job twice would quietly
+	 * degrade every photograph on the site for almost no further saving.
+	 * An attachment carrying this meta is skipped.
+	 */
+	const META_RESULT = '_dos_compressed';
+
+	/** The same event as a bare timestamp, because meta cannot be sorted on a serialised array. */
+	const META_TIME = '_dos_compressed_at';
+
+	/** Results from wp_handle_upload, waiting for the attachment row to exist. */
+	private static $pending = array();
+
 	public static function quality() {
 		$value = DOS_Settings::get( 'images_quality', null );
 
@@ -53,6 +69,7 @@ final class DOS_Images_Compress {
 
 		if ( self::compress_uploads() ) {
 			add_filter( 'wp_handle_upload', array( __CLASS__, 'on_upload' ), 10, 2 );
+			add_action( 'add_attachment', array( __CLASS__, 'attach_upload_record' ) );
 		}
 	}
 
@@ -128,9 +145,13 @@ final class DOS_Images_Compress {
 	 * Written to a temporary file and moved into place, because a half-written
 	 * image is a corrupt image rather than a failed job.
 	 *
+	 * With $apply false nothing is replaced: the re-encode is measured and
+	 * thrown away. That is what a dry run reports, and it costs the same work
+	 * as the real thing, which is the only way the figure can be trusted.
+	 *
 	 * @return array|WP_Error before, after, saved
 	 */
-	public static function compress_file( $path, $mime, $quality = 0 ) {
+	public static function compress_file( $path, $mime, $quality = 0, $apply = true ) {
 		if ( ! file_exists( $path ) ) {
 			return new WP_Error( 'dos_missing', __( 'File not found.', 'dos-toolkit' ) );
 		}
@@ -182,6 +203,12 @@ final class DOS_Images_Compress {
 			return array( 'before' => $before, 'after' => $before, 'saved' => 0 );
 		}
 
+		if ( ! $apply ) {
+			wp_delete_file( $saved['path'] );
+
+			return array( 'before' => $before, 'after' => $after, 'saved' => $before - $after );
+		}
+
 		if ( ! @rename( $saved['path'], $path ) ) {
 			wp_delete_file( $saved['path'] );
 
@@ -193,6 +220,11 @@ final class DOS_Images_Compress {
 
 	/**
 	 * Compress an upload as it arrives, before it becomes the canonical file.
+	 *
+	 * This runs inside wp_handle_upload, which is before the attachment row
+	 * exists, so there is nothing yet to hang the per-image record on. The
+	 * site totals are recorded here and the record is held until
+	 * add_attachment fires with an ID.
 	 */
 	public static function on_upload( $upload, $context = 'upload' ) {
 		if ( empty( $upload['file'] ) || empty( $upload['type'] ) ) {
@@ -212,6 +244,10 @@ final class DOS_Images_Compress {
 		}
 
 		if ( $result['saved'] > 0 ) {
+			self::record_totals( $result['before'], $result['after'] );
+
+			self::$pending[ (string) $upload['file'] ] = $result;
+
 			DOS_Log::add(
 				'images',
 				'compressed',
@@ -220,6 +256,211 @@ final class DOS_Images_Compress {
 		}
 
 		return $upload;
+	}
+
+	/**
+	 * Hang the record from on_upload on the attachment that was just created.
+	 */
+	public static function attach_upload_record( $attachment_id ) {
+		if ( ! self::$pending ) {
+			return;
+		}
+
+		$path = get_attached_file( (int) $attachment_id );
+
+		if ( ! $path || ! isset( self::$pending[ (string) $path ] ) ) {
+			return;
+		}
+
+		$result = self::$pending[ (string) $path ];
+
+		unset( self::$pending[ (string) $path ] );
+
+		// The totals were already counted at upload; only the record is owed.
+		self::mark_attachment( (int) $attachment_id, $result, 'upload' );
+	}
+
+	/* ---------------------------------------------------------------------
+	 * What has actually been compressed
+	 *
+	 * Two records, deliberately. The site totals answer "what has this
+	 * setting bought me", and survive an image being deleted afterwards. The
+	 * per-attachment meta answers "has this file already been through a lossy
+	 * re-encode", which is the question the library job has to ask before it
+	 * touches anything.
+	 * ------------------------------------------------------------------- */
+
+	public static function stats() {
+		$stats = DOS_Settings::get( 'images_compress_stats', array() );
+		$stats = is_array( $stats ) ? $stats : array();
+
+		return wp_parse_args(
+			$stats,
+			array(
+				'count'  => 0,
+				'before' => 0,
+				'after'  => 0,
+				'saved'  => 0,
+				'first'  => 0,
+				'last'   => 0,
+			)
+		);
+	}
+
+	public static function record_totals( $before, $after ) {
+		$stats  = self::stats();
+		$before = (int) $before;
+		$after  = (int) $after;
+		$now    = time();
+
+		$stats['count']++;
+		$stats['before'] += $before;
+		$stats['after']  += $after;
+		$stats['saved']  += max( 0, $before - $after );
+		$stats['first']   = $stats['first'] ? $stats['first'] : $now;
+		$stats['last']    = $now;
+
+		DOS_Settings::set( 'images_compress_stats', $stats );
+
+		return $stats;
+	}
+
+	public static function reset_stats() {
+		DOS_Settings::set( 'images_compress_stats', array() );
+	}
+
+	public static function mark_attachment( $attachment_id, array $result, $source = 'library' ) {
+		$now = time();
+
+		update_post_meta(
+			(int) $attachment_id,
+			self::META_RESULT,
+			array(
+				'time'    => $now,
+				'before'  => (int) $result['before'],
+				'after'   => (int) $result['after'],
+				'saved'   => (int) $result['saved'],
+				'quality' => self::quality(),
+				'source'  => (string) $source,
+			)
+		);
+
+		update_post_meta( (int) $attachment_id, self::META_TIME, $now );
+	}
+
+	public static function record_for( $attachment_id ) {
+		$record = get_post_meta( (int) $attachment_id, self::META_RESULT, true );
+
+		return is_array( $record ) ? $record : null;
+	}
+
+	public static function is_compressed( $attachment_id ) {
+		return null !== self::record_for( $attachment_id );
+	}
+
+	/**
+	 * The most recently compressed images, newest first.
+	 */
+	public static function recent( $limit = 25 ) {
+		$ids = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'post_mime_type' => 'image',
+				'fields'         => 'ids',
+				'posts_per_page' => max( 1, (int) $limit ),
+				'meta_key'       => self::META_TIME,
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+				'no_found_rows'  => true,
+			)
+		);
+
+		$rows = array();
+
+		foreach ( (array) $ids as $id ) {
+			$record = self::record_for( $id );
+
+			if ( ! $record ) {
+				continue;
+			}
+
+			$path = get_attached_file( $id );
+
+			$rows[] = array(
+				'id'     => (int) $id,
+				'name'   => $path ? wp_basename( $path ) : sprintf( '#%d', (int) $id ),
+				'record' => $record,
+			);
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Re-encode one attachment's main file.
+	 *
+	 * The main file only. The registered sizes were generated through the
+	 * quality filter already, so re-encoding those would cost a second lossy
+	 * pass for almost nothing. The original (or the -scaled copy WordPress
+	 * serves in its place) is the file the weight audit is complaining about.
+	 *
+	 * @return array status, saved, note
+	 */
+	public static function compress_attachment( $attachment_id, $dry_run = true ) {
+		$attachment_id = (int) $attachment_id;
+
+		if ( self::is_compressed( $attachment_id ) ) {
+			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'already compressed', 'dos-toolkit' ) );
+		}
+
+		$mime = (string) get_post_mime_type( $attachment_id );
+
+		if ( ! self::compressible( $mime ) ) {
+			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'not a JPEG or PNG', 'dos-toolkit' ) );
+		}
+
+		$path = get_attached_file( $attachment_id );
+
+		if ( ! $path || ! file_exists( $path ) ) {
+			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'not on disk', 'dos-toolkit' ) );
+		}
+
+		$result = self::compress_file( $path, $mime, 0, ! $dry_run );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'status' => 'failed', 'saved' => 0, 'note' => $result->get_error_message() );
+		}
+
+		if ( $result['saved'] < 1 ) {
+			return array( 'status' => 'unchanged', 'saved' => 0, 'note' => __( 'already as small as this quality gets', 'dos-toolkit' ) );
+		}
+
+		if ( ! $dry_run ) {
+			self::record_totals( $result['before'], $result['after'] );
+			self::mark_attachment( $attachment_id, $result, 'library' );
+
+			// The stored file size is part of the attachment metadata, and a
+			// stale one misreports the library from here on.
+			$meta = wp_get_attachment_metadata( $attachment_id );
+
+			if ( is_array( $meta ) ) {
+				$meta['filesize'] = (int) $result['after'];
+
+				wp_update_attachment_metadata( $attachment_id, $meta );
+			}
+		}
+
+		return array(
+			'status' => 'compressed',
+			'saved'  => (int) $result['saved'],
+			'note'   => sprintf(
+				/* translators: 1: size before, 2: size after */
+				__( '%1$s to %2$s', 'dos-toolkit' ),
+				size_format( $result['before'] ),
+				size_format( $result['after'] )
+			),
+		);
 	}
 
 	/* ---------------------------------------------------------------------

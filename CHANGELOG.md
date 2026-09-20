@@ -5,6 +5,53 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.18.0
+
+Compression reported what it could save and never what it had saved.
+
+The Images screen had a weight audit, which is a forecast, and a quality
+sampler, which is an experiment. Neither of them answered the only question
+worth asking afterwards: what did this actually do to my library? The one
+record of a compression was a line in the Activity Log, which is an audit
+trail rather than a report — no running total, nothing per image, and nothing
+that survived being scrolled past.
+
+There is now a "What compression has saved" section: images compressed, bytes
+saved, the percentage that represents, and the twenty-five most recent with
+before, after, saved, quality and where each came from. It counts work done,
+not work available, and it says so, because the two numbers sitting on one
+screen would otherwise be read as the same number.
+
+Building the report exposed the larger gap behind it. Compression only ever
+ran on new uploads, so on an existing site the report would have stayed near
+enough empty forever while the weight audit went on listing problems nothing
+could act on. A "Compress the existing library" job now walks what is already
+there.
+
+Three decisions in that job are worth keeping:
+
+It re-encodes the main file only. The registered sizes were generated through
+the quality filter already; putting them through a second lossy pass would
+cost quality for almost no bytes. The original — or the `-scaled` copy
+WordPress serves in its place — is the file the audit is complaining about.
+
+Each attachment keeps a record of having been compressed, and that record is
+the guard, not the receipt. A JPEG re-encode is lossy every time. Without it,
+running the job twice would quietly degrade every photograph on the site while
+reporting almost no further saving, and nothing on screen would have looked
+wrong.
+
+Its dry run does the full encode and throws the result away rather than
+estimating. It costs the same work as the real run, which is the only way the
+figure it reports can be trusted — and this job overwrites originals, so the
+number in front of the confirmation has to be the real one.
+
+The job queries every image and skips the already-compressed ones in PHP
+rather than excluding them in SQL. The runner advances by a fixed stride, so a
+result set that shrinks as the job progresses steps straight over images it
+never looked at. That is the 0.7.3 failure, and it is a property of the runner
+rather than of any one job.
+
 ## 0.9.1
 
 The Internal Links dashboard reported nothing to link without saying why.

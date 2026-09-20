@@ -56,6 +56,14 @@ final class DOS_Module_Images extends DOS_Module {
 				'count'       => array( 'DOS_Images_Usage', 'count_attachments' ),
 				'step'        => array( __CLASS__, 'weight_audit_step' ),
 			),
+			'images_compress_library' => array(
+				'label'       => __( 'Compress the existing library', 'dos-toolkit' ),
+				'description' => __( 'Re-encodes every JPEG and PNG already in the library at the quality set above, keeping the result only where it is genuinely smaller. The main file only; the generated sizes were made at this quality already. An image is re-encoded once and never again — the record kept on each attachment is what stops a second run degrading it. Dry run does the same encoding and measures it without replacing anything, so the figure it reports is the real one. Originals are overwritten and cannot be restored.', 'dos-toolkit' ),
+				'batch_size'  => 20,
+				'destructive' => true,
+				'count'       => array( 'DOS_Images_Usage', 'count_attachments' ),
+				'step'        => array( __CLASS__, 'compress_library_step' ),
+			),
 			'images_alt_audit' => array(
 				'label'       => __( 'Audit alt text', 'dos-toolkit' ),
 				'description' => __( 'Reports images with no alt text. Reads only; it never invents alt text, because a wrong description is worse than none.', 'dos-toolkit' ),
@@ -183,6 +191,59 @@ final class DOS_Module_Images extends DOS_Module {
 		DOS_Settings::set( 'images_weight', $totals );
 
 		return array( 'processed' => count( $ids ), 'changed' => $flagged, 'notes' => $notes );
+	}
+
+	/**
+	 * Walk the library re-encoding what is worth re-encoding.
+	 *
+	 * The query is over every image, unfiltered, and the already-compressed
+	 * ones are skipped in PHP rather than excluded in SQL. That is deliberate:
+	 * the runner advances by a fixed stride, so a result set that shrinks as
+	 * the job progresses would step straight over images it never looked at.
+	 */
+	public static function compress_library_step( $offset, $size, $dry_run ) {
+		$ids = get_posts(
+			array(
+				'post_type'              => 'attachment',
+				'post_status'            => 'inherit',
+				'post_mime_type'         => 'image',
+				'fields'                 => 'ids',
+				'posts_per_page'         => $size,
+				'offset'                 => $offset,
+				'orderby'                => 'ID',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		$notes   = array();
+		$changed = 0;
+
+		foreach ( $ids as $id ) {
+			$result = DOS_Images_Compress::compress_attachment( $id, $dry_run );
+
+			if ( 'compressed' !== $result['status'] ) {
+				if ( 'failed' === $result['status'] && count( $notes ) < 40 ) {
+					$notes[] = sprintf( '%s — skipped: %s', get_the_title( $id ), $result['note'] );
+				}
+
+				continue;
+			}
+
+			$changed++;
+
+			if ( count( $notes ) < 40 ) {
+				$notes[] = sprintf(
+					'%s — %s (%s saved)',
+					get_the_title( $id ),
+					$result['note'],
+					size_format( $result['saved'] )
+				);
+			}
+		}
+
+		return array( 'processed' => count( $ids ), 'changed' => $changed, 'notes' => $notes );
 	}
 
 	/* ---------------------------------------------------------------------
@@ -483,6 +544,106 @@ final class DOS_Module_Images extends DOS_Module {
 			<?php endif; ?>
 
 			<hr>
+			<h2 id="compressed"><?php esc_html_e( 'What compression has saved', 'dos-toolkit' ); ?></h2>
+
+			<?php
+			$stats  = DOS_Images_Compress::stats();
+			$recent = $stats['count'] ? DOS_Images_Compress::recent( 25 ) : array();
+			?>
+
+			<?php if ( ! $stats['count'] ) : ?>
+				<p class="description">
+					<?php esc_html_e( 'Nothing compressed yet. This counts work actually done, which is not the same thing as the weight audit below — that reports what could be saved. Two things feed it: re-encoding new uploads as they arrive, and the library job that walks what is already there.', 'dos-toolkit' ); ?>
+				</p>
+			<?php else : ?>
+				<?php $percent = $stats['before'] ? round( ( $stats['saved'] / $stats['before'] ) * 100, 1 ) : 0; ?>
+
+				<p>
+					<?php
+					printf(
+						/* translators: 1: number of images, 2: bytes saved, 3: percentage, 4: size before, 5: size after */
+						esc_html__( '%1$d images compressed. %2$s saved — %3$s%% off, %4$s down to %5$s.', 'dos-toolkit' ),
+						(int) $stats['count'],
+						'<strong>' . esc_html( size_format( (int) $stats['saved'] ) ) . '</strong>',
+						esc_html( number_format_i18n( $percent, 1 ) ),
+						esc_html( size_format( (int) $stats['before'] ) ),
+						esc_html( size_format( (int) $stats['after'] ) )
+					);
+					?>
+					<br>
+					<span class="description">
+						<?php
+						printf(
+							/* translators: 1: time ago of first compression, 2: time ago of most recent */
+							esc_html__( 'First %1$s ago, most recent %2$s ago.', 'dos-toolkit' ),
+							esc_html( human_time_diff( (int) $stats['first'] ) ),
+							esc_html( human_time_diff( (int) $stats['last'] ) )
+						);
+						?>
+					</span>
+				</p>
+
+				<?php if ( $recent ) : ?>
+					<table class="widefat striped" style="max-width:70em">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'File', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Before', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'After', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Saved', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Quality', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'When', 'dos-toolkit' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php foreach ( $recent as $row ) : ?>
+							<?php $record = $row['record']; ?>
+							<tr>
+								<td>
+									<a href="<?php echo esc_url( get_edit_post_link( $row['id'] ) ); ?>"><code><?php echo esc_html( $row['name'] ); ?></code></a>
+									<span class="description">
+										<?php
+										echo 'upload' === $record['source']
+											? esc_html__( 'on upload', 'dos-toolkit' )
+											: esc_html__( 'library job', 'dos-toolkit' );
+										?>
+									</span>
+								</td>
+								<td><?php echo esc_html( size_format( (int) $record['before'] ) ); ?></td>
+								<td><?php echo esc_html( size_format( (int) $record['after'] ) ); ?></td>
+								<td>
+									<?php echo esc_html( size_format( (int) $record['saved'] ) ); ?>
+									<span class="description">
+										<?php
+										echo esc_html(
+											number_format_i18n(
+												$record['before'] ? round( ( $record['saved'] / $record['before'] ) * 100, 1 ) : 0,
+												1
+											)
+										);
+										?>%
+									</span>
+								</td>
+								<td><?php echo (int) $record['quality']; ?></td>
+								<td><?php echo esc_html( human_time_diff( (int) $record['time'] ) ); ?> <?php esc_html_e( 'ago', 'dos-toolkit' ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %s: link to the activity log */
+							esc_html__( 'The twenty-five most recent. Every compression, and every image skipped because it was too large to open safely, is written to the %s.', 'dos-toolkit' ),
+							'<a href="' . esc_url( add_query_arg( array( 'page' => 'dos-log', 'module' => 'images' ), admin_url( 'admin.php' ) ) ) . '">' . esc_html__( 'Activity Log', 'dos-toolkit' ) . '</a>'
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			<?php endif; ?>
+
+			<hr>
 			<h2><?php esc_html_e( 'Where the weight is', 'dos-toolkit' ); ?></h2>
 
 			<?php
@@ -553,7 +714,7 @@ final class DOS_Module_Images extends DOS_Module {
 			</p>
 
 			<?php
-			foreach ( array( 'images_weight_audit', 'images_usage_scan', 'images_alt_audit', 'images_clear_titles', 'images_delete_unused' ) as $job ) {
+			foreach ( array( 'images_weight_audit', 'images_usage_scan', 'images_compress_library', 'images_alt_audit', 'images_clear_titles', 'images_delete_unused' ) as $job ) {
 				DOS_Batch::render_runner( $job );
 			}
 			?>

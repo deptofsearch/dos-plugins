@@ -265,6 +265,13 @@ reference; none of it is built or shipped.
 | `breanm-clear-image-titles` | `modules/images/` (batch job) |
 | `breanm-plugin-downloader` | `modules/utilities/` |
 | `last-updated-column` | `modules/utilities/` (admin column and front-end date) |
+
+Two things from the originals were left out on purpose. Page Tags Tools
+injected a tag chooser into core's bulk-action markup with JavaScript, which
+breaks whenever that markup changes; the Utilities screen does the same job.
+Media Usage Manager showed a usage badge in the media grid through
+`wp_prepare_attachment_for_js` and bespoke JavaScript; the same answer appears
+in the attachment details panel without it.
 | `page-tags-tools` | `modules/utilities/` |
 
 `ai` was written from scratch and has no legacy counterpart.

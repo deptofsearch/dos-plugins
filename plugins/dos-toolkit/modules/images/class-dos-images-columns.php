@@ -16,6 +16,7 @@ final class DOS_Images_Columns {
 
 	const COLUMN = 'dos_featured';
 	const FILTER = 'dos_featured_filter';
+	const USAGE  = 'dos_usage';
 
 	public static function is_enabled() {
 		$value = DOS_Settings::get( 'images_featured_column', null );
@@ -33,6 +34,122 @@ final class DOS_Images_Columns {
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_filter' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'apply_filter' ) );
+
+		// The media library's own view of the same data.
+		add_filter( 'manage_media_columns', array( __CLASS__, 'add_usage_column' ) );
+		add_action( 'manage_media_custom_column', array( __CLASS__, 'render_usage_column' ), 10, 2 );
+		add_filter( 'attachment_fields_to_edit', array( __CLASS__, 'usage_field' ), 10, 2 );
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Usage, in the media library
+	 * ------------------------------------------------------------------- */
+
+	public static function add_usage_column( $columns ) {
+		$columns[ self::USAGE ] = __( 'Used', 'dos-toolkit' );
+
+		return $columns;
+	}
+
+	public static function render_usage_column( $column, $attachment_id ) {
+		if ( self::USAGE !== $column ) {
+			return;
+		}
+
+		if ( 0 !== strpos( (string) get_post_mime_type( $attachment_id ), 'image/' ) ) {
+			echo '&mdash;';
+
+			return;
+		}
+
+		echo wp_kses_post( self::status_badge( get_post_meta( $attachment_id, DOS_Images_Usage::META_STATUS, true ) ) );
+		echo '<div class="dos-used-in">' . wp_kses_post( self::format_used_in( get_post_meta( $attachment_id, DOS_Images_Usage::META_USED_IN, true ), 2 ) ) . '</div>';
+	}
+
+	/**
+	 * The same answer in the attachment details panel, where somebody is
+	 * usually deciding whether they can safely change or delete the file.
+	 */
+	public static function usage_field( $fields, $post ) {
+		if ( 0 !== strpos( (string) get_post_mime_type( $post ), 'image/' ) ) {
+			return $fields;
+		}
+
+		$fields[ self::USAGE ] = array(
+			'label' => __( 'Used', 'dos-toolkit' ),
+			'input' => 'html',
+			'html'  => self::status_badge( get_post_meta( $post->ID, DOS_Images_Usage::META_STATUS, true ) )
+				. '<br>' . self::format_used_in( get_post_meta( $post->ID, DOS_Images_Usage::META_USED_IN, true ) ),
+		);
+
+		return $fields;
+	}
+
+	/**
+	 * Three states, not two. An image nobody has scanned yet is not the same
+	 * as one a scan found no reference to, and showing them alike would put
+	 * unexamined images on a deletion list.
+	 */
+	public static function status_badge( $status ) {
+		if ( 'used' === $status ) {
+			return '<span class="dos-badge dos-badge-on">' . esc_html__( 'Used', 'dos-toolkit' ) . '</span>';
+		}
+
+		if ( 'unused' === $status ) {
+			return '<span class="dos-badge dos-badge-missing">' . esc_html__( 'Unused', 'dos-toolkit' ) . '</span>';
+		}
+
+		return '<span class="dos-badge dos-badge-off">' . esc_html__( 'Not scanned', 'dos-toolkit' ) . '</span>';
+	}
+
+	/**
+	 * Where an image is used, as links to the pages using it.
+	 *
+	 * @param int $limit Show at most this many, then a count of the rest.
+	 */
+	public static function format_used_in( $used_in, $limit = 0 ) {
+		$used_in = is_array( $used_in ) ? $used_in : array();
+
+		if ( ! $used_in ) {
+			return '&mdash;';
+		}
+
+		$items = array();
+
+		foreach ( $used_in as $usage ) {
+			if ( $limit && count( $items ) >= $limit ) {
+				break;
+			}
+
+			$post_id = isset( $usage['post_id'] ) ? absint( $usage['post_id'] ) : 0;
+
+			if ( ! $post_id ) {
+				continue;
+			}
+
+			$title = get_the_title( $post_id );
+			$title = $title ? $title : sprintf( /* translators: %d: post ID */ __( 'Post #%d', 'dos-toolkit' ), $post_id );
+			$type  = isset( $usage['type'] ) ? sanitize_key( $usage['type'] ) : 'content';
+
+			$items[] = sprintf(
+				'<a href="%s">%s</a> <span class="description">(%s)</span>',
+				esc_url( (string) get_edit_post_link( $post_id ) ),
+				esc_html( $title ),
+				'featured' === $type ? esc_html__( 'featured', 'dos-toolkit' ) : esc_html__( 'in content', 'dos-toolkit' )
+			);
+		}
+
+		if ( ! $items ) {
+			return '&mdash;';
+		}
+
+		$more = count( $used_in ) - count( $items );
+
+		if ( $more > 0 ) {
+			$items[] = '<span class="description">' . esc_html( sprintf( /* translators: %d: number of further pages */ __( '+%d more', 'dos-toolkit' ), $more ) ) . '</span>';
+		}
+
+		return implode( '<br>', $items );
 	}
 
 	/**

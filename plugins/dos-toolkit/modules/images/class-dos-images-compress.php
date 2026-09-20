@@ -297,23 +297,28 @@ final class DOS_Images_Compress {
 		return wp_parse_args(
 			$stats,
 			array(
-				'count'  => 0,
-				'before' => 0,
-				'after'  => 0,
-				'saved'  => 0,
-				'first'  => 0,
-				'last'   => 0,
+				'count'   => 0,
+				'resized' => 0,
+				'before'  => 0,
+				'after'   => 0,
+				'saved'   => 0,
+				'first'   => 0,
+				'last'    => 0,
 			)
 		);
 	}
 
-	public static function record_totals( $before, $after ) {
+	public static function record_totals( $before, $after, $resized = false ) {
 		$stats  = self::stats();
 		$before = (int) $before;
 		$after  = (int) $after;
 		$now    = time();
 
 		$stats['count']++;
+
+		if ( $resized ) {
+			$stats['resized']++;
+		}
 		$stats['before'] += $before;
 		$stats['after']  += $after;
 		$stats['saved']  += max( 0, $before - $after );
@@ -336,12 +341,17 @@ final class DOS_Images_Compress {
 			(int) $attachment_id,
 			self::META_RESULT,
 			array(
-				'time'    => $now,
-				'before'  => (int) $result['before'],
-				'after'   => (int) $result['after'],
-				'saved'   => (int) $result['saved'],
-				'quality' => self::quality(),
-				'source'  => (string) $source,
+				'time'        => $now,
+				'before'      => (int) $result['before'],
+				'after'       => (int) $result['after'],
+				'saved'       => (int) $result['saved'],
+				'quality'     => self::quality(),
+				'source'      => (string) $source,
+				'resized'     => ! empty( $result['resized'] ),
+				'from_width'  => isset( $result['from_width'] ) ? (int) $result['from_width'] : 0,
+				'from_height' => isset( $result['from_height'] ) ? (int) $result['from_height'] : 0,
+				'width'       => isset( $result['width'] ) ? (int) $result['width'] : 0,
+				'height'      => isset( $result['height'] ) ? (int) $result['height'] : 0,
 			)
 		);
 
@@ -398,23 +408,180 @@ final class DOS_Images_Compress {
 	}
 
 	/**
-	 * Re-encode one attachment's main file.
+	 * Shrink a file to fit a box and re-encode it, in one pass.
+	 *
+	 * One pass matters. A resize is itself a re-encode, so resizing and then
+	 * compressing separately puts a JPEG through two lossy generations for
+	 * one useful result. Everything here happens between a single decode and
+	 * a single encode.
+	 *
+	 * Never upscales: an image already inside the box is only re-encoded.
+	 *
+	 * @param int  $max     Longest edge to allow. 0 leaves dimensions alone.
+	 * @param bool $apply   False measures the result and throws it away.
+	 * @return array|WP_Error before, after, saved, resized, and both sizes.
+	 */
+	public static function optimise_file( $path, $mime, $max = 0, $quality = 0, $apply = true ) {
+		if ( ! file_exists( $path ) ) {
+			return new WP_Error( 'dos_missing', __( 'File not found.', 'dos-toolkit' ) );
+		}
+
+		if ( ! self::compressible( $mime ) ) {
+			return new WP_Error( 'dos_type', __( 'Only JPEG and PNG are re-encoded.', 'dos-toolkit' ) );
+		}
+
+		$size = @getimagesize( $path );
+
+		if ( ! $size ) {
+			return new WP_Error( 'dos_unreadable', __( 'Not a readable image.', 'dos-toolkit' ) );
+		}
+
+		$width  = (int) $size[0];
+		$height = (int) $size[1];
+		$max    = max( 0, (int) $max );
+		$shrink = $max > 0 && ( $width > $max || $height > $max );
+
+		$can = self::can_process( $width, $height );
+
+		if ( true !== $can ) {
+			return new WP_Error( 'dos_memory', $can );
+		}
+
+		wp_raise_memory_limit( 'image' );
+
+		$editor = wp_get_image_editor( $path );
+
+		if ( is_wp_error( $editor ) ) {
+			return $editor;
+		}
+
+		if ( $shrink ) {
+			// No crop: fit inside the box and keep the aspect ratio, because
+			// cropping decides for the photographer what the picture is of.
+			$resized = $editor->resize( $max, $max, false );
+
+			if ( is_wp_error( $resized ) ) {
+				return $resized;
+			}
+		}
+
+		$editor->set_quality( $quality ? max( 40, min( 100, (int) $quality ) ) : self::quality() );
+
+		$temp  = $path . '.dos-tmp';
+		$saved = $editor->save( $temp, $mime );
+
+		if ( is_wp_error( $saved ) ) {
+			if ( file_exists( $temp ) ) {
+				wp_delete_file( $temp );
+			}
+
+			return $saved;
+		}
+
+		$before = (int) filesize( $path );
+		$after  = (int) filesize( $saved['path'] );
+
+		// A result that is no smaller is not worth a lossy generation, and
+		// that holds whether or not the dimensions changed.
+		if ( $after >= $before || $after < 1 ) {
+			wp_delete_file( $saved['path'] );
+
+			return array(
+				'before'      => $before,
+				'after'       => $before,
+				'saved'       => 0,
+				'resized'     => false,
+				'from_width'  => $width,
+				'from_height' => $height,
+				'width'       => $width,
+				'height'      => $height,
+			);
+		}
+
+		$result = array(
+			'before'      => $before,
+			'after'       => $after,
+			'saved'       => $before - $after,
+			'resized'     => (bool) $shrink,
+			'from_width'  => $width,
+			'from_height' => $height,
+			'width'       => isset( $saved['width'] ) ? (int) $saved['width'] : $width,
+			'height'      => isset( $saved['height'] ) ? (int) $saved['height'] : $height,
+		);
+
+		if ( ! $apply ) {
+			wp_delete_file( $saved['path'] );
+
+			return $result;
+		}
+
+		if ( ! @rename( $saved['path'], $path ) ) {
+			wp_delete_file( $saved['path'] );
+
+			return new WP_Error( 'dos_replace', __( 'Could not replace the original file.', 'dos-toolkit' ) );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Drop generated sizes that are now larger than the image itself.
+	 *
+	 * After the main file shrinks, any registered size wider than it is a
+	 * file that can only ever be served as a worse choice than the full
+	 * image — bigger bytes for no more detail. WordPress will happily offer
+	 * one in a srcset, so leaving them would work against the reason for
+	 * rescaling in the first place.
+	 *
+	 * The metadata entry and the file go together. Removing the entry alone
+	 * would orphan the file permanently, since attachment deletion only
+	 * knows about sizes the metadata lists.
+	 *
+	 * @return array Names of the sizes removed.
+	 */
+	public static function prune_oversized_sizes( array &$meta, $width, $height, $dir ) {
+		if ( empty( $meta['sizes'] ) || ! is_array( $meta['sizes'] ) ) {
+			return array();
+		}
+
+		$removed = array();
+
+		foreach ( $meta['sizes'] as $name => $size ) {
+			if ( empty( $size['file'] ) ) {
+				continue;
+			}
+
+			if ( (int) $size['width'] <= (int) $width && (int) $size['height'] <= (int) $height ) {
+				continue;
+			}
+
+			$file = trailingslashit( $dir ) . wp_basename( $size['file'] );
+
+			if ( file_exists( $file ) ) {
+				wp_delete_file( $file );
+			}
+
+			unset( $meta['sizes'][ $name ] );
+
+			$removed[] = (string) $name;
+		}
+
+		return $removed;
+	}
+
+	/**
+	 * Bring one attachment's main file within the size limit and re-encode it.
 	 *
 	 * The main file only. The registered sizes were generated through the
 	 * quality filter already, so re-encoding those would cost a second lossy
-	 * pass for almost nothing. The original (or the -scaled copy WordPress
-	 * serves in its place) is the file the weight audit is complaining about.
+	 * pass for almost nothing, and they are generated from the original at
+	 * dimensions that are still correct.
 	 *
-	 * @return array status, saved, note
+	 * @return array status, saved, resized, note
 	 */
 	public static function compress_attachment( $attachment_id, $dry_run = true ) {
 		$attachment_id = (int) $attachment_id;
-
-		if ( self::is_compressed( $attachment_id ) ) {
-			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'already compressed', 'dos-toolkit' ) );
-		}
-
-		$mime = (string) get_post_mime_type( $attachment_id );
+		$mime          = (string) get_post_mime_type( $attachment_id );
 
 		if ( ! self::compressible( $mime ) ) {
 			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'not a JPEG or PNG', 'dos-toolkit' ) );
@@ -426,41 +593,106 @@ final class DOS_Images_Compress {
 			return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'not on disk', 'dos-toolkit' ) );
 		}
 
-		$result = self::compress_file( $path, $mime, 0, ! $dry_run );
+		$max    = self::threshold();
+		$record = self::record_for( $attachment_id );
+
+		if ( $record ) {
+			// Already through one lossy generation. The only thing worth a
+			// second one is dimensions, which is a bigger saving than any
+			// quality setting — and only when it has not been done already.
+			if ( ! empty( $record['resized'] ) || ! $max || ! self::is_oversized( $path, $max ) ) {
+				return array( 'status' => 'skipped', 'saved' => 0, 'note' => __( 'already optimised', 'dos-toolkit' ) );
+			}
+		}
+
+		$result = self::optimise_file( $path, $mime, $max, 0, ! $dry_run );
 
 		if ( is_wp_error( $result ) ) {
 			return array( 'status' => 'failed', 'saved' => 0, 'note' => $result->get_error_message() );
 		}
 
 		if ( $result['saved'] < 1 ) {
-			return array( 'status' => 'unchanged', 'saved' => 0, 'note' => __( 'already as small as this quality gets', 'dos-toolkit' ) );
+			return array( 'status' => 'unchanged', 'saved' => 0, 'note' => __( 'already as small as this setting gets', 'dos-toolkit' ) );
 		}
 
-		if ( ! $dry_run ) {
-			self::record_totals( $result['before'], $result['after'] );
-			self::mark_attachment( $attachment_id, $result, 'library' );
+		$note = sprintf(
+			/* translators: 1: size before, 2: size after */
+			__( '%1$s to %2$s', 'dos-toolkit' ),
+			size_format( $result['before'] ),
+			size_format( $result['after'] )
+		);
 
-			// The stored file size is part of the attachment metadata, and a
-			// stale one misreports the library from here on.
-			$meta = wp_get_attachment_metadata( $attachment_id );
+		if ( $result['resized'] ) {
+			$note = sprintf(
+				/* translators: 1: original dimensions, 2: new dimensions, 3: the size change */
+				__( '%1$s to %2$s, %3$s', 'dos-toolkit' ),
+				sprintf( '%dx%d', $result['from_width'], $result['from_height'] ),
+				sprintf( '%dx%d', $result['width'], $result['height'] ),
+				$note
+			);
+		}
 
-			if ( is_array( $meta ) ) {
-				$meta['filesize'] = (int) $result['after'];
+		if ( $dry_run ) {
+			return array(
+				'status'  => 'compressed',
+				'saved'   => (int) $result['saved'],
+				'resized' => (bool) $result['resized'],
+				'note'    => $note,
+			);
+		}
 
-				wp_update_attachment_metadata( $attachment_id, $meta );
+		self::record_totals( $result['before'], $result['after'], $result['resized'] );
+		self::mark_attachment( $attachment_id, $result, 'library' );
+
+		$meta = wp_get_attachment_metadata( $attachment_id );
+
+		if ( is_array( $meta ) ) {
+			// A stale filesize or dimension misreports the library from here
+			// on, and the dimensions are what every srcset is built from.
+			$meta['filesize'] = (int) $result['after'];
+			$meta['width']    = (int) $result['width'];
+			$meta['height']   = (int) $result['height'];
+
+			if ( $result['resized'] ) {
+				$removed = self::prune_oversized_sizes( $meta, $result['width'], $result['height'], dirname( $path ) );
+
+				if ( $removed ) {
+					$note .= sprintf(
+						/* translators: %s: comma-separated list of image size names */
+						__( ' (dropped %s, now larger than the image)', 'dos-toolkit' ),
+						implode( ', ', $removed )
+					);
+				}
 			}
+
+			wp_update_attachment_metadata( $attachment_id, $meta );
 		}
 
 		return array(
-			'status' => 'compressed',
-			'saved'  => (int) $result['saved'],
-			'note'   => sprintf(
-				/* translators: 1: size before, 2: size after */
-				__( '%1$s to %2$s', 'dos-toolkit' ),
-				size_format( $result['before'] ),
-				size_format( $result['after'] )
-			),
+			'status'  => 'compressed',
+			'saved'   => (int) $result['saved'],
+			'resized' => (bool) $result['resized'],
+			'note'    => $note,
 		);
+	}
+
+	/**
+	 * Whether the file on disk is larger than the limit in either direction.
+	 */
+	public static function is_oversized( $path, $max ) {
+		$max = (int) $max;
+
+		if ( $max < 1 ) {
+			return false;
+		}
+
+		$size = @getimagesize( $path );
+
+		if ( ! $size ) {
+			return false;
+		}
+
+		return (int) $size[0] > $max || (int) $size[1] > $max;
 	}
 
 	/* ---------------------------------------------------------------------

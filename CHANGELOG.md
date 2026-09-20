@@ -5,6 +5,52 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.19.0
+
+The library job rescales as well as re-encodes.
+
+Quality was always the smaller lever, and 0.18.0 only pulled the smaller
+lever. The weight audit has been saying so since 0.15.0: an image larger than
+anything that displays it costs more than the difference between quality 82
+and 75, and no quality setting fixes it. The job that acts on the audit now
+acts on its first finding rather than its third.
+
+Both happen in one pass. A resize is itself a re-encode, so rescaling and then
+compressing as separate jobs would put every photograph through two lossy
+generations to reach one result. Everything happens between a single decode
+and a single encode.
+
+The limit is the one already on the screen — the same number that scales new
+uploads — so there is one setting rather than two that can disagree. Nothing
+is ever enlarged, nothing is cropped, and a result that is no smaller is
+discarded rather than kept for the sake of having done something.
+
+Shrinking the main file makes a generated size bigger than the image it came
+from. The 2048x2048 size WordPress registers by default is wider than a 1920
+limit, and WordPress will offer it in a srcset quite happily: more bytes, no
+more detail, which is the opposite of the reason for rescaling. Those sizes
+are removed — the metadata entry and the file together, because removing the
+entry alone orphans the file forever. Attachment deletion only knows about the
+sizes the metadata lists.
+
+The generated sizes that still fit are left alone. They were produced from the
+original at dimensions that are still correct, and regenerating them from a
+smaller source would make them worse.
+
+One image, one lossy generation, still. The record on each attachment now says
+whether it was rescaled as well as re-encoded, and an image compressed by
+0.18.0 while still oversized is allowed exactly one more pass to fix the
+dimensions — the larger saving, and the one that could not be had any other
+way. Anything already rescaled is never touched again.
+
+Two things this deliberately does not do. It does not touch the unscaled
+original WordPress keeps beside a `-scaled` copy: that file is never served,
+so shrinking it would save disk and not load time, and it is the only copy of
+the full-resolution image on the site. And re-encoding through GD drops EXIF,
+which includes any embedded copyright or photographer credit — that is how
+every WordPress resize has always behaved, but it is worth knowing before
+running this over a library of commissioned photography.
+
 ## 0.18.0
 
 Compression reported what it could save and never what it had saved.

@@ -57,8 +57,8 @@ final class DOS_Module_Images extends DOS_Module {
 				'step'        => array( __CLASS__, 'weight_audit_step' ),
 			),
 			'images_compress_library' => array(
-				'label'       => __( 'Compress the existing library', 'dos-toolkit' ),
-				'description' => __( 'Re-encodes every JPEG and PNG already in the library at the quality set above, keeping the result only where it is genuinely smaller. The main file only; the generated sizes were made at this quality already. An image is re-encoded once and never again — the record kept on each attachment is what stops a second run degrading it. Dry run does the same encoding and measures it without replacing anything, so the figure it reports is the real one. Originals are overwritten and cannot be restored.', 'dos-toolkit' ),
+				'label'       => __( 'Compress and rescale the library', 'dos-toolkit' ),
+				'description' => __( 'Brings every JPEG and PNG already in the library within the size limit set above and re-encodes it at the quality set above — both in one pass, because a resize is itself a re-encode and doing them separately would cost two lossy generations for one result. Nothing is ever enlarged, nothing is cropped, and a result that is no smaller is discarded. The main file only; the generated sizes were made from the original at dimensions that are still correct. Where the main file shrinks below a generated size, that size is removed, since it could only ever be served as a larger file showing no more detail. An image is processed once — the record kept on each attachment is what stops a second run degrading it. Dry run does the same resize and encode and measures the result without replacing anything, so the figure it reports is the real one. Originals are overwritten and cannot be restored.', 'dos-toolkit' ),
 				'batch_size'  => 20,
 				'destructive' => true,
 				'count'       => array( 'DOS_Images_Usage', 'count_attachments' ),
@@ -235,7 +235,8 @@ final class DOS_Module_Images extends DOS_Module {
 
 			if ( count( $notes ) < 40 ) {
 				$notes[] = sprintf(
-					'%s — %s (%s saved)',
+					'%s%s — %s (%s saved)',
+					empty( $result['resized'] ) ? '' : '↓ ',
 					get_the_title( $id ),
 					$result['note'],
 					size_format( $result['saved'] )
@@ -434,6 +435,7 @@ final class DOS_Module_Images extends DOS_Module {
 						<td>
 							<input type="number" id="threshold" name="threshold" min="0" class="small-text" value="<?php echo (int) DOS_Images_Compress::threshold(); ?>" /> px
 							<p class="description"><?php esc_html_e( 'WordPress keeps the original and serves a scaled copy. 2560 is its default; 1920 is plenty for most sites. 0 leaves WordPress to decide.', 'dos-toolkit' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The library job below rescales to this same number, so there is one limit rather than two that can disagree. Lowering it does not retrospectively shrink anything — run the job.', 'dos-toolkit' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -544,7 +546,7 @@ final class DOS_Module_Images extends DOS_Module {
 			<?php endif; ?>
 
 			<hr>
-			<h2 id="compressed"><?php esc_html_e( 'What compression has saved', 'dos-toolkit' ); ?></h2>
+			<h2 id="compressed"><?php esc_html_e( 'What compression and rescaling have saved', 'dos-toolkit' ); ?></h2>
 
 			<?php
 			$stats  = DOS_Images_Compress::stats();
@@ -553,7 +555,7 @@ final class DOS_Module_Images extends DOS_Module {
 
 			<?php if ( ! $stats['count'] ) : ?>
 				<p class="description">
-					<?php esc_html_e( 'Nothing compressed yet. This counts work actually done, which is not the same thing as the weight audit below — that reports what could be saved. Two things feed it: re-encoding new uploads as they arrive, and the library job that walks what is already there.', 'dos-toolkit' ); ?>
+					<?php esc_html_e( 'Nothing optimised yet. This counts work actually done, which is not the same thing as the weight audit below — that reports what could be saved. Two things feed it: re-encoding new uploads as they arrive, and the library job that rescales and re-encodes what is already there.', 'dos-toolkit' ); ?>
 				</p>
 			<?php else : ?>
 				<?php $percent = $stats['before'] ? round( ( $stats['saved'] / $stats['before'] ) * 100, 1 ) : 0; ?>
@@ -570,6 +572,16 @@ final class DOS_Module_Images extends DOS_Module {
 						esc_html( size_format( (int) $stats['after'] ) )
 					);
 					?>
+					<?php if ( ! empty( $stats['resized'] ) ) : ?>
+						<br>
+						<?php
+						printf(
+							/* translators: %d: number of images whose dimensions were reduced */
+							esc_html__( '%d of them were also brought within the size limit, which is where most of that came from.', 'dos-toolkit' ),
+							(int) $stats['resized']
+						);
+						?>
+					<?php endif; ?>
 					<br>
 					<span class="description">
 						<?php
@@ -588,6 +600,7 @@ final class DOS_Module_Images extends DOS_Module {
 						<thead>
 							<tr>
 								<th><?php esc_html_e( 'File', 'dos-toolkit' ); ?></th>
+								<th><?php esc_html_e( 'Dimensions', 'dos-toolkit' ); ?></th>
 								<th><?php esc_html_e( 'Before', 'dos-toolkit' ); ?></th>
 								<th><?php esc_html_e( 'After', 'dos-toolkit' ); ?></th>
 								<th><?php esc_html_e( 'Saved', 'dos-toolkit' ); ?></th>
@@ -608,6 +621,23 @@ final class DOS_Module_Images extends DOS_Module {
 											: esc_html__( 'library job', 'dos-toolkit' );
 										?>
 									</span>
+								</td>
+								<td>
+									<?php if ( ! empty( $record['resized'] ) ) : ?>
+										<?php
+										printf(
+											/* translators: 1: original dimensions, 2: dimensions now */
+											esc_html__( '%1$s to %2$s', 'dos-toolkit' ),
+											esc_html( sprintf( '%dx%d', (int) $record['from_width'], (int) $record['from_height'] ) ),
+											'<strong>' . esc_html( sprintf( '%dx%d', (int) $record['width'], (int) $record['height'] ) ) . '</strong>'
+										);
+										?>
+									<?php elseif ( ! empty( $record['width'] ) ) : ?>
+										<?php echo esc_html( sprintf( '%dx%d', (int) $record['width'], (int) $record['height'] ) ); ?>
+										<span class="description"><?php esc_html_e( 'unchanged', 'dos-toolkit' ); ?></span>
+									<?php else : ?>
+										&#8212;
+									<?php endif; ?>
 								</td>
 								<td><?php echo esc_html( size_format( (int) $record['before'] ) ); ?></td>
 								<td><?php echo esc_html( size_format( (int) $record['after'] ) ); ?></td>

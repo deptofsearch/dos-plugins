@@ -120,22 +120,127 @@ final class DOS_Page_Tags {
 		return $used;
 	}
 
-	public static function pages( $search = '' ) {
-		$args = array(
-			'post_type'              => 'page',
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
-			'posts_per_page'         => 300,
-			'orderby'                => 'title',
-			'order'                  => 'ASC',
-			'no_found_rows'          => true,
-			'update_post_term_cache' => false,
+	/** Rows shown at once. The list scrolls; beyond this it paginates. */
+	const PER_PAGE = 100;
+
+	/** Titles pulled from the database in one go before filtering. */
+	const MAX_CANDIDATES = 5000;
+
+	/**
+	 * Find pages by title, either by plain text or by regular expression.
+	 *
+	 * Titles are fetched in one query and matched in PHP rather than handed
+	 * to MySQL's own REGEXP: its syntax is not PCRE, so a pattern that works
+	 * here would behave differently there, and a bad pattern would be a
+	 * database error rather than a message.
+	 *
+	 * @return array rows, total, pages, error
+	 */
+	public static function search( array $args = array() ) {
+		global $wpdb;
+
+		$args = wp_parse_args(
+			$args,
+			array(
+				'search' => '',
+				'regex'  => false,
+				'status' => 'any',
+				'page'   => 1,
+			)
 		);
 
-		if ( '' !== trim( (string) $search ) ) {
-			$args['s'] = sanitize_text_field( $search );
+		$statuses = array( 'publish', 'draft', 'pending', 'private', 'future' );
+
+		if ( in_array( $args['status'], $statuses, true ) ) {
+			$statuses = array( $args['status'] );
 		}
 
-		return get_posts( $args );
+		$placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+
+		$candidates = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID, post_title, post_status FROM {$wpdb->posts}
+				WHERE post_type = 'page' AND post_status IN ({$placeholders})
+				ORDER BY post_title ASC
+				LIMIT %d",
+				array_merge( $statuses, array( self::MAX_CANDIDATES ) )
+			),
+			ARRAY_A
+		);
+
+		$candidates = is_array( $candidates ) ? $candidates : array();
+		$search     = trim( (string) $args['search'] );
+		$error      = '';
+
+		if ( '' !== $search ) {
+			if ( $args['regex'] ) {
+				$pattern = '/' . str_replace( '/', '\/', $search ) . '/iu';
+
+				// Validate before use: an invalid pattern is a warning on
+				// every row otherwise, and no results with no explanation.
+				set_error_handler( function () { return true; } );
+				$valid = false !== @preg_match( $pattern, '' );
+				restore_error_handler();
+
+				if ( ! $valid ) {
+					return array(
+						'rows'  => array(),
+						'total' => 0,
+						'pages' => 0,
+						'error' => __( 'That is not a valid regular expression.', 'dos-toolkit' ),
+					);
+				}
+
+				$candidates = array_values( array_filter( $candidates, function ( $row ) use ( $pattern ) {
+					return 1 === preg_match( $pattern, (string) $row['post_title'] );
+				} ) );
+			} else {
+				$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( $search ) : strtolower( $search );
+
+				$candidates = array_values( array_filter( $candidates, function ( $row ) use ( $needle ) {
+					$title = function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $row['post_title'] ) : strtolower( (string) $row['post_title'] );
+
+					return false !== strpos( $title, $needle );
+				} ) );
+			}
+		}
+
+		$total = count( $candidates );
+		$page  = max( 1, (int) $args['page'] );
+		$rows  = array_slice( $candidates, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
+
+		return array(
+			'rows'  => $rows,
+			'total' => $total,
+			'pages' => (int) ceil( $total / self::PER_PAGE ),
+			'error' => $error,
+			'ids'   => wp_list_pluck( $candidates, 'ID' ),
+		);
+	}
+
+	/**
+	 * Tags for a set of pages, in one query rather than one per row.
+	 */
+	public static function tags_for( array $ids ) {
+		$ids = array_filter( array_map( 'absint', $ids ) );
+
+		if ( ! $ids ) {
+			return array();
+		}
+
+		$terms = wp_get_object_terms( $ids, 'post_tag', array( 'fields' => 'all_with_object_id' ) );
+
+		if ( is_wp_error( $terms ) ) {
+			return array();
+		}
+
+		$map = array();
+
+		foreach ( $terms as $term ) {
+			$map[ (int) $term->object_id ][] = $term->name;
+		}
+
+		return $map;
 	}
 
 	public static function handle_apply() {
@@ -145,7 +250,21 @@ final class DOS_Page_Tags {
 
 		check_admin_referer( self::ACTION );
 
-		$page_ids = isset( $_POST['page_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['page_ids'] ) ) : array();
+		// "Everything that matched" is re-run here rather than trusting a
+		// list of several thousand IDs posted from a browser.
+		if ( ! empty( $_POST['apply_all'] ) ) {
+			$found = self::search(
+				array(
+					'search' => isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '',
+					'regex'  => ! empty( $_POST['regex'] ),
+					'status' => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'any',
+				)
+			);
+
+			$page_ids = isset( $found['ids'] ) ? array_map( 'absint', $found['ids'] ) : array();
+		} else {
+			$page_ids = isset( $_POST['page_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['page_ids'] ) ) : array();
+		}
 		$tag      = isset( $_POST['tag'] ) ? sanitize_text_field( wp_unslash( $_POST['tag'] ) ) : '';
 		$term_id  = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
 

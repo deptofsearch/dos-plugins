@@ -188,3 +188,28 @@
 		run( panel, job, dryRun, true, confirm );
 	} );
 }() );
+
+/* Select all / none on any list that uses data-dos-check buttons. */
+( function () {
+	'use strict';
+
+	document.addEventListener( 'click', function ( event ) {
+		var button = event.target.closest( '[data-dos-check]' );
+
+		if ( ! button ) {
+			return;
+		}
+
+		var form = button.closest( 'form' );
+
+		if ( ! form ) {
+			return;
+		}
+
+		var wanted = 'all' === button.getAttribute( 'data-dos-check' );
+
+		form.querySelectorAll( '.dos-tag-check' ).forEach( function ( box ) {
+			box.checked = wanted;
+		} );
+	} );
+}() );

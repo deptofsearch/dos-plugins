@@ -333,21 +333,56 @@ final class DOS_Module_Utilities extends DOS_Module {
 				<h2><?php esc_html_e( 'Tag pages in bulk', 'dos-toolkit' ); ?></h2>
 
 				<?php
-				$search = isset( $_GET['dos_search'] ) ? sanitize_text_field( wp_unslash( $_GET['dos_search'] ) ) : '';
-				$pages  = DOS_Page_Tags::pages( $search );
-				$terms  = get_terms( array( 'taxonomy' => 'post_tag', 'hide_empty' => false ) );
-				$terms  = is_wp_error( $terms ) ? array() : $terms;
+				$search  = isset( $_GET['dos_search'] ) ? sanitize_text_field( wp_unslash( $_GET['dos_search'] ) ) : '';
+				$regex   = ! empty( $_GET['dos_regex'] );
+				$status  = isset( $_GET['dos_status'] ) ? sanitize_key( wp_unslash( $_GET['dos_status'] ) ) : 'any';
+				$paged   = isset( $_GET['dos_paged'] ) ? max( 1, (int) $_GET['dos_paged'] ) : 1;
+				$found   = DOS_Page_Tags::search( array( 'search' => $search, 'regex' => $regex, 'status' => $status, 'page' => $paged ) );
+				$tag_map = DOS_Page_Tags::tags_for( wp_list_pluck( $found['rows'], 'ID' ) );
+				$terms   = get_terms( array( 'taxonomy' => 'post_tag', 'hide_empty' => false ) );
+				$terms   = is_wp_error( $terms ) ? array() : $terms;
 				?>
 
-				<form method="get" style="margin-bottom:1em;">
+				<form method="get" class="dos-filters">
 					<input type="hidden" name="page" value="dos-utilities" />
-					<input type="search" name="dos_search" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Filter pages by title', 'dos-toolkit' ); ?>" />
+					<input type="search" name="dos_search" value="<?php echo esc_attr( $search ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Filter pages by title', 'dos-toolkit' ); ?>" />
+					<label style="margin:0 .6em">
+						<input type="checkbox" name="dos_regex" value="1" <?php checked( $regex ); ?> />
+						<?php esc_html_e( 'regular expression', 'dos-toolkit' ); ?>
+					</label>
+					<select name="dos_status">
+						<?php
+						$statuses = array(
+							'any'     => __( 'Any status', 'dos-toolkit' ),
+							'publish' => __( 'Published', 'dos-toolkit' ),
+							'draft'   => __( 'Draft', 'dos-toolkit' ),
+							'private' => __( 'Private', 'dos-toolkit' ),
+							'pending' => __( 'Pending', 'dos-toolkit' ),
+						);
+						?>
+						<?php foreach ( $statuses as $key => $label ) : ?>
+							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $status, $key ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
 					<button type="submit" class="button"><?php esc_html_e( 'Filter', 'dos-toolkit' ); ?></button>
+					<?php if ( $search || 'any' !== $status ) : ?>
+						<a class="button-link" href="<?php echo esc_url( admin_url( 'admin.php?page=dos-utilities' ) ); ?>"><?php esc_html_e( 'Clear', 'dos-toolkit' ); ?></a>
+					<?php endif; ?>
+					<p class="description" style="margin:.4em 0 0">
+						<?php esc_html_e( 'Matched against the title. With “regular expression” ticked, ^ $ . * + ? [ ] ( ) | all mean what they usually do — for example ^Service to match titles starting with Service, or (roof|gutter) to match either word.', 'dos-toolkit' ); ?>
+					</p>
 				</form>
+
+				<?php if ( ! empty( $found['error'] ) ) : ?>
+					<div class="notice notice-warning inline"><p><?php echo esc_html( $found['error'] ); ?></p></div>
+				<?php endif; ?>
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<?php wp_nonce_field( DOS_Page_Tags::ACTION ); ?>
 					<input type="hidden" name="action" value="<?php echo esc_attr( DOS_Page_Tags::ACTION ); ?>" />
+					<input type="hidden" name="search" value="<?php echo esc_attr( $search ); ?>" />
+					<input type="hidden" name="regex" value="<?php echo $regex ? '1' : ''; ?>" />
+					<input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>" />
 
 					<table class="form-table" role="presentation">
 						<tr>
@@ -360,7 +395,7 @@ final class DOS_Module_Utilities extends DOS_Module {
 											<option value="<?php echo (int) $term->term_id; ?>"><?php echo esc_html( $term->name ); ?></option>
 										<?php endforeach; ?>
 									</select>
-									<br><br>
+									&nbsp;
 								<?php endif; ?>
 								<input type="text" id="dos_tag_new" name="tag" class="regular-text" placeholder="<?php esc_attr_e( 'or type a new tag', 'dos-toolkit' ); ?>" />
 								<p class="description"><?php esc_html_e( 'Tags are added, never replaced — existing tags on a page are left alone.', 'dos-toolkit' ); ?></p>
@@ -368,44 +403,94 @@ final class DOS_Module_Utilities extends DOS_Module {
 						</tr>
 					</table>
 
-					<table class="widefat striped" style="max-width:60em">
-						<thead>
-							<tr>
-								<td class="check-column"></td>
-								<th><?php esc_html_e( 'Page', 'dos-toolkit' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'dos-toolkit' ); ?></th>
-								<th><?php esc_html_e( 'Current tags', 'dos-toolkit' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-						<?php if ( ! $pages ) : ?>
-							<tr><td colspan="4"><?php esc_html_e( 'No pages matched.', 'dos-toolkit' ); ?></td></tr>
-						<?php else : ?>
-							<?php foreach ( $pages as $page ) : ?>
-								<?php $page_terms = get_the_terms( $page->ID, 'post_tag' ); ?>
-								<tr>
-									<th class="check-column">
-										<input type="checkbox" name="page_ids[]" value="<?php echo (int) $page->ID; ?>" />
-									</th>
-									<td><?php echo esc_html( $page->post_title ? $page->post_title : __( '(no title)', 'dos-toolkit' ) ); ?></td>
-									<td><?php echo esc_html( $page->post_status ); ?></td>
-									<td>
-										<?php
-										echo esc_html(
-											$page_terms && ! is_wp_error( $page_terms )
-												? implode( ', ', wp_list_pluck( $page_terms, 'name' ) )
-												: '—'
-										);
-										?>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-						<?php endif; ?>
-						</tbody>
-					</table>
+					<p class="dos-tag-toolbar">
+						<button type="button" class="button" data-dos-check="all"><?php esc_html_e( 'Select all shown', 'dos-toolkit' ); ?></button>
+						<button type="button" class="button" data-dos-check="none"><?php esc_html_e( 'Select none', 'dos-toolkit' ); ?></button>
+						<span class="description">
+							<?php
+							printf(
+								/* translators: 1: rows shown, 2: rows matching */
+								esc_html__( 'showing %1$d of %2$d matching pages', 'dos-toolkit' ),
+								count( $found['rows'] ),
+								(int) $found['total']
+							);
+							?>
+						</span>
+					</p>
 
-					<?php submit_button( __( 'Apply tag to selected pages', 'dos-toolkit' ) ); ?>
+					<div class="dos-scroll">
+						<table class="widefat striped">
+							<thead>
+								<tr>
+									<td class="check-column"></td>
+									<th><?php esc_html_e( 'Page', 'dos-toolkit' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'dos-toolkit' ); ?></th>
+									<th><?php esc_html_e( 'Current tags', 'dos-toolkit' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+							<?php if ( ! $found['rows'] ) : ?>
+								<tr><td colspan="4"><?php esc_html_e( 'No pages matched.', 'dos-toolkit' ); ?></td></tr>
+							<?php else : ?>
+								<?php foreach ( $found['rows'] as $row ) : ?>
+									<?php $id = (int) $row['ID']; ?>
+									<tr>
+										<th class="check-column">
+											<input type="checkbox" name="page_ids[]" value="<?php echo $id; ?>" class="dos-tag-check" />
+										</th>
+										<td>
+											<?php echo esc_html( $row['post_title'] ? $row['post_title'] : __( '(no title)', 'dos-toolkit' ) ); ?>
+											<span class="description">#<?php echo $id; ?></span>
+										</td>
+										<td><?php echo esc_html( $row['post_status'] ); ?></td>
+										<td class="description">
+											<?php echo isset( $tag_map[ $id ] ) ? esc_html( implode( ', ', $tag_map[ $id ] ) ) : '—'; ?>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							<?php endif; ?>
+							</tbody>
+						</table>
+					</div>
+
+					<?php if ( $found['pages'] > 1 ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: 1: current page, 2: total pages */
+								esc_html__( 'Page %1$d of %2$d.', 'dos-toolkit' ),
+								(int) $paged,
+								(int) $found['pages']
+							);
+							?>
+							<?php if ( $paged > 1 ) : ?>
+								<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'dos-utilities', 'dos_search' => $search, 'dos_regex' => $regex ? 1 : null, 'dos_status' => $status, 'dos_paged' => $paged - 1 ), admin_url( 'admin.php' ) ) ); ?>">&laquo; <?php esc_html_e( 'Previous', 'dos-toolkit' ); ?></a>
+							<?php endif; ?>
+							<?php if ( $paged < $found['pages'] ) : ?>
+								<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'dos-utilities', 'dos_search' => $search, 'dos_regex' => $regex ? 1 : null, 'dos_status' => $status, 'dos_paged' => $paged + 1 ), admin_url( 'admin.php' ) ) ); ?>"><?php esc_html_e( 'Next', 'dos-toolkit' ); ?> &raquo;</a>
+							<?php endif; ?>
+							<?php esc_html_e( 'Ticks are lost when you change page — use “Apply to every match” instead.', 'dos-toolkit' ); ?>
+						</p>
+					<?php endif; ?>
+
+					<p>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply tag to selected pages', 'dos-toolkit' ); ?></button>
+
+						<?php if ( $found['total'] > count( $found['rows'] ) ) : ?>
+							<button type="submit" name="apply_all" value="1" class="button"
+								onclick="return confirm('<?php echo esc_js( sprintf( __( 'Apply the tag to all %d matching pages?', 'dos-toolkit' ), (int) $found['total'] ) ); ?>')">
+								<?php
+								printf(
+									/* translators: %d: number of matching pages */
+									esc_html__( 'Apply to every match (%d)', 'dos-toolkit' ),
+									(int) $found['total']
+								);
+								?>
+							</button>
+						<?php endif; ?>
+					</p>
 				</form>
+
 			<?php endif; ?>
 
 			<hr>

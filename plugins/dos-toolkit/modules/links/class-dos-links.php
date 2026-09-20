@@ -116,6 +116,14 @@ final class DOS_Module_Links extends DOS_Module {
 				'count'       => array( __CLASS__, 'count_posts' ),
 				'step'        => array( __CLASS__, 'remove_step' ),
 			),
+			'links_remove_orphans' => array(
+				'label'       => __( 'Remove links left by deleted phrases', 'dos-toolkit' ),
+				'description' => __( 'Deleting a phrase leaves its links in the content, belonging to nothing and counted by nothing. This strips those and leaves every live phrase, and every link added by hand, alone.', 'dos-toolkit' ),
+				'batch_size'  => self::BATCH,
+				'destructive' => true,
+				'count'       => array( __CLASS__, 'count_posts' ),
+				'step'        => array( __CLASS__, 'remove_orphans_step' ),
+			),
 		);
 
 		// One pair for the phrase currently being worked on, and only that
@@ -201,15 +209,35 @@ final class DOS_Module_Links extends DOS_Module {
 			DOS_Links_Rules::reset_stats( (int) $only_rule );
 		}
 
+		if ( 0 === $offset ) {
+			DOS_Settings::set( 'links_orphans', 0 );
+		}
+
 		$rules = self::rules_for( $only_rule );
 		$posts = self::page_of_posts( $offset, $size );
 		$notes = array();
 		$total = 0;
+		$valid = DOS_Links_Rules::ids();
 
 		foreach ( $posts as $post ) {
+			// Links whose phrase has since been deleted still sit in the
+			// content and belong to nothing. Nothing else counts them.
+			$orphans = 0;
+
+			foreach ( DOS_Links_Engine::linked_counts( $post->post_content ) as $rule_id => $count ) {
+				if ( ! in_array( (int) $rule_id, $valid, true ) ) {
+					$orphans += $count;
+				}
+			}
+
+			if ( $orphans ) {
+				DOS_Settings::set( 'links_orphans', (int) DOS_Settings::get( 'links_orphans', 0 ) + $orphans );
+			}
+
 			foreach ( $rules as $rule ) {
 				$analysis = DOS_Links_Engine::analyse( $post->post_content, $rule, $post->ID );
 				$existing = substr_count( $post->post_content, 'data-dos-link="' . (int) $rule['id'] . '"' );
+				$manual   = DOS_Links_Engine::manual_count( $post->post_content, $rule['phrase'] );
 
 				if ( $analysis['occurrences'] ) {
 					DOS_Links_Rules::add_found( $rule['id'], $analysis['occurrences'] );
@@ -220,11 +248,11 @@ final class DOS_Module_Links extends DOS_Module {
 					DOS_Links_Rules::set_reason( $rule['id'], $analysis['reason'] );
 				}
 
-				if ( ! $analysis['placements'] && ! $existing ) {
+				if ( ! $analysis['placements'] && ! $existing && ! $manual ) {
 					continue;
 				}
 
-				DOS_Links_Rules::add_stats( $rule['id'], $analysis['placements'], $existing, 1 );
+				DOS_Links_Rules::add_stats( $rule['id'], $analysis['placements'], $existing, 1, $manual );
 
 				$total += $analysis['placements'];
 			}
@@ -284,6 +312,44 @@ final class DOS_Module_Links extends DOS_Module {
 
 				DOS_Log::add( 'links', 'links_added', sprintf( '%d added to "%s"', $added, get_the_title( $post->ID ) ), $post->ID );
 			}
+		}
+
+		return array( 'processed' => count( $posts ), 'changed' => $count, 'notes' => $notes );
+	}
+
+	public static function remove_orphans_step( $offset, $size, $dry_run ) {
+		$posts = self::page_of_posts( $offset, $size );
+		$valid = DOS_Links_Rules::ids();
+		$notes = array();
+		$count = 0;
+
+		foreach ( $posts as $post ) {
+			$result = DOS_Links_Engine::strip_orphans( $post->post_content, $valid );
+
+			if ( ! $result['removed'] ) {
+				continue;
+			}
+
+			$count += $result['removed'];
+
+			if ( count( $notes ) < 60 ) {
+				$notes[] = sprintf(
+					/* translators: 1: number of links, 2: post title */
+					$dry_run ? __( 'Would remove %1$d orphaned link(s) from "%2$s"', 'dos-toolkit' ) : __( 'Removed %1$d orphaned link(s) from "%2$s"', 'dos-toolkit' ),
+					$result['removed'],
+					get_the_title( $post->ID )
+				);
+			}
+
+			if ( ! $dry_run ) {
+				self::write_content( $post->ID, $result['html'] );
+
+				DOS_Log::add( 'links', 'orphans_removed', sprintf( '%d removed from "%s"', $result['removed'], get_the_title( $post->ID ) ), $post->ID );
+			}
+		}
+
+		if ( ! $dry_run && ! $count && 0 === $offset ) {
+			DOS_Settings::set( 'links_orphans', 0 );
 		}
 
 		return array( 'processed' => count( $posts ), 'changed' => $count, 'notes' => $notes );
@@ -628,12 +694,26 @@ final class DOS_Module_Links extends DOS_Module {
 				<div class="dos-stat">
 					<span class="dos-stat-n"><?php echo (int) $totals['links']; ?></span>
 					<span class="dos-stat-l"><?php esc_html_e( 'links in place', 'dos-toolkit' ); ?></span>
-					<span class="description"><?php printf( esc_html__( '%d more available', 'dos-toolkit' ), (int) $totals['available'] ); ?></span>
+					<span class="description">
+						<?php
+						printf(
+							/* translators: 1: links available, 2: links added by hand */
+							esc_html__( '%1$d more available · %2$d by hand', 'dos-toolkit' ),
+							(int) $totals['available'],
+							(int) $totals['manual']
+						);
+						?>
+					</span>
 				</div>
 				<div class="dos-stat">
 					<span class="dos-stat-n<?php echo $totals['top_share'] >= 40 && $totals['phrases'] > 1 ? ' dos-media-warning' : ''; ?>"><?php echo esc_html( $totals['top_share'] ); ?>%</span>
 					<span class="dos-stat-l"><?php esc_html_e( 'busiest phrase', 'dos-toolkit' ); ?></span>
 					<span class="description"><?php esc_html_e( 'share of all links placed', 'dos-toolkit' ); ?></span>
+				</div>
+				<div class="dos-stat">
+					<span class="dos-stat-n<?php echo $totals['orphans'] ? ' dos-media-warning' : ''; ?>"><?php echo (int) $totals['orphans']; ?></span>
+					<span class="dos-stat-l"><?php esc_html_e( 'orphaned', 'dos-toolkit' ); ?></span>
+					<span class="description"><?php esc_html_e( 'left by deleted phrases', 'dos-toolkit' ); ?></span>
 				</div>
 				<div class="dos-stat">
 					<span class="dos-stat-n"><?php echo (int) $totals['idle']; ?></span>
@@ -825,6 +905,7 @@ final class DOS_Module_Links extends DOS_Module {
 							<th><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></th>
 							<th><?php self::sort_link( 'max_per_page', __( 'Limits', 'dos-toolkit' ) ); ?></th>
 							<th><?php self::sort_link( 'links_made', __( 'Links', 'dos-toolkit' ) ); ?></th>
+							<th><?php esc_html_e( 'By hand', 'dos-toolkit' ); ?></th>
 							<th><?php esc_html_e( 'Share', 'dos-toolkit' ); ?></th>
 							<th><?php self::sort_link( 'opportunities', __( 'Available', 'dos-toolkit' ) ); ?></th>
 							<th></th>
@@ -832,7 +913,7 @@ final class DOS_Module_Links extends DOS_Module {
 					</thead>
 					<tbody>
 					<?php if ( ! $rules ) : ?>
-						<tr><td colspan="8"><?php esc_html_e( 'Nothing matches.', 'dos-toolkit' ); ?></td></tr>
+						<tr><td colspan="9"><?php esc_html_e( 'Nothing matches.', 'dos-toolkit' ); ?></td></tr>
 					<?php else : ?>
 						<?php foreach ( $rules as $rule ) : ?>
 							<?php $share = DOS_Links_Rules::share( $rule, $all ); ?>
@@ -855,6 +936,7 @@ final class DOS_Module_Links extends DOS_Module {
 									?>
 								</td>
 								<td><strong><?php echo (int) $rule['links_made']; ?></strong></td>
+								<td><?php echo (int) ( $rule['manual_links'] ?? 0 ); ?></td>
 								<td<?php echo $share >= 40 && count( $all ) > 1 ? ' class="dos-media-warning"' : ''; ?>><?php echo esc_html( $share ); ?>%</td>
 								<td>
 									<?php echo (int) $rule['opportunities']; ?>
@@ -1072,7 +1154,7 @@ final class DOS_Module_Links extends DOS_Module {
 			</p>
 
 			<?php
-			foreach ( array( 'links_scan', 'links_apply', 'links_remove' ) as $job ) {
+			foreach ( array( 'links_scan', 'links_apply', 'links_remove_orphans', 'links_remove' ) as $job ) {
 				DOS_Batch::render_runner( $job );
 			}
 			?>

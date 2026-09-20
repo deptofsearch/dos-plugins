@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class DOS_Links_Rules {
 
-	const DB_VERSION = '2';
+	const DB_VERSION = '3';
 
 	public static function table() {
 		global $wpdb;
@@ -44,6 +44,7 @@ final class DOS_Links_Rules {
 				pages_linked bigint(20) unsigned NOT NULL DEFAULT 0,
 				scanned_at datetime NULL DEFAULT NULL,
 				last_reason varchar(20) NOT NULL DEFAULT '',
+				manual_links bigint(20) unsigned NOT NULL DEFAULT 0,
 				found_in bigint(20) unsigned NOT NULL DEFAULT 0,
 				created datetime NOT NULL,
 				PRIMARY KEY  (id),
@@ -160,6 +161,7 @@ final class DOS_Links_Rules {
 			"SELECT COUNT(*) AS phrases,
 				SUM(enabled) AS enabled,
 				SUM(links_made) AS links,
+				SUM(manual_links) AS manual,
 				SUM(opportunities) AS available,
 				SUM(CASE WHEN links_made = 0 THEN 1 ELSE 0 END) AS idle,
 				MAX(links_made) AS busiest
@@ -170,15 +172,19 @@ final class DOS_Links_Rules {
 		$row = is_array( $row ) ? $row : array();
 
 		$links   = (int) ( $row['links'] ?? 0 );
+		$manual  = (int) ( $row['manual'] ?? 0 );
 		$busiest = (int) ( $row['busiest'] ?? 0 );
+		$all     = $links + $manual;
 
 		return array(
 			'phrases'   => (int) ( $row['phrases'] ?? 0 ),
 			'enabled'   => (int) ( $row['enabled'] ?? 0 ),
 			'links'     => $links,
+			'manual'    => $manual,
 			'available' => (int) ( $row['available'] ?? 0 ),
 			'idle'      => (int) ( $row['idle'] ?? 0 ),
-			'top_share' => $links ? round( ( $busiest / $links ) * 100, 1 ) : 0.0,
+			'orphans'   => (int) DOS_Settings::get( 'links_orphans', 0 ),
+			'top_share' => $all ? round( ( $busiest / $all ) * 100, 1 ) : 0.0,
 		);
 	}
 
@@ -300,6 +306,18 @@ final class DOS_Links_Rules {
 		return count( $ids );
 	}
 
+	/**
+	 * IDs of every rule that still exists, for telling a live link from one
+	 * left behind by a deleted phrase.
+	 */
+	public static function ids() {
+		global $wpdb;
+
+		$table = self::table();
+
+		return array_map( 'intval', (array) $wpdb->get_col( "SELECT id FROM {$table}" ) );
+	}
+
 	public static function get( $id ) {
 		global $wpdb;
 
@@ -412,7 +430,7 @@ final class DOS_Links_Rules {
 		global $wpdb;
 
 		$table = self::table();
-		$reset = "opportunities = 0, links_made = 0, pages_linked = 0, found_in = 0, last_reason = ''";
+		$reset = "opportunities = 0, links_made = 0, pages_linked = 0, found_in = 0, manual_links = 0, last_reason = ''";
 
 		if ( $rule_id ) {
 			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET {$reset} WHERE id = %d", (int) $rule_id ) );
@@ -504,21 +522,29 @@ final class DOS_Links_Rules {
 		}
 	}
 
-	public static function add_stats( $rule_id, $opportunities, $links_made, $pages ) {
+	public static function add_stats( $rule_id, $opportunities, $links_made, $pages, $manual = 0 ) {
 		global $wpdb;
 
 		$table = self::table();
 
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$table} SET opportunities = opportunities + %d, links_made = links_made + %d, pages_linked = pages_linked + %d, scanned_at = %s WHERE id = %d",
+				"UPDATE {$table} SET opportunities = opportunities + %d, links_made = links_made + %d, pages_linked = pages_linked + %d, manual_links = manual_links + %d, scanned_at = %s WHERE id = %d",
 				(int) $opportunities,
 				(int) $links_made,
 				(int) $pages,
+				(int) $manual,
 				current_time( 'mysql' ),
 				(int) $rule_id
 			)
 		);
+	}
+
+	/**
+	 * Every link carrying this phrase, however it got there.
+	 */
+	public static function total_links( array $rule ) {
+		return (int) ( $rule['links_made'] ?? 0 ) + (int) ( $rule['manual_links'] ?? 0 );
 	}
 
 	/**
@@ -531,13 +557,16 @@ final class DOS_Links_Rules {
 		$total = 0;
 
 		foreach ( $all as $row ) {
-			$total += (int) $row['links_made'];
+			$total += self::total_links( $row );
 		}
 
 		if ( ! $total ) {
 			return 0.0;
 		}
 
-		return round( ( (int) $rule['links_made'] / $total ) * 100, 1 );
+		// Counted on every link carrying the phrase, not only the ones this
+		// module placed. A phrase linked twenty times by hand is carrying
+		// twenty links whoever typed them.
+		return round( ( self::total_links( $rule ) / $total ) * 100, 1 );
 	}
 }

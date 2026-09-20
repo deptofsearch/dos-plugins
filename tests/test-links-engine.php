@@ -10,6 +10,7 @@ define( 'PLUGIN', dirname( __DIR__ ) . '/plugins/dos-toolkit' );
 function esc_url( $u ) { return $u; }
 function esc_attr( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
 function get_permalink( $id ) { return $id ? 'https://example.com/target/' : false; }
+function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 
 require PLUGIN . '/modules/links/class-dos-links-engine.php';
 
@@ -270,6 +271,42 @@ check( 'still respects word boundaries', 0 === found( '<p>open houses in Phoenix
 $out = DOS_Links_Engine::apply( "<p>about open{$nbsp}houses in Phoenix today</p>", array( rule( array( 'phrase' => $phrase ) ) ), 5 );
 check( 'splices correctly around a non-breaking space', false !== strpos( $out['html'], '</a> today</p>' ), $out['html'] );
 check( '  and leaves the surrounding text intact', false !== strpos( $out['html'], '<p>about <a ' ), $out['html'] );
+
+echo "\n--- links already on the page ---\n";
+
+$mixed = '<p>'
+    . '<a href="/a" class="dos-ilink" data-dos-link="1">roof repair</a> '
+    . '<a href="/b" class="dos-ilink" data-dos-link="1">roof repair</a> '
+    . '<a href="/c" class="dos-ilink" data-dos-link="7">gutter cleaning</a> '
+    . '<a href="/d">roof repair</a> '
+    . '<a href="/e">something else</a>'
+    . '</p>';
+
+$counts = DOS_Links_Engine::linked_counts( $mixed );
+check( 'counts this module\'s links by phrase', 2 === ( $counts[1] ?? 0 ), json_encode( $counts ) );
+check( '  including one belonging to a deleted phrase', 1 === ( $counts[7] ?? 0 ) );
+check( '  and ignores links added by hand', 2 === count( $counts ), json_encode( $counts ) );
+
+check( 'counts a phrase linked by hand', 1 === DOS_Links_Engine::manual_count( $mixed, 'roof repair' ) );
+check( '  without counting its own links again', 1 === DOS_Links_Engine::manual_count( $mixed, 'roof repair' ) );
+check( 'counts nothing for a phrase nobody linked', 0 === DOS_Links_Engine::manual_count( $mixed, 'solar panels' ) );
+check( 'counts nothing in content with no links at all', 0 === DOS_Links_Engine::manual_count( '<p>roof repair</p>', 'roof repair' ) );
+
+echo "\n--- clearing up after a deleted phrase ---\n";
+
+$result = DOS_Links_Engine::strip_orphans( $mixed, array( 1 ) );
+check( 'removes links whose phrase no longer exists', 1 === $result['removed'], json_encode( $result ) );
+check( '  leaves the live phrase alone', 2 === substr_count( $result['html'], 'data-dos-link="1"' ), $result['html'] );
+check( '  leaves links added by hand alone', false !== strpos( $result['html'], '<a href="/d">roof repair</a>' ), $result['html'] );
+check( '  and keeps the words that were linked', false !== strpos( $result['html'], 'gutter cleaning' ), $result['html'] );
+
+$none = DOS_Links_Engine::strip_orphans( $mixed, array( 1, 7 ) );
+check( 'removes nothing when every phrase still exists', 0 === $none['removed'] );
+
+$all = DOS_Links_Engine::strip_orphans( $mixed, array() );
+check( 'removes all of them when every phrase is gone', 3 === $all['removed'], json_encode( $all['removed'] ) );
+check( '  still leaving both hand-made links', 2 === substr_count( $all['html'], '<a href="/' ), $all['html'] );
+check( '  and not touching the other hand-made link', false !== strpos( $all['html'], '<a href="/e">something else</a>' ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

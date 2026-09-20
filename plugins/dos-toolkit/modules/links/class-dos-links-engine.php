@@ -491,7 +491,11 @@ final class DOS_Links_Engine {
 				continue;
 			}
 
-			$weights[ (int) $rule['id'] ] = isset( $rule['links_made'] ) ? (int) $rule['links_made'] : 0;
+			// Weighted on every link carrying the phrase, including ones
+			// added by hand — a phrase already linked twenty times is not
+			// under-used just because this module did not place them.
+			$weights[ (int) $rule['id'] ] = ( isset( $rule['links_made'] ) ? (int) $rule['links_made'] : 0 )
+				+ ( isset( $rule['manual_links'] ) ? (int) $rule['manual_links'] : 0 );
 
 			foreach ( self::placements( $html, $rule, $post_id ) as $placement ) {
 				$insertions[] = array(
@@ -566,6 +570,89 @@ final class DOS_Links_Engine {
 		}
 
 		return array( 'html' => $html, 'added' => $added, 'capped' => $capped );
+	}
+
+	/**
+	 * Links this module has placed in a piece of content, by rule.
+	 *
+	 * @return array rule_id => count
+	 */
+	public static function linked_counts( $html ) {
+		$counts = array();
+
+		if ( preg_match_all( '#<a\b[^>]*data-dos-link="(\d+)"#i', (string) $html, $m ) ) {
+			foreach ( $m[1] as $id ) {
+				$id            = (int) $id;
+				$counts[ $id ] = isset( $counts[ $id ] ) ? $counts[ $id ] + 1 : 1;
+			}
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Occurrences of a phrase sitting inside a link somebody added by hand.
+	 *
+	 * The matcher skips these, correctly — the words are already a link. But
+	 * they are part of the site's linking profile, and a share worked out
+	 * without them describes only what this module did rather than what is
+	 * actually on the page.
+	 */
+	public static function manual_count( $html, $phrase ) {
+		$html = (string) $html;
+
+		if ( '' === trim( $html ) || false === stripos( $html, '<a' ) ) {
+			return 0;
+		}
+
+		$pattern = '/(?<![\w\-])' . self::space_tolerant( $phrase ) . '(?![\w\-])/iu';
+		$count   = 0;
+
+		if ( ! preg_match_all( '#<a\b([^>]*)>(.*?)</a>#is', $html, $links, PREG_SET_ORDER ) ) {
+			return 0;
+		}
+
+		foreach ( $links as $link ) {
+			// Ours are counted separately and are not "by hand".
+			if ( false !== stripos( $link[1], 'data-dos-link=' ) ) {
+				continue;
+			}
+
+			$count += preg_match_all( $pattern, wp_strip_all_tags( $link[2] ) );
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Remove links whose rule no longer exists.
+	 *
+	 * Deleting a phrase leaves its links behind in the content, pointing
+	 * somewhere real but belonging to nothing. They are invisible to every
+	 * count that works from the rules table, which is how a site's linking
+	 * profile quietly stops matching its own reports.
+	 *
+	 * @param array $valid_ids Rule IDs that still exist.
+	 */
+	public static function strip_orphans( $html, array $valid_ids ) {
+		$valid   = array_map( 'intval', $valid_ids );
+		$removed = 0;
+
+		$result = preg_replace_callback(
+			'#<a\b[^>]*data-dos-link="(\d+)"[^>]*>(.*?)</a>#is',
+			function ( $m ) use ( $valid, &$removed ) {
+				if ( in_array( (int) $m[1], $valid, true ) ) {
+					return $m[0];
+				}
+
+				$removed++;
+
+				return $m[2];
+			},
+			(string) $html
+		);
+
+		return array( 'html' => null === $result ? $html : $result, 'removed' => $removed );
 	}
 
 	/**

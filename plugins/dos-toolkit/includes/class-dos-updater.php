@@ -326,29 +326,77 @@ final class DOS_Updater {
 		return $transient;
 	}
 
+	/**
+	 * Describe this plugin to the View details screen.
+	 *
+	 * Once the slug is ours this always answers, even when the release
+	 * lookup has nothing to say. Returning false hands the question to
+	 * wordpress.org, which has never heard of this plugin and replies
+	 * "Plugin not found." — an accurate answer to a question that should not
+	 * have reached it, and one that reads as a broken plugin.
+	 */
 	public static function plugin_info( $result, $action, $args ) {
-		if ( 'plugin_information' !== $action || empty( $args->slug ) || self::SLUG !== $args->slug ) {
+		if ( 'plugin_information' !== $action ) {
+			return $result;
+		}
+
+		$slug = is_object( $args ) && isset( $args->slug ) ? $args->slug : '';
+		$slug = ( '' === $slug && is_array( $args ) && isset( $args['slug'] ) ) ? $args['slug'] : $slug;
+
+		if ( self::SLUG !== $slug ) {
 			return $result;
 		}
 
 		$release = self::release();
+		$notes   = '';
 
-		if ( ! $release ) {
-			return $result;
+		if ( $release && ! empty( $release['notes'] ) ) {
+			$notes = wpautop( esc_html( $release['notes'] ) );
+		} elseif ( $miss = self::last_miss() ) {
+			$notes = wpautop( esc_html( sprintf(
+				/* translators: %s: why the release could not be read */
+				__( 'The release notes could not be read just now: %s', 'dos-toolkit' ),
+				$miss['reason']
+			) ) );
 		}
 
-		return (object) array(
-			'name'          => 'DoS Toolkit',
-			'slug'          => self::SLUG,
-			'version'       => $release['version'],
-			'author'        => '<a href="https://departmentofsearch.com">Department of Search</a>',
-			'homepage'      => $release['url'],
-			'download_link' => $release['package'],
-			'last_updated'  => $release['date'],
-			'sections'      => array(
-				'changelog' => wpautop( esc_html( $release['notes'] ) ),
+		$info = array(
+			'name'              => 'DoS Toolkit',
+			'slug'              => self::SLUG,
+			'plugin'            => DOS_TOOLKIT_BASENAME,
+			'version'           => $release ? $release['version'] : DOS_TOOLKIT_VERSION,
+			'author'            => '<a href="https://departmentofsearch.com">Department of Search</a>',
+			'author_profile'    => 'https://departmentofsearch.com',
+			'homepage'          => 'https://github.com/' . self::repo(),
+			'download_link'     => $release ? $release['package'] : '',
+			'trunk'             => $release ? $release['package'] : '',
+			'last_updated'      => $release ? $release['date'] : '',
+			'requires'          => '6.0',
+			'tested'            => get_bloginfo( 'version' ),
+			'requires_php'      => '7.4',
+			'active_installs'   => 0,
+			'rating'            => 0,
+			'num_ratings'       => 0,
+			'downloaded'        => 0,
+			'added'             => '',
+			'banners'           => array(),
+			'icons'             => array(),
+			'contributors'      => array(),
+			'sections'          => array(
+				'description' => wpautop( esc_html__( 'Department of Search standard toolkit. SEO, AI search, image and media management, internal links, redirects and site utilities, shipped as modules that are disabled until you turn them on.', 'dos-toolkit' ) ),
+				'changelog'   => $notes ? $notes : wpautop( esc_html__( 'No release notes were published for this version.', 'dos-toolkit' ) ),
 			),
 		);
+
+		if ( $release && ! empty( $release['url'] ) ) {
+			$info['sections']['changelog'] .= sprintf(
+				'<p><a href="%s" target="_blank" rel="noopener">%s</a></p>',
+				esc_url( $release['url'] ),
+				esc_html__( 'Read this release on GitHub', 'dos-toolkit' )
+			);
+		}
+
+		return (object) $info;
 	}
 
 	/**

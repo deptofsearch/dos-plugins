@@ -28,6 +28,9 @@ function __( $s, $d = '' ) { return $s; }
 function add_filter() {} function add_action() {}
 function get_bloginfo( $w ) { return '6.5'; }
 function wpautop( $s ) { return $s; } function esc_html( $s ) { return $s; }
+function esc_html__( $s, $d = '' ) { return $s; }
+function esc_url( $s ) { return $s; }
+function esc_attr( $s ) { return $s; }
 
 class WP_Error {
     private $msg;
@@ -167,6 +170,36 @@ check( 'handles a bulk update that includes this plugin', ( function () {
     DOS_Updater::after_update( null, array( 'type' => 'plugin', 'plugins' => array( 'a/a.php', DOS_TOOLKIT_BASENAME ) ) );
     return false === get_site_transient( 'dos_toolkit_release' );
 } )() );
+
+echo "\n--- the View details screen ---\n";
+
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
+
+$info = DOS_Updater::plugin_info( false, 'plugin_information', (object) array( 'slug' => 'dos-toolkit' ) );
+check( 'answers for its own slug', is_object( $info ), gettype( $info ) );
+check( '  with the version on offer', '0.6.0' === $info->version, json_encode( $info->version ?? null ) );
+check( '  a changelog section', ! empty( $info->sections['changelog'] ) );
+check( '  and a description, which the screen opens on', ! empty( $info->sections['description'] ) );
+
+check( 'leaves other plugins alone', false === DOS_Updater::plugin_info( false, 'plugin_information', (object) array( 'slug' => 'akismet' ) ) );
+check( 'leaves other actions alone', false === DOS_Updater::plugin_info( false, 'query_plugins', (object) array( 'slug' => 'dos-toolkit' ) ) );
+
+// The failure that produced "Plugin not found." on the canary: with nothing
+// cached and the lookup failing, this used to hand the question to
+// wordpress.org, which has never heard of this plugin.
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = array( 'response' => array( 'code' => 403 ), 'body' => '{}' );
+
+$info = DOS_Updater::plugin_info( false, 'plugin_information', (object) array( 'slug' => 'dos-toolkit' ) );
+check( 'still answers when the release cannot be read', is_object( $info ), gettype( $info ) );
+check( '  falling back to the installed version', DOS_TOOLKIT_VERSION === $info->version, json_encode( $info->version ?? null ) );
+check( '  and saying why the notes are missing', false !== strpos( $info->sections['changelog'], '403' ), $info->sections['changelog'] );
+
+// Some callers pass an array rather than an object.
+$GLOBALS['transients'] = array();
+$GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
+check( 'accepts an array of arguments as well as an object', is_object( DOS_Updater::plugin_info( false, 'plugin_information', array( 'slug' => 'dos-toolkit' ) ) ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

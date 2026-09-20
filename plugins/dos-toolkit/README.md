@@ -131,6 +131,13 @@ vanishes from both lists whenever the site is current — at which point
 WordPress hides the auto-update toggle and reports that auto-updates are
 unavailable.
 
+**A `plugins_api` filter must answer for its own slug every time.** Returning
+false hands the question on to wordpress.org, which has never heard of a
+self-hosted plugin and replies "Plugin not found." — an accurate answer to a
+question that should not have reached it, and one that reads to everybody as a
+broken plugin. Answer with what is known, even when a release lookup has just
+failed.
+
 **Failed update checks must cache separately from successful ones.** GitHub
 allows 60 unauthenticated API requests an hour per IP, which shared hosting
 reaches. If a failure is cached for as long as a success, one rate-limited

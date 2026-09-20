@@ -171,12 +171,22 @@ final class DOS_Links_Rules {
 	 * Statistics
 	 * ------------------------------------------------------------------- */
 
-	public static function reset_stats() {
+	/**
+	 * @param int $rule_id Reset one rule's figures, or 0 for all of them.
+	 */
+	public static function reset_stats( $rule_id = 0 ) {
 		global $wpdb;
 
 		$table = self::table();
+		$reset = "opportunities = 0, links_made = 0, pages_linked = 0, found_in = 0, last_reason = ''";
 
-		$wpdb->query( "UPDATE {$table} SET opportunities = 0, links_made = 0, pages_linked = 0, found_in = 0, last_reason = ''" );
+		if ( $rule_id ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET {$reset} WHERE id = %d", (int) $rule_id ) );
+
+			return;
+		}
+
+		$wpdb->query( "UPDATE {$table} SET {$reset}" );
 	}
 
 	/**

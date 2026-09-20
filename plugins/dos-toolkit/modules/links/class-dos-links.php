@@ -82,7 +82,7 @@ final class DOS_Module_Links extends DOS_Module {
 	 * ------------------------------------------------------------------- */
 
 	public static function jobs() {
-		return array(
+		$jobs = array(
 			'links_scan' => array(
 				'label'       => __( 'Scan for link opportunities', 'dos-toolkit' ),
 				'description' => __( 'Counts where every enabled rule could place a link, and how many links are already in place. Changes nothing. Run it before applying, and again afterwards to see the result.', 'dos-toolkit' ),
@@ -108,14 +108,65 @@ final class DOS_Module_Links extends DOS_Module {
 				'step'        => array( __CLASS__, 'remove_step' ),
 			),
 		);
-	}
 
-	public static function scan_step( $offset, $size, $dry_run ) {
-		if ( 0 === $offset ) {
-			DOS_Links_Rules::reset_stats();
+		// One pair per phrase, so a single phrase can be revisited without
+		// touching the rest.
+		foreach ( DOS_Links_Rules::all() as $rule ) {
+			$id = (int) $rule['id'];
+
+			$jobs[ 'links_scan_' . $id ] = array(
+				/* translators: %s: keyword phrase */
+				'label'       => sprintf( __( 'Rescan “%s”', 'dos-toolkit' ), $rule['phrase'] ),
+				'description' => __( 'Looks for this phrase across the whole site again, so content added since the phrase was set up is counted. Changes nothing.', 'dos-toolkit' ),
+				'batch_size'  => self::BATCH,
+				'always_live' => true,
+				'count'       => array( __CLASS__, 'count_posts' ),
+				'step'        => function ( $offset, $size, $dry_run ) use ( $id ) {
+					return DOS_Module_Links::scan_step( $offset, $size, $dry_run, $id );
+				},
+			);
+
+			$jobs[ 'links_apply_' . $id ] = array(
+				/* translators: %s: keyword phrase */
+				'label'       => sprintf( __( 'Apply links for “%s”', 'dos-toolkit' ), $rule['phrase'] ),
+				'description' => __( 'Writes links for this phrase only. Every other phrase is left exactly as it is.', 'dos-toolkit' ),
+				'batch_size'  => self::BATCH,
+				'destructive' => true,
+				'count'       => array( __CLASS__, 'count_posts' ),
+				'step'        => function ( $offset, $size, $dry_run ) use ( $id ) {
+					return DOS_Module_Links::apply_step( $offset, $size, $dry_run, $id );
+				},
+			);
 		}
 
-		$rules = DOS_Links_Rules::all( true );
+		return $jobs;
+	}
+
+	/**
+	 * Every enabled rule, or just one of them.
+	 *
+	 * Rescanning a single phrase is what a site needs months later, when
+	 * content has been added that the phrase now appears in and a full pass
+	 * over everything is more than the question deserves.
+	 */
+	private static function rules_for( $only_rule ) {
+		$only_rule = (int) $only_rule;
+
+		if ( ! $only_rule ) {
+			return DOS_Links_Rules::all( true );
+		}
+
+		$rule = DOS_Links_Rules::get( $only_rule );
+
+		return ( $rule && $rule['enabled'] ) ? array( $rule ) : array();
+	}
+
+	public static function scan_step( $offset, $size, $dry_run, $only_rule = 0 ) {
+		if ( 0 === $offset ) {
+			DOS_Links_Rules::reset_stats( (int) $only_rule );
+		}
+
+		$rules = self::rules_for( $only_rule );
 		$posts = self::page_of_posts( $offset, $size );
 		$notes = array();
 		$total = 0;
@@ -156,8 +207,8 @@ final class DOS_Module_Links extends DOS_Module {
 		return array( 'processed' => count( $posts ), 'changed' => $total, 'notes' => $notes );
 	}
 
-	public static function apply_step( $offset, $size, $dry_run ) {
-		$rules = DOS_Links_Rules::all( true );
+	public static function apply_step( $offset, $size, $dry_run, $only_rule = 0 ) {
+		$rules = self::rules_for( $only_rule );
 		$posts = self::page_of_posts( $offset, $size );
 		$notes = array();
 		$count = 0;
@@ -556,6 +607,10 @@ final class DOS_Module_Links extends DOS_Module {
 									<button type="submit" class="button-link"><?php echo $rule['enabled'] ? esc_html__( 'Disable', 'dos-toolkit' ) : esc_html__( 'Enable', 'dos-toolkit' ); ?></button>
 								</form>
 								&nbsp;
+								<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'dos-links', 'rescan' => (int) $rule['id'] ), admin_url( 'admin.php' ) ) ); ?>#rescan">
+									<?php esc_html_e( 'Rescan', 'dos-toolkit' ); ?>
+								</a>
+								&nbsp;
 								<form method="post" style="display:inline">
 									<?php wp_nonce_field( 'dos_links' ); ?>
 									<input type="hidden" name="dos_action" value="links_delete" />
@@ -572,6 +627,33 @@ final class DOS_Module_Links extends DOS_Module {
 			<p class="description">
 				<?php esc_html_e( '"Links made" counts links currently in your content. "Still available" is how many more the rule could place if applied now. Both come from the scan, so run it after any change to see current numbers.', 'dos-toolkit' ); ?>
 			</p>
+
+			<?php
+			$rescan_id = isset( $_GET['rescan'] ) ? (int) $_GET['rescan'] : 0;
+			$rescan    = $rescan_id ? DOS_Links_Rules::get( $rescan_id ) : null;
+			?>
+
+			<?php if ( $rescan ) : ?>
+				<hr>
+				<h2 id="rescan">
+					<?php
+					printf(
+						/* translators: %s: keyword phrase */
+						esc_html__( 'Just this phrase: %s', 'dos-toolkit' ),
+						esc_html( $rescan['phrase'] )
+					);
+					?>
+				</h2>
+
+				<p class="description">
+					<?php esc_html_e( 'Rescan when content has been added since this phrase was set up. Applying writes links for this phrase alone and leaves every other phrase untouched.', 'dos-toolkit' ); ?>
+				</p>
+
+				<?php
+				DOS_Batch::render_runner( 'links_scan_' . $rescan_id );
+				DOS_Batch::render_runner( 'links_apply_' . $rescan_id );
+				?>
+			<?php endif; ?>
 
 			<hr>
 			<h2><?php esc_html_e( 'Check one page', 'dos-toolkit' ); ?></h2>

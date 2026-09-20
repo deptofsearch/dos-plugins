@@ -149,5 +149,38 @@ check( '  and reports no occurrences, since none were linkable', 0 === $a['occur
 $a = DOS_Links_Engine::analyse( '<p>nothing relevant here</p>', $r, 205 );
 check( 'a phrase that appears nowhere reports absent', 'absent' === $a['reason'] );
 
+echo "\n--- one page linking out to several different pages ---\n";
+
+$page = '<p>We handle roof repair across the valley.</p>'
+      . '<p>Ask about gutter cleaning too.</p>'
+      . '<p>And our solar panel install service.</p>';
+
+$three = array(
+    rule( array( 'id' => 1, 'phrase' => 'roof repair',         'target_id' => 101 ) ),
+    rule( array( 'id' => 2, 'phrase' => 'gutter cleaning',     'target_id' => 102 ) ),
+    rule( array( 'id' => 3, 'phrase' => 'solar panel install', 'target_id' => 103 ) ),
+);
+
+$out = DOS_Links_Engine::apply( $page, $three, 5 );
+
+check( 'places one link per phrase on the same page', 3 === substr_count( $out['html'], '<a ' ), $out['html'] );
+check( '  each attributed to its own rule', false !== strpos( $out['html'], 'data-dos-link="1"' ) && false !== strpos( $out['html'], 'data-dos-link="2"' ) && false !== strpos( $out['html'], 'data-dos-link="3"' ) );
+check( '  and reports all three', array( 1 => 1, 2 => 1, 3 => 1 ) === $out['added'], json_encode( $out['added'] ) );
+
+// Each phrase keeps its own per-page allowance rather than sharing one.
+$repeated = '<p>roof repair here and roof repair there.</p><p>gutter cleaning as well.</p>';
+$out = DOS_Links_Engine::apply( $repeated, array(
+    rule( array( 'id' => 1, 'phrase' => 'roof repair', 'target_id' => 101, 'max_per_page' => 2 ) ),
+    rule( array( 'id' => 2, 'phrase' => 'gutter cleaning', 'target_id' => 102, 'max_per_page' => 1 ) ),
+), 5 );
+check( 'per-page limits are per phrase, not shared', 3 === substr_count( $out['html'], '<a ' ), $out['html'] );
+check( '  two for the phrase allowed two', 2 === $out['added'][1], json_encode( $out['added'] ) );
+check( '  one for the phrase allowed one', 1 === $out['added'][2] );
+
+// A page that is the destination of one rule still links out via the others.
+$out = DOS_Links_Engine::apply( $page, $three, 102 );
+check( 'the destination page still links out on its other phrases', 2 === substr_count( $out['html'], '<a ' ), $out['html'] );
+check( '  but not to itself', false === strpos( $out['html'], 'data-dos-link="2"' ), $out['html'] );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

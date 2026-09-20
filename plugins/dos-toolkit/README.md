@@ -23,7 +23,7 @@ Installing adds a top-level **DoS Tools** menu:
 | `images` | Images & Media | JPEG quality and upload scaling, compression of new uploads, a quality finder that measures the trade-off on your own photographs, a weight audit, responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `links` | Internal Links | Keyword phrases linked to chosen pages, written into the content behind a dry run. Capped at ten links per page by default, with the allowance given to the least-used phrases first. Never links inside headings, bold, lists, tables, existing links, code or shortcodes, never links a page to itself, and throttles a phrase by percentage so one does not carry the whole profile. |
 | `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
-| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, permalink flush, settings export/import. |
+| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, next/previous navigation in the editor, permalink flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when
 it is both available and enabled. The shell can therefore be deployed before
@@ -201,6 +201,13 @@ different origin. A redirect table that accepts one hands out an open redirect
 under the site's own name. Targets are either absolute `http`/`https` or a
 path, and everything else — protocol-relative, `javascript:`, `data:`,
 `mailto:` — is refused rather than repaired into something that looks safe.
+
+**The block editor's sidebar cannot be added to from PHP.**
+`post_submitbox_misc_actions` renders inside the classic editor's Publish box
+and never fires in the block editor, whose sidebar is built in JavaScript and
+takes additions only through its own plugin API. Anything added there in PHP
+appears on classic-editor screens and silently nowhere else, so features that
+use it say which editor they apply to.
 
 **`get_the_date()` is a display function and can be filtered; `get_post_time()`
 cannot.** Anything machine-readable — a schema date, an Open Graph timestamp,

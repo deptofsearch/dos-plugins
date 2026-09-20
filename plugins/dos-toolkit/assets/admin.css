@@ -40,3 +40,9 @@
 .dos-featured-no { color: #b32d2e; font-weight: 600; }
 
 .dos-used-in { margin-top: 4px; font-size: 12px; }
+
+.dos-editor-nav .dos-nav-label { font-weight: 600; }
+.dos-editor-nav .dos-nav-buttons { float: right; }
+.dos-editor-nav .dos-nav-buttons .button { min-width: 2.2em; text-align: center; }
+.dos-editor-nav .dos-nav-save { margin: .6em 0 .2em; clear: both; }
+.dos-editor-nav .dos-nav-back { margin: 0; }

@@ -52,6 +52,378 @@ result set that shrinks as the job progresses steps straight over images it
 never looked at. That is the 0.7.3 failure, and it is a property of the runner
 rather than of any one job.
 
+## 0.17.1
+
+"View version details" showed "Plugin not found."
+
+The `plugins_api` handler answered only when a release lookup had succeeded,
+and returned false otherwise. False means "nothing to say about this", so
+WordPress passed the question on to wordpress.org, which has never heard of a
+self-hosted plugin and said so. The message was accurate; the question should
+never have reached it. From the outside it reads as a broken plugin.
+
+It answers for its own slug every time now. Where the release cannot be read
+it falls back to the installed version and says why the notes are missing,
+instead of rendering blank. The screen opens on a description, which it
+previously did not supply at all, and links to the release on GitHub.
+
+It also accepts arguments as an array as well as an object, since not every
+caller of `plugins_api` casts first.
+
+The fifth time on this project the defect has been correct behaviour that
+could not be told apart from a fault.
+
+## 0.17.0
+
+Bulk page tagging was built for four pages and had to survive four hundred.
+
+The screen listed up to three hundred pages in one flat table behind a plain
+title filter. Titles can now be matched by regular expression as well as plain
+text, which is what makes tagging a whole section practical: `^Services` for
+everything under one heading, `(roof|gutter)` for either word. An invalid
+pattern is reported as invalid, rather than matching nothing and leaving the
+operator to work out which of their assumptions was wrong.
+
+Matching happens in PHP against titles fetched in a single query rather than
+through MySQL's `REGEXP`. Its syntax is not PCRE, so a pattern that works in
+one would quietly behave differently in the other, and a bad pattern would
+arrive as a database error instead of a message.
+
+The list scrolls with its header fixed, shows a hundred at a time and filters
+by status. Select all and select none act on what is shown. Where the matches
+run past one page there is an "Apply to every match" button, which re-runs the
+search on the server rather than trusting a list of several thousand IDs
+posted from a browser.
+
+## 0.16.1
+
+Layout only. The editor arrows were floated right, which left them above the
+text baseline with uneven spacing between the three rows.
+
+The position and the arrows now share one flex row, aligned to each other,
+with the arrows matched in width so the pair reads as a pair. The
+save-and-next button spans the Publish box rather than ending wherever its
+label happened to, which is what made the block look ragged.
+
+## 0.16.0
+
+Adds next and previous navigation to the editor.
+
+Working through a run of pages meant the same four clicks between each one:
+update, back to the list, find your place, open the next. This removes three.
+
+The arrows follow the list you arrived from, with its filters and sorting,
+which is the whole point. Recomputing "the next page" from scratch gives the
+next by date, and that is rarely the next in the set somebody is working
+through. The list is captured on the list screen itself, where filters, search
+and sort order have already been resolved into a query — reconstructing that
+later from a URL would mean reimplementing whatever core and every other
+plugin did to it.
+
+The Publish box gains the position in the list, arrows either side, a link
+back, and an "Update and open the next" button that saves and moves on in one
+click. The arrows stop at the ends rather than wrapping, and save-and-next
+never lands on a post the user cannot edit. Five hundred posts are remembered
+from one list, which is more than anyone works through by hand in a sitting.
+
+Classic editor only. The block editor's sidebar is built in JavaScript and
+takes additions through its own plugin API, so the setting names which editor
+it applies to rather than appearing to do nothing.
+
+## 0.15.2
+
+Restores the media library usage column, and audits the rest of the ports.
+
+Each image now shows whether anything uses it, with links to the pages that
+do — in the list, and in the attachment details panel, where somebody is
+usually deciding whether a file can safely be changed or deleted.
+
+Three states rather than the original's two. An image nobody has scanned yet
+reads "Not scanned" rather than "Unused". Showing them alike would put
+unexamined images on a deletion list, which is the one mistake this module
+must not encourage.
+
+Since two omissions had now been found one screenshot at a time, this also
+compares every hook the six absorbed plugins registered against what the
+toolkit registers. Everything else is accounted for.
+
+Two remain unimplemented on purpose, written down here rather than left to be
+discovered again. Page Tags Tools injected a tag chooser into core's
+bulk-action markup with JavaScript, which breaks whenever that markup changes;
+the Utilities screen does the same job. Media Usage Manager drew a usage badge
+in the media grid through `wp_prepare_attachment_for_js` and bespoke
+JavaScript; the attachment details panel gives the same answer without
+depending on core's markup staying still.
+
+## 0.15.1
+
+Restores the featured-image column the port dropped.
+
+Media Usage Manager showed whether a post or page had a featured image and let
+you filter for the ones missing it. Its description said so. The port took the
+usage scanning and the deletion and left that behind.
+
+Posts and pages show Yes or No beside the title now, with a thumbnail where
+there is one, and a filter for finding everything missing one. A post without
+a featured image is invisible in a list of fifty until you open each one, and
+nothing breaks to draw attention to it — the archive still renders, with a
+hole where the thumbnail should be.
+
+Two things done differently from the original. The column covers any public
+type that supports thumbnails rather than only posts and pages, and "missing"
+matches both ways a thumbnail can be absent: no meta row at all, or a row left
+holding an empty value when an image was removed. The second case is the one
+that looks like a working filter and quietly omits results.
+
+Also removes a duplicate Tags column on the Pages list. Attaching the post tag
+taxonomy to pages makes WordPress add a Tags column of its own, and the
+Utilities module was adding a second with the same heading. The filter stays,
+since core provides none for a non-hierarchical taxonomy.
+
+## 0.15.0
+
+Adds image compression, aimed at page weight rather than at a number.
+
+Quality is the smaller lever and the module says so. A file larger than
+anything that displays it costs far more than the difference between quality
+82 and 75, so the weight audit ranks oversized images above over-quality ones,
+separates photographs saved as PNG where the format is the whole problem, and
+lists the heaviest offenders rather than whatever it happened to scan first.
+
+Rather than a quality dial set on folklore, a finder encodes one of the site's
+own photographs at six qualities and reports what each saves and how far it
+drifts from the original. The difference figure is a stated approximation —
+both versions reduced to a thumbnail and compared channel by channel — which
+is enough to separate "no visible change" from "visible on a gradient", and
+that is the decision being made.
+
+Compression of new uploads is opt-in and touches nothing already in the
+library. A re-encode that would make a file larger is discarded, the result is
+written to a temporary file and moved into place, and an image too large to
+open safely is skipped and logged.
+
+That guard is not optional on this host. Without ImageMagick, GD holds a whole
+decoded image in memory — roughly four bytes a pixel, with a source and a
+destination live at once during a re-encode, so a 24 megapixel photograph
+wants over 200MB. Exceeding the limit produces a truncated file rather than an
+error, and a truncated image is a corrupt one that has replaced something
+unrecoverable.
+
+Nothing rewrites a file already in the library. A lossy re-encode is the only
+irreversible thing this toolkit could do, and that stays a deliberate decision
+rather than a default. (0.18.0 adds the job that does it, behind the
+destructive guard.)
+
+## 0.14.0
+
+Adds a page-level view of internal linking.
+
+The phrases table answers how a phrase is being used. It cannot answer the
+other half, which is the half somebody actually asks about: which pages link
+out, which pages are linked to, and which do neither. A page nothing points at
+is invisible to the site's own structure however well its phrases are
+configured, and nothing on the screen could show that.
+
+The scan builds the index as it walks, so there is no second pass over the
+content. Each page shows links out, links in, and how they were placed, with
+views for linking out, linking to nothing, nothing linking to them, and
+neither. A page at the per-page limit is marked, as is one with nothing
+pointing at it.
+
+Counts cover every internal link, not only the ones this module placed. A link
+written by hand carries the same weight, and a report that ignored them would
+describe this module's work rather than the site.
+
+A link counts as internal when it resolves to a post here. Off-site links,
+in-page anchors, mailto and tel, and URLs matching no page are ignored, so the
+figures are about internal linking rather than links in general. Resolutions
+are cached per request, since the same navigation link appears on every page.
+
+## 0.13.0
+
+The per-page limit counted only links this module had placed.
+
+Set to one link per page it would add its link to a page already carrying a
+hand-written link on the same phrase, consider itself compliant, and leave the
+page with two. Seen on the canary: a page linking "open houses in Phoenix"
+twice, one by hand and one from the module, with the rule set to one per page.
+
+What matters for a linking profile is how many links a page carries on a
+phrase, not who put them there. Links already present — written by hand, or
+placed by this module on an earlier run — count against the allowance now, and
+a page at its limit is left alone. A limit of two allows one more alongside an
+existing link, which is what raising it should mean.
+
+A page skipped for this reason says so, instead of reporting a zero
+indistinguishable from a phrase that was never there.
+
+## 0.12.1
+
+A dry run reported "8 scanned, 8 changed" — the same sentence a real run
+reports, distinguished only by "(dry run)" at the end. Nothing had been
+changed.
+
+It surfaced on the canary as eight links surviving a removal, which turned out
+never to have been run live at all. The word "changed" was the problem. A dry
+run now says how many were examined, how many would change, and that nothing
+has been changed yet. When it finds work to do, a destructive job offers a
+second button beside the first that runs it for real, so the obvious next
+action sits where the result is rather than back at a checkbox above it.
+
+A refused live run is visible now too. The guard has always returned a plain
+explanation of what to do about it, and it was being rendered as small grey
+text in the same spot a successful run reports its total.
+
+The fourth time on this project the defect has been correct behaviour that
+could not be told apart from a fault. The engine strips the site's markup
+correctly; nothing had asked it to.
+
+## 0.12.0
+
+Counts the links that were already there.
+
+Deleting a phrase left its links behind in the content. They still pointed
+somewhere real, but belonged to no rule, so nothing counted them and the
+reported linking profile quietly stopped describing the site. The scan finds
+them now, the dashboard reports how many exist, and a job removes them —
+leaving every live phrase and every hand-written link alone.
+
+Links a person wrote themselves are counted as well. The matcher has always
+skipped a phrase already inside a link, which is right, but those links are
+part of the profile: a phrase linked twenty times by hand is carrying twenty
+links whoever typed them. Each phrase shows what this module placed alongside
+what was there already, and every share is worked out on the total rather than
+on this module's own work.
+
+That feeds the per-page balancing too. When a page has more candidates than
+its limit allows, the allowance goes to the least-used phrases — and a phrase
+heavily linked by hand was reading as under-used, which would have given it
+still more.
+
+## 0.11.1
+
+A phrase plainly present in a published post matched nothing.
+
+A phrase typed into the settings screen is separated by ordinary spaces. The
+same words in a post frequently are not: editors and pasted text carry
+non-breaking spaces, and HTML source wraps lines wherever it likes. The two
+are indistinguishable on screen.
+
+A space in a phrase now matches any run of whitespace, including U+00A0 and
+its relatives and an ordinary newline. The phrase itself is normalised the
+same way on save and again on every match, so rules saved before this are
+covered without being retyped.
+
+Normalising the content instead would have been simpler and wrong: it moves
+every byte offset after the first substitution, and those offsets are where
+links are spliced in. Tests cover that the splice still lands correctly either
+side of a non-breaking space, and that tolerance has not turned into matching
+things that are not the phrase.
+
+Also fixes a reason recorded from an irrelevant page masking the real one:
+scanning the destination early in a run recorded "points at itself", and a
+different reason found on a later page never replaced it. Reasons are ranked
+now, and one naming a setting the operator can change wins.
+
+Check one page moved up beside the phrases table rather than sitting below
+three other sections, and the table shows each destination's ID next to its
+title, since a rule pointing at the page being tested is the commonest cause
+of nothing happening and was invisible before.
+
+## 0.11.0
+
+Caps links per page, and spends the allowance on the quietest phrases.
+
+A page may carry at most ten links from this module, counting every phrase
+together and counting links placed on an earlier run — without that second
+part, each pass would add a fresh set. The number is a setting, and zero
+removes the limit.
+
+What matters is what happens when the limit binds. Keeping candidates in
+document order would give the allowance to whichever phrases happen to appear
+near the top of the page, and a phrase already carrying most of the site's
+links would go on taking more of them: the limit would entrench an unbalanced
+profile rather than correct it.
+
+So the phrases competing for a page are ordered by how many links they have
+placed across the site, fewest first, and given one slot each in turn. Every
+phrase gets its first link on a page before any phrase gets a second. Over
+repeated runs that pulls a lopsided profile back towards the middle, which is
+the point of having the limit at all. Ties break on rule id, so the same page
+is decided the same way every time.
+
+The dry run says when a page hit the limit, because which links were kept was
+a decision and not an accident.
+
+## 0.10.0
+
+Rebuilds the Internal Links screen for a real keyword list.
+
+The screen was built for a handful of phrases and would not survive a hundred:
+one unpaginated table, no search, no way to act on more than one row, and a
+form at the top that everything else scrolled past.
+
+A summary strip leads now: phrases, links in place, places still available,
+which phrase carries the largest share of the profile, and how many phrases
+are doing nothing. The last links straight to those rows, because a phrase
+placing no links is the one worth reading.
+
+The table gained search, filtering by state, sortable columns, pagination and
+bulk switch-on, switch-off and delete. Adding phrases moved into a panel that
+collapses once there are phrases to look at, and gained an import: one phrase
+per line, destination written as an ID, a URL, a path or the exact title, with
+the optional limits after it. Refused lines are listed with the reason rather
+than dropped.
+
+Also fixes a fault introduced in 0.9.3, before it could matter. Per-phrase
+scan and apply jobs were registered for every rule on every admin request —
+three phrases is six closures, two hundred phrases is four hundred, built and
+thrown away on every page load. Only the phrase being worked on is registered
+now, resolved from the screen or, for the runner's own callback where no page
+state exists, from the job name.
+
+And the import panel's example did not work: a destination written as
+`/agents/` resolved only when written as a full URL, which is not how anyone
+writes one by hand.
+
+## 0.9.3
+
+Gives each phrase its own rescan and apply.
+
+A phrase set up early in a site's life goes stale as content is added: the
+places it could now link did not exist when it was last scanned. Answering
+that by rescanning every phrase across every post is more than the question
+deserves, and on a large site slow enough that nobody asks it.
+
+Each row in the phrases table carries a Rescan link, which opens a scan and an
+apply scoped to that phrase alone. Both run on the shared batch runner, so
+neither can time out on a long library, and the apply keeps the dry run and
+typed confirmation every destructive job has. Rescanning one phrase resets
+only that phrase's figures.
+
+Separately, adds tests for the behaviour asked about rather than described:
+one page can carry links to several different destinations at once, each
+phrase keeps its own per-page allowance rather than drawing on a shared
+budget, and a page that is itself the destination of one phrase still links
+out on the others while never linking to itself.
+
+## 0.9.2
+
+Adds "Check one page" to the Internal Links screen.
+
+Working out why a phrase produced no links took two rounds of guesswork from
+the outside, and the second round did not settle it either. The plugin has the
+answer and was not being asked.
+
+It runs every configured phrase against a single post, named by ID or URL, and
+reports four numbers side by side: how many times the phrase occurs in the
+text at all, how many of those are in linkable positions, how many this rule
+would actually link, and which rule or limit accounted for the difference. It
+also shows the post's type, status and content length, because a draft or an
+empty revision explains a zero on its own.
+
+Nothing is changed by running it.
+
 ## 0.9.1
 
 The Internal Links dashboard reported nothing to link without saying why.

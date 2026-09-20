@@ -41,8 +41,13 @@
 
 .dos-used-in { margin-top: 4px; font-size: 12px; }
 
-.dos-editor-nav .dos-nav-label { font-weight: 600; }
-.dos-editor-nav .dos-nav-buttons { float: right; }
-.dos-editor-nav .dos-nav-buttons .button { min-width: 2.2em; text-align: center; }
-.dos-editor-nav .dos-nav-save { margin: .6em 0 .2em; clear: both; }
-.dos-editor-nav .dos-nav-back { margin: 0; }
+/* The Publish box is narrow and its sections are already padded, so this
+   lays out as one block: a row that stays on one line, then two full-width
+   rows beneath it. Floats left the arrows sitting above the text baseline. */
+.dos-editor-nav .dos-nav-row { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
+.dos-editor-nav .dos-nav-label { font-weight: 600; line-height: 1.4; }
+.dos-editor-nav .dos-nav-label .description { font-weight: 400; }
+.dos-editor-nav .dos-nav-buttons { display: flex; gap: 4px; flex: 0 0 auto; }
+.dos-editor-nav .dos-nav-arrow { width: 34px; padding: 0 !important; text-align: center; line-height: 28px !important; }
+.dos-editor-nav .dos-nav-save { display: block; width: 100%; margin: .8em 0 .5em; text-align: center; }
+.dos-editor-nav .dos-nav-back { display: inline-block; }

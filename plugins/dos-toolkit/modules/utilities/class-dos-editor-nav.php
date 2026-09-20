@@ -176,45 +176,43 @@ final class DOS_Editor_Nav {
 
 		?>
 		<div class="misc-pub-section dos-editor-nav">
-			<span class="dos-nav-label">
-				<?php
-				printf(
-					/* translators: 1: position in the list, 2: number of items */
-					esc_html__( '%1$d of %2$d', 'dos-toolkit' ),
-					(int) $place['position'],
-					(int) $place['total']
-				);
-				?>
-				<?php if ( $place['filtered'] ) : ?>
-					<span class="description"><?php esc_html_e( 'in your filtered list', 'dos-toolkit' ); ?></span>
-				<?php endif; ?>
-			</span>
+			<div class="dos-nav-row">
+				<span class="dos-nav-label">
+					<?php
+					printf(
+						/* translators: 1: position in the list, 2: number of items */
+						esc_html__( '%1$d of %2$d', 'dos-toolkit' ),
+						(int) $place['position'],
+						(int) $place['total']
+					);
+					?>
+					<?php if ( $place['filtered'] ) : ?>
+						<br><span class="description"><?php esc_html_e( 'in your filtered list', 'dos-toolkit' ); ?></span>
+					<?php endif; ?>
+				</span>
 
-			<span class="dos-nav-buttons">
-				<?php if ( $place['previous'] ) : ?>
-					<a class="button" href="<?php echo esc_url( self::edit_url( $place['previous'] ) ); ?>" title="<?php esc_attr_e( 'Previous', 'dos-toolkit' ); ?>">&larr;</a>
-				<?php else : ?>
-					<span class="button disabled">&larr;</span>
-				<?php endif; ?>
+				<span class="dos-nav-buttons">
+					<?php if ( $place['previous'] ) : ?>
+						<a class="button dos-nav-arrow" href="<?php echo esc_url( self::edit_url( $place['previous'] ) ); ?>" aria-label="<?php esc_attr_e( 'Previous', 'dos-toolkit' ); ?>">&larr;</a>
+					<?php else : ?>
+						<span class="button dos-nav-arrow disabled" aria-hidden="true">&larr;</span>
+					<?php endif; ?>
 
-				<?php if ( $place['next'] ) : ?>
-					<a class="button" href="<?php echo esc_url( self::edit_url( $place['next'] ) ); ?>" title="<?php esc_attr_e( 'Next', 'dos-toolkit' ); ?>">&rarr;</a>
-				<?php else : ?>
-					<span class="button disabled">&rarr;</span>
-				<?php endif; ?>
-			</span>
+					<?php if ( $place['next'] ) : ?>
+						<a class="button dos-nav-arrow" href="<?php echo esc_url( self::edit_url( $place['next'] ) ); ?>" aria-label="<?php esc_attr_e( 'Next', 'dos-toolkit' ); ?>">&rarr;</a>
+					<?php else : ?>
+						<span class="button dos-nav-arrow disabled" aria-hidden="true">&rarr;</span>
+					<?php endif; ?>
+				</span>
+			</div>
 
 			<?php if ( $place['next'] ) : ?>
-				<p class="dos-nav-save">
-					<button type="submit" name="dos_save_next" value="1" class="button">
-						<?php esc_html_e( 'Update and open the next', 'dos-toolkit' ); ?>
-					</button>
-				</p>
+				<button type="submit" name="dos_save_next" value="1" class="button dos-nav-save">
+					<?php esc_html_e( 'Update and open the next', 'dos-toolkit' ); ?>
+				</button>
 			<?php endif; ?>
 
-			<p class="dos-nav-back">
-				<a href="<?php echo esc_url( $place['url'] ); ?>"><?php esc_html_e( 'Back to the list', 'dos-toolkit' ); ?></a>
-			</p>
+			<a class="dos-nav-back" href="<?php echo esc_url( $place['url'] ); ?>"><?php esc_html_e( 'Back to the list', 'dos-toolkit' ); ?></a>
 		</div>
 		<?php
 	}

@@ -23,6 +23,11 @@ function current_time( $t = 'mysql' ) { return '2026-09-20 10:00:00'; }
 function wp_parse_args( $a, $d ) { return array_merge( $d, is_array( $a ) ? $a : array() ); }
 function get_post( $id ) { return isset( $GLOBALS['posts'][ (int) $id ] ) ? (object) array( 'ID' => (int) $id ) : null; }
 function get_post_status( $id ) { return $GLOBALS['posts'][ (int) $id ] ?? false; }
+function url_to_postid( $u ) { return false !== strpos( $u, '/agents' ) ? 98 : 0; }
+function home_url( $p = '/' ) { return 'https://example.com' . $p; }
+function absint( $v ) { return abs( (int) $v ); }
+function get_page_by_title( $t, $o = null, $types = array() ) { return 'Agents Page' === $t ? (object) array( 'ID' => 98 ) : null; }
+define( 'OBJECT', 'OBJECT' );
 
 class WP_Error {
     public $code; private $msg;
@@ -106,6 +111,48 @@ $all = array(
 check( 'the dominant phrase reports 60 per cent', 60.0 === DOS_Links_Rules::share( $all[0], $all ) );
 check( 'the smallest reports 10 per cent', 10.0 === DOS_Links_Rules::share( $all[2], $all ) );
 check( 'no links anywhere reports zero rather than dividing by zero', 0.0 === DOS_Links_Rules::share( array( 'id' => 1, 'links_made' => 0 ), array( array( 'id' => 1, 'links_made' => 0 ) ) ) );
+
+echo "\n--- importing many at once ---\n";
+$GLOBALS['rows'] = array(); $GLOBALS['next_id'] = 1;
+
+$text = "# a comment line\n"
+      . "open houses in phoenix | 99\n"
+      . "phoenix real estate agent | /agents/ | 2 | skip | 60\n"
+      . "listing agent | Agents Page\n"
+      . "\n"
+      . "roofing | 99\n"
+      . "broken phrase | nowhere-at-all\n";
+
+$res = DOS_Links_Rules::add_many( $text );
+
+check( 'skips comments and blank lines', 5 === count( $res ), count( $res ) . ' results' );
+check( 'adds a plain phrase with a numeric destination', $res[0]['ok'] );
+check( 'accepts a URL as the destination', $res[1]['ok'], $res[1]['message'] );
+check( '  and carries the extra fields through', 2 === (int) DOS_Links_Rules::by_phrase( 'phoenix real estate agent' )['max_per_page'] );
+check( '  including the first-occurrence choice', 'skip' === DOS_Links_Rules::by_phrase( 'phoenix real estate agent' )['first_instance'] );
+check( '  and the percentage', 60 === (int) DOS_Links_Rules::by_phrase( 'phoenix real estate agent' )['throttle'] );
+check( 'accepts an exact title as the destination', $res[2]['ok'], $res[2]['message'] );
+check( 'still refuses a single word', ! $res[3]['ok'] );
+check( 'refuses a destination that matches nothing', ! $res[4]['ok'] );
+check( '  and says what to use instead', false !== strpos( $res[4]['message'], 'exact title' ), $res[4]['message'] );
+
+echo "\n--- destination resolution ---\n";
+check( 'a numeric ID', 99 === DOS_Links_Rules::resolve_target( '99' ) );
+check( 'a full URL', 98 === DOS_Links_Rules::resolve_target( 'https://example.com/agents/' ) );
+check( 'a site-relative path', 98 === DOS_Links_Rules::resolve_target( '/agents/' ) );
+check( 'an exact title', 98 === DOS_Links_Rules::resolve_target( 'Agents Page' ) );
+check( 'nothing at all', 0 === DOS_Links_Rules::resolve_target( '' ) );
+check( 'something unmatchable', 0 === DOS_Links_Rules::resolve_target( 'no such page anywhere' ) );
+
+echo "\n--- bulk actions ---\n";
+$ids = array_keys( $GLOBALS['rows'] );
+check( 'switching several off', 2 === DOS_Links_Rules::bulk( 'disable', array_slice( $ids, 0, 2 ) ) );
+check( '  actually switched them off', 0 === (int) $GLOBALS['rows'][ $ids[0] ]['enabled'] );
+check( 'switching them back on', 2 === DOS_Links_Rules::bulk( 'enable', array_slice( $ids, 0, 2 ) ) );
+check( 'deleting several', 1 === DOS_Links_Rules::bulk( 'delete', array( $ids[0] ) ) );
+check( '  actually removed the row', ! isset( $GLOBALS['rows'][ $ids[0] ] ) );
+check( 'an empty selection does nothing', 0 === DOS_Links_Rules::bulk( 'delete', array() ) );
+check( 'a nonsense action changes nothing', 1 === DOS_Links_Rules::bulk( 'explode', array( $ids[1] ) ) && isset( $GLOBALS['rows'][ $ids[1] ] ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

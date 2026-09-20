@@ -23,3 +23,11 @@
 .dos-media-actions { margin: .25em 0; }
 .dos-media-meta { color: #50575e; font-size: 12px; margin: .25em 0; }
 .dos-media-warning { color: #8a2424; }
+
+.dos-stats { display: flex; flex-wrap: wrap; gap: 1em; margin: 1em 0 1.5em; }
+.dos-stat { background: #fff; border: 1px solid #dcdcde; border-radius: 3px; padding: .9em 1.2em; min-width: 11em; }
+.dos-stat-n { display: block; font-size: 22px; font-weight: 600; line-height: 1.2; }
+.dos-stat-l { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: #50575e; }
+.dos-panel { background: #fff; border: 1px solid #dcdcde; padding: .8em 1.2em; margin-bottom: 1.5em; }
+.dos-panel > summary { cursor: pointer; }
+.dos-filters { margin: .5em 0 1em; }

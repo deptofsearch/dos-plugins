@@ -69,6 +69,237 @@ final class DOS_Links_Rules {
 		return is_array( $rows ) ? $rows : array();
 	}
 
+	/**
+	 * Filtered, sorted, paginated rules.
+	 *
+	 * A site with two phrases is a list. A site with two hundred is a working
+	 * set that has to be searched and narrowed, or the screen becomes a wall
+	 * nobody reads.
+	 *
+	 * @return array rows, total, pages
+	 */
+	public static function query( array $args = array() ) {
+		global $wpdb;
+
+		$args = wp_parse_args(
+			$args,
+			array(
+				'search'   => '',
+				'status'   => 'all',
+				'orderby'  => 'phrase',
+				'order'    => 'asc',
+				'per_page' => 50,
+				'page'     => 1,
+			)
+		);
+
+		$table  = self::table();
+		$where  = array( '1=1' );
+		$params = array();
+
+		if ( '' !== trim( (string) $args['search'] ) ) {
+			$where[]  = 'phrase LIKE %s';
+			$params[] = '%' . $wpdb->esc_like( trim( $args['search'] ) ) . '%';
+		}
+
+		switch ( $args['status'] ) {
+			case 'enabled':
+				$where[] = 'enabled = 1';
+				break;
+
+			case 'disabled':
+				$where[] = 'enabled = 0';
+				break;
+
+			// Phrases doing nothing: either never placed a link, or have no
+			// remaining opportunity. These are the rows worth attention.
+			case 'idle':
+				$where[] = 'links_made = 0';
+				break;
+
+			case 'available':
+				$where[] = 'opportunities > 0';
+				break;
+		}
+
+		// Whitelisted: this goes straight into ORDER BY.
+		$columns = array( 'phrase', 'links_made', 'opportunities', 'throttle', 'max_per_page', 'created' );
+		$orderby = in_array( $args['orderby'], $columns, true ) ? $args['orderby'] : 'phrase';
+		$order   = 'desc' === strtolower( $args['order'] ) ? 'DESC' : 'ASC';
+
+		$clause = implode( ' AND ', $where );
+
+		$total = (int) ( $params
+			? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$clause}", $params ) )
+			: $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE {$clause}" ) );
+
+		$per_page = max( 1, (int) $args['per_page'] );
+		$page     = max( 1, (int) $args['page'] );
+		$offset   = ( $page - 1 ) * $per_page;
+
+		$sql  = "SELECT * FROM {$table} WHERE {$clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, array( $per_page, $offset ) ) ), ARRAY_A );
+
+		return array(
+			'rows'  => is_array( $rows ) ? $rows : array(),
+			'total' => $total,
+			'pages' => (int) ceil( $total / $per_page ),
+		);
+	}
+
+	/**
+	 * Figures for the strip at the top of the screen: the numbers worth
+	 * knowing before reading any individual row.
+	 */
+	public static function totals() {
+		global $wpdb;
+
+		$table = self::table();
+
+		$row = $wpdb->get_row(
+			"SELECT COUNT(*) AS phrases,
+				SUM(enabled) AS enabled,
+				SUM(links_made) AS links,
+				SUM(opportunities) AS available,
+				SUM(CASE WHEN links_made = 0 THEN 1 ELSE 0 END) AS idle,
+				MAX(links_made) AS busiest
+			FROM {$table}",
+			ARRAY_A
+		);
+
+		$row = is_array( $row ) ? $row : array();
+
+		$links   = (int) ( $row['links'] ?? 0 );
+		$busiest = (int) ( $row['busiest'] ?? 0 );
+
+		return array(
+			'phrases'   => (int) ( $row['phrases'] ?? 0 ),
+			'enabled'   => (int) ( $row['enabled'] ?? 0 ),
+			'links'     => $links,
+			'available' => (int) ( $row['available'] ?? 0 ),
+			'idle'      => (int) ( $row['idle'] ?? 0 ),
+			'top_share' => $links ? round( ( $busiest / $links ) * 100, 1 ) : 0.0,
+		);
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Bulk
+	 * ------------------------------------------------------------------- */
+
+	/**
+	 * Resolve whatever someone typed in a destination column: an ID, a URL
+	 * on this site, or an exact page title.
+	 */
+	public static function resolve_target( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return 0;
+		}
+
+		if ( ctype_digit( $value ) ) {
+			return (int) $value;
+		}
+
+		if ( preg_match( '#^https?://#i', $value ) ) {
+			return (int) url_to_postid( $value );
+		}
+
+		// A path on its own is how anyone would write a destination by hand,
+		// and is what the import panel's own example shows.
+		if ( 0 === strpos( $value, '/' ) ) {
+			return (int) url_to_postid( home_url( $value ) );
+		}
+
+		$page = get_page_by_title( $value, OBJECT, array( 'page', 'post' ) );
+
+		return $page ? (int) $page->ID : 0;
+	}
+
+	/**
+	 * Add many phrases at once.
+	 *
+	 * One per line: phrase | destination | links per page | first | percent.
+	 * Only the first two are required, because the rest have sensible
+	 * defaults and asking for five fields per line would defeat the point.
+	 *
+	 * @return array Per-line result: line, ok, message.
+	 */
+	public static function add_many( $text ) {
+		$results = array();
+		$lines   = preg_split( '/
+|
+|
+/', (string) $text );
+
+		foreach ( $lines as $raw ) {
+			$raw = trim( $raw );
+
+			if ( '' === $raw || 0 === strpos( $raw, '#' ) ) {
+				continue;
+			}
+
+			// Comma is too common inside a phrase to use as the separator.
+			$parts  = array_map( 'trim', explode( '|', $raw ) );
+			$phrase = isset( $parts[0] ) ? $parts[0] : '';
+			$target = self::resolve_target( isset( $parts[1] ) ? $parts[1] : '' );
+
+			if ( ! $target ) {
+				$results[] = array(
+					'line'    => $raw,
+					'ok'      => false,
+					'message' => __( 'No destination on this site matched. Use the numeric ID, a URL, or the exact title.', 'dos-toolkit' ),
+				);
+
+				continue;
+			}
+
+			$result = self::add(
+				$phrase,
+				$target,
+				array(
+					'max_per_page'   => isset( $parts[2] ) && '' !== $parts[2] ? (int) $parts[2] : 1,
+					'first_instance' => isset( $parts[3] ) && 'skip' === strtolower( $parts[3] ) ? 'skip' : 'link',
+					'throttle'       => isset( $parts[4] ) && '' !== $parts[4] ? (int) $parts[4] : 100,
+				)
+			);
+
+			$results[] = array(
+				'line'    => $raw,
+				'ok'      => ! is_wp_error( $result ),
+				'message' => is_wp_error( $result ) ? $result->get_error_message() : __( 'Added.', 'dos-toolkit' ),
+			);
+		}
+
+		return $results;
+	}
+
+	public static function bulk( $action, array $ids ) {
+		$ids = array_filter( array_map( 'absint', $ids ) );
+
+		if ( ! $ids ) {
+			return 0;
+		}
+
+		foreach ( $ids as $id ) {
+			switch ( $action ) {
+				case 'enable':
+					self::set_enabled( $id, true );
+					break;
+
+				case 'disable':
+					self::set_enabled( $id, false );
+					break;
+
+				case 'delete':
+					self::delete( $id );
+					break;
+			}
+		}
+
+		return count( $ids );
+	}
+
 	public static function get( $id ) {
 		global $wpdb;
 

@@ -109,9 +109,16 @@ final class DOS_Module_Links extends DOS_Module {
 			),
 		);
 
-		// One pair per phrase, so a single phrase can be revisited without
-		// touching the rest.
-		foreach ( DOS_Links_Rules::all() as $rule ) {
+		// One pair for the phrase currently being worked on, and only that
+		// one. Registering a pair per rule meant several hundred closures
+		// built on every admin request once a site had a real keyword list.
+		$only = self::rescan_id();
+
+		if ( $only ) {
+			$rule = DOS_Links_Rules::get( $only );
+		}
+
+		if ( $only && ! empty( $rule ) ) {
 			$id = (int) $rule['id'];
 
 			$jobs[ 'links_scan_' . $id ] = array(
@@ -140,6 +147,25 @@ final class DOS_Module_Links extends DOS_Module {
 		}
 
 		return $jobs;
+	}
+
+	/**
+	 * Which phrase the per-phrase jobs are for.
+	 *
+	 * Taken from the screen when one is open, and from the job key when the
+	 * runner calls back over AJAX — that request carries no page state, so
+	 * without this the job it is asking to run would not be registered.
+	 */
+	public static function rescan_id() {
+		if ( isset( $_GET['rescan'] ) ) {
+			return (int) $_GET['rescan'];
+		}
+
+		if ( isset( $_POST['job'] ) && preg_match( '/^links_(?:scan|apply)_(\d+)$/', sanitize_key( wp_unslash( $_POST['job'] ) ), $m ) ) {
+			return (int) $m[1];
+		}
+
+		return 0;
 	}
 
 	/**
@@ -343,6 +369,25 @@ final class DOS_Module_Links extends DOS_Module {
 				DOS_Links_Rules::set_enabled( (int) $_POST['id'], ! empty( $_POST['enabled'] ) );
 				break;
 
+			case 'links_import':
+				$results = DOS_Links_Rules::add_many( isset( $_POST['import'] ) ? wp_unslash( $_POST['import'] ) : '' );
+
+				set_transient( 'dos_links_import', $results, 120 );
+
+				self::log( 'rules_imported', sprintf( '%d lines processed.', count( $results ) ) );
+				break;
+
+			case 'links_bulk':
+				$done = DOS_Links_Rules::bulk(
+					isset( $_POST['bulk_action'] ) ? sanitize_key( wp_unslash( $_POST['bulk_action'] ) ) : '',
+					isset( $_POST['ids'] ) ? (array) wp_unslash( $_POST['ids'] ) : array()
+				);
+
+				if ( $done ) {
+					self::log( 'rules_bulk', sprintf( '%d phrases changed.', $done ) );
+				}
+				break;
+
 			case 'links_test':
 				set_transient(
 					'dos_links_test',
@@ -352,8 +397,64 @@ final class DOS_Module_Links extends DOS_Module {
 				break;
 		}
 
-		wp_safe_redirect( add_query_arg( array( 'page' => 'dos-links', 'dos_notice' => 'saved' ), admin_url( 'admin.php' ) ) );
+		$back = array( 'page' => 'dos-links', 'dos_notice' => 'saved' );
+
+		foreach ( array( 's', 'status', 'orderby', 'order', 'paged' ) as $key ) {
+			if ( ! empty( $_POST[ $key ] ) ) {
+				$back[ $key ] = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+			}
+		}
+
+		wp_safe_redirect( add_query_arg( $back, admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Screen helpers
+	 * ------------------------------------------------------------------- */
+
+	private static function state() {
+		return array(
+			'search'   => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
+			'status'   => isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'all',
+			'orderby'  => isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'phrase',
+			'order'    => isset( $_GET['order'] ) && 'desc' === strtolower( $_GET['order'] ) ? 'desc' : 'asc',
+			'page'     => isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1,
+			'per_page' => 50,
+		);
+	}
+
+	private static function url( array $args ) {
+		$state = self::state();
+
+		$base = array(
+			'page'    => 'dos-links',
+			's'       => $state['search'],
+			'status'  => $state['status'],
+			'orderby' => $state['orderby'],
+			'order'   => $state['order'],
+			'paged'   => $state['page'],
+		);
+
+		return add_query_arg( array_filter( array_merge( $base, $args ), 'strlen' ), admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * A column heading that sorts, and flips direction when it is already
+	 * the one being sorted by.
+	 */
+	private static function sort_link( $column, $label ) {
+		$state = self::state();
+		$is    = $state['orderby'] === $column;
+		$next  = ( $is && 'asc' === $state['order'] ) ? 'desc' : 'asc';
+		$arrow = $is ? ( 'asc' === $state['order'] ? ' ↑' : ' ↓' ) : '';
+
+		printf(
+			'<a href="%s">%s%s</a>',
+			esc_url( self::url( array( 'orderby' => $column, 'order' => $next, 'paged' => 1 ) ) ),
+			esc_html( $label ),
+			esc_html( $arrow )
+		);
 	}
 
 	/**
@@ -465,7 +566,6 @@ final class DOS_Module_Links extends DOS_Module {
 			delete_transient( 'dos_links_error' );
 		}
 
-		$rules   = DOS_Links_Rules::all();
 		$targets = get_posts(
 			array(
 				'post_type'      => self::post_types(),
@@ -490,143 +590,278 @@ final class DOS_Module_Links extends DOS_Module {
 				<?php esc_html_e( 'A phrase, a page it should point at, and limits on how often it is used. Phrases are never linked inside headings, bold text, lists, tables, existing links, code or shortcodes, and a page never links to itself.', 'dos-toolkit' ); ?>
 			</p>
 
-			<h2><?php esc_html_e( 'Add a phrase', 'dos-toolkit' ); ?></h2>
+			<?php $totals = DOS_Links_Rules::totals(); ?>
+
+			<div class="dos-stats">
+				<div class="dos-stat">
+					<span class="dos-stat-n"><?php echo (int) $totals['phrases']; ?></span>
+					<span class="dos-stat-l"><?php esc_html_e( 'phrases', 'dos-toolkit' ); ?></span>
+					<span class="description"><?php printf( esc_html__( '%d switched on', 'dos-toolkit' ), (int) $totals['enabled'] ); ?></span>
+				</div>
+				<div class="dos-stat">
+					<span class="dos-stat-n"><?php echo (int) $totals['links']; ?></span>
+					<span class="dos-stat-l"><?php esc_html_e( 'links in place', 'dos-toolkit' ); ?></span>
+					<span class="description"><?php printf( esc_html__( '%d more available', 'dos-toolkit' ), (int) $totals['available'] ); ?></span>
+				</div>
+				<div class="dos-stat">
+					<span class="dos-stat-n<?php echo $totals['top_share'] >= 40 && $totals['phrases'] > 1 ? ' dos-media-warning' : ''; ?>"><?php echo esc_html( $totals['top_share'] ); ?>%</span>
+					<span class="dos-stat-l"><?php esc_html_e( 'busiest phrase', 'dos-toolkit' ); ?></span>
+					<span class="description"><?php esc_html_e( 'share of all links placed', 'dos-toolkit' ); ?></span>
+				</div>
+				<div class="dos-stat">
+					<span class="dos-stat-n"><?php echo (int) $totals['idle']; ?></span>
+					<span class="dos-stat-l"><?php esc_html_e( 'doing nothing', 'dos-toolkit' ); ?></span>
+					<span class="description">
+						<a href="<?php echo esc_url( self::url( array( 'status' => 'idle', 'paged' => 1 ) ) ); ?>"><?php esc_html_e( 'show them', 'dos-toolkit' ); ?></a>
+					</span>
+				</div>
+			</div>
+
+			<details class="dos-panel"<?php echo $totals['phrases'] ? '' : ' open'; ?>>
+				<summary><strong><?php esc_html_e( 'Add phrases', 'dos-toolkit' ); ?></strong></summary>
+
+				<h3><?php esc_html_e( 'One at a time', 'dos-toolkit' ); ?></h3>
+
+				<form method="post">
+					<?php wp_nonce_field( 'dos_links' ); ?>
+					<input type="hidden" name="dos_action" value="links_add" />
+
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><label for="phrase"><?php esc_html_e( 'Keyword phrase', 'dos-toolkit' ); ?></label></th>
+							<td>
+								<input type="text" id="phrase" name="phrase" class="regular-text" required placeholder="<?php esc_attr_e( 'open houses in Phoenix', 'dos-toolkit' ); ?>" />
+								<p class="description"><?php esc_html_e( 'Two words or more. Matched whole and without regard to case.', 'dos-toolkit' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="target_id"><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></label></th>
+							<td>
+								<select id="target_id" name="target_id" required>
+									<option value=""><?php esc_html_e( '— choose a page —', 'dos-toolkit' ); ?></option>
+									<?php foreach ( $targets as $target ) : ?>
+										<option value="<?php echo (int) $target->ID; ?>"><?php echo esc_html( $target->post_title ? $target->post_title : __( '(no title)', 'dos-toolkit' ) ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Limits', 'dos-toolkit' ); ?></th>
+							<td>
+								<label>
+									<input type="number" name="max_per_page" value="1" min="1" max="20" class="small-text" />
+									<?php esc_html_e( 'links per page', 'dos-toolkit' ); ?>
+								</label>
+								&nbsp;&nbsp;
+								<label>
+									<input type="number" name="throttle" value="100" min="0" max="100" class="small-text" /> %
+									<?php esc_html_e( 'of available places', 'dos-toolkit' ); ?>
+								</label>
+								<p style="margin-top:.6em">
+									<label style="margin-right:1em"><input type="radio" name="first_instance" value="link" checked /> <?php esc_html_e( 'Link the first occurrence', 'dos-toolkit' ); ?></label>
+									<label><input type="radio" name="first_instance" value="skip" /> <?php esc_html_e( 'Leave the first alone', 'dos-toolkit' ); ?></label>
+								</p>
+							</td>
+						</tr>
+					</table>
+
+					<?php submit_button( __( 'Save phrase', 'dos-toolkit' ), 'secondary' ); ?>
+				</form>
+
+				<h3><?php esc_html_e( 'Many at once', 'dos-toolkit' ); ?></h3>
+
+				<p class="description">
+					<?php esc_html_e( 'One phrase per line. Separate the fields with a vertical bar. Only the phrase and its destination are required; the rest fall back to one link per page, first occurrence linked, 100%.', 'dos-toolkit' ); ?>
+				</p>
+
+				<p class="description">
+					<code><?php echo esc_html( 'phrase | destination | links per page | first | percent' ); ?></code><br>
+					<code><?php echo esc_html( 'open houses in Phoenix | 12' ); ?></code><br>
+					<code><?php echo esc_html( 'Phoenix real estate agent | /agents/ | 2 | skip | 60' ); ?></code>
+				</p>
+
+				<p class="description">
+					<?php esc_html_e( 'A destination can be a numeric ID, a URL on this site, or the exact page title. Lines starting with # are ignored.', 'dos-toolkit' ); ?>
+				</p>
+
+				<form method="post">
+					<?php wp_nonce_field( 'dos_links' ); ?>
+					<input type="hidden" name="dos_action" value="links_import" />
+					<p><textarea name="import" rows="8" class="large-text code" placeholder="<?php esc_attr_e( 'open houses in Phoenix | 12', 'dos-toolkit' ); ?>"></textarea></p>
+					<?php submit_button( __( 'Import phrases', 'dos-toolkit' ), 'secondary' ); ?>
+				</form>
+
+				<?php $import = get_transient( 'dos_links_import' ); ?>
+				<?php if ( $import ) : ?>
+					<?php delete_transient( 'dos_links_import' ); ?>
+					<?php
+					$ok     = count( array_filter( wp_list_pluck( $import, 'ok' ) ) );
+					$failed = count( $import ) - $ok;
+					?>
+					<div class="notice notice-<?php echo $failed ? 'warning' : 'success'; ?> inline">
+						<p>
+							<?php
+							printf(
+								/* translators: 1: number added, 2: number refused */
+								esc_html__( '%1$d added, %2$d refused.', 'dos-toolkit' ),
+								(int) $ok,
+								(int) $failed
+							);
+							?>
+						</p>
+					</div>
+
+					<?php if ( $failed ) : ?>
+						<table class="widefat striped" style="max-width:60em">
+							<thead><tr><th><?php esc_html_e( 'Line', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Why it was refused', 'dos-toolkit' ); ?></th></tr></thead>
+							<tbody>
+							<?php foreach ( $import as $line ) : ?>
+								<?php if ( $line['ok'] ) { continue; } ?>
+								<tr>
+									<td><code><?php echo esc_html( $line['line'] ); ?></code></td>
+									<td class="description"><?php echo esc_html( $line['message'] ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+					<?php endif; ?>
+				<?php endif; ?>
+			</details>
+
+			<?php
+			$state  = self::state();
+			$result = DOS_Links_Rules::query( $state );
+			$rules  = $result['rows'];
+			$all    = DOS_Links_Rules::all();
+			?>
+
+			<h2><?php esc_html_e( 'Phrases', 'dos-toolkit' ); ?></h2>
+
+			<form method="get" class="dos-filters">
+				<input type="hidden" name="page" value="dos-links" />
+				<input type="search" name="s" value="<?php echo esc_attr( $state['search'] ); ?>" placeholder="<?php esc_attr_e( 'Search phrases', 'dos-toolkit' ); ?>" />
+				<select name="status">
+					<?php
+					$statuses = array(
+						'all'       => __( 'All', 'dos-toolkit' ),
+						'enabled'   => __( 'Switched on', 'dos-toolkit' ),
+						'disabled'  => __( 'Switched off', 'dos-toolkit' ),
+						'idle'      => __( 'No links placed', 'dos-toolkit' ),
+						'available' => __( 'Has places available', 'dos-toolkit' ),
+					);
+					?>
+					<?php foreach ( $statuses as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $state['status'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<button type="submit" class="button"><?php esc_html_e( 'Filter', 'dos-toolkit' ); ?></button>
+				<?php if ( $state['search'] || 'all' !== $state['status'] ) : ?>
+					<a class="button-link" href="<?php echo esc_url( admin_url( 'admin.php?page=dos-links' ) ); ?>"><?php esc_html_e( 'Clear', 'dos-toolkit' ); ?></a>
+				<?php endif; ?>
+				<span class="description" style="margin-left:.5em">
+					<?php
+					printf(
+						/* translators: 1: rows shown, 2: rows in total */
+						esc_html__( 'showing %1$d of %2$d', 'dos-toolkit' ),
+						count( $rules ),
+						(int) $result['total']
+					);
+					?>
+				</span>
+			</form>
 
 			<form method="post">
 				<?php wp_nonce_field( 'dos_links' ); ?>
-				<input type="hidden" name="dos_action" value="links_add" />
+				<input type="hidden" name="dos_action" value="links_bulk" />
+				<input type="hidden" name="s" value="<?php echo esc_attr( $state['search'] ); ?>" />
+				<input type="hidden" name="status" value="<?php echo esc_attr( $state['status'] ); ?>" />
+				<input type="hidden" name="orderby" value="<?php echo esc_attr( $state['orderby'] ); ?>" />
+				<input type="hidden" name="order" value="<?php echo esc_attr( $state['order'] ); ?>" />
+				<input type="hidden" name="paged" value="<?php echo (int) $state['page']; ?>" />
 
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="phrase"><?php esc_html_e( 'Keyword phrase', 'dos-toolkit' ); ?></label></th>
-						<td>
-							<input type="text" id="phrase" name="phrase" class="regular-text" required placeholder="<?php esc_attr_e( 'roof repair phoenix', 'dos-toolkit' ); ?>" />
-							<p class="description"><?php esc_html_e( 'Two words or more. Matched whole and without regard to case, so it will not match inside a longer word.', 'dos-toolkit' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="target_id"><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></label></th>
-						<td>
-							<select id="target_id" name="target_id" required>
-								<option value=""><?php esc_html_e( '— choose a page —', 'dos-toolkit' ); ?></option>
-								<?php foreach ( $targets as $target ) : ?>
-									<option value="<?php echo (int) $target->ID; ?>">
-										<?php echo esc_html( $target->post_title ? $target->post_title : __( '(no title)', 'dos-toolkit' ) ); ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="max_per_page"><?php esc_html_e( 'Links per page', 'dos-toolkit' ); ?></label></th>
-						<td>
-							<input type="number" id="max_per_page" name="max_per_page" value="1" min="1" max="20" class="small-text" />
-							<p class="description"><?php esc_html_e( 'At most this many links from one page, however often the phrase appears on it.', 'dos-toolkit' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'First occurrence', 'dos-toolkit' ); ?></th>
-						<td>
-							<label style="display:block;margin-bottom:.4em">
-								<input type="radio" name="first_instance" value="link" checked />
-								<?php esc_html_e( 'Link the first occurrence on the page', 'dos-toolkit' ); ?>
-							</label>
-							<label style="display:block">
-								<input type="radio" name="first_instance" value="skip" />
-								<?php esc_html_e( 'Leave the first alone and link a later one', 'dos-toolkit' ); ?>
-							</label>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="throttle"><?php esc_html_e( 'Use at most', 'dos-toolkit' ); ?></label></th>
-						<td>
-							<input type="number" id="throttle" name="throttle" value="100" min="0" max="100" class="small-text" /> %
-							<p class="description"><?php esc_html_e( 'Of the places this phrase could be linked, link only this share of them. Lower it when one phrase is doing too much of the work. The same places are chosen every time, so the result does not move around between runs.', 'dos-toolkit' ); ?></p>
-						</td>
-					</tr>
+				<div class="tablenav top">
+					<select name="bulk_action">
+						<option value=""><?php esc_html_e( 'Bulk actions', 'dos-toolkit' ); ?></option>
+						<option value="enable"><?php esc_html_e( 'Switch on', 'dos-toolkit' ); ?></option>
+						<option value="disable"><?php esc_html_e( 'Switch off', 'dos-toolkit' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Delete', 'dos-toolkit' ); ?></option>
+					</select>
+					<button type="submit" class="button"><?php esc_html_e( 'Apply', 'dos-toolkit' ); ?></button>
+				</div>
+
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<td class="check-column"><input type="checkbox" onclick="this.closest('table').querySelectorAll('input[name=\'ids[]\']').forEach(function(b){b.checked=this.checked}.bind(this))" /></td>
+							<th><?php self::sort_link( 'phrase', __( 'Phrase', 'dos-toolkit' ) ); ?></th>
+							<th><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></th>
+							<th><?php self::sort_link( 'max_per_page', __( 'Limits', 'dos-toolkit' ) ); ?></th>
+							<th><?php self::sort_link( 'links_made', __( 'Links', 'dos-toolkit' ) ); ?></th>
+							<th><?php esc_html_e( 'Share', 'dos-toolkit' ); ?></th>
+							<th><?php self::sort_link( 'opportunities', __( 'Available', 'dos-toolkit' ) ); ?></th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php if ( ! $rules ) : ?>
+						<tr><td colspan="8"><?php esc_html_e( 'Nothing matches.', 'dos-toolkit' ); ?></td></tr>
+					<?php else : ?>
+						<?php foreach ( $rules as $rule ) : ?>
+							<?php $share = DOS_Links_Rules::share( $rule, $all ); ?>
+							<tr<?php echo $rule['enabled'] ? '' : ' style="opacity:.5"'; ?>>
+								<th class="check-column"><input type="checkbox" name="ids[]" value="<?php echo (int) $rule['id']; ?>" /></th>
+								<td><strong><?php echo esc_html( $rule['phrase'] ); ?></strong></td>
+								<td><?php echo esc_html( get_the_title( (int) $rule['target_id'] ) ); ?></td>
+								<td class="description">
+									<?php
+									printf(
+										/* translators: 1: links per page, 2: first-occurrence behaviour, 3: percentage */
+										esc_html__( '%1$d/page · %2$s · %3$d%%', 'dos-toolkit' ),
+										(int) $rule['max_per_page'],
+										'skip' === $rule['first_instance'] ? esc_html__( 'not first', 'dos-toolkit' ) : esc_html__( 'first ok', 'dos-toolkit' ),
+										(int) $rule['throttle']
+									);
+									?>
+								</td>
+								<td><strong><?php echo (int) $rule['links_made']; ?></strong></td>
+								<td<?php echo $share >= 40 && count( $all ) > 1 ? ' class="dos-media-warning"' : ''; ?>><?php echo esc_html( $share ); ?>%</td>
+								<td>
+									<?php echo (int) $rule['opportunities']; ?>
+									<?php $why = DOS_Links_Rules::explain( $rule ); ?>
+									<?php if ( $why ) : ?>
+										<br><span class="description"><?php echo esc_html( $why ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td style="white-space:nowrap">
+									<a href="<?php echo esc_url( self::url( array( 'rescan' => (int) $rule['id'] ) ) ); ?>#rescan"><?php esc_html_e( 'Rescan', 'dos-toolkit' ); ?></a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php endif; ?>
+					</tbody>
 				</table>
 
-				<?php submit_button( __( 'Save phrase', 'dos-toolkit' ) ); ?>
-			</form>
-
-			<hr>
-			<h2><?php esc_html_e( 'Phrases in use', 'dos-toolkit' ); ?></h2>
-
-			<table class="widefat striped">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Phrase', 'dos-toolkit' ); ?></th>
-						<th><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></th>
-						<th><?php esc_html_e( 'Limits', 'dos-toolkit' ); ?></th>
-						<th><?php esc_html_e( 'Links made', 'dos-toolkit' ); ?></th>
-						<th><?php esc_html_e( 'Share of all links', 'dos-toolkit' ); ?></th>
-						<th><?php esc_html_e( 'Still available', 'dos-toolkit' ); ?></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-				<?php if ( ! $rules ) : ?>
-					<tr><td colspan="7"><?php esc_html_e( 'No phrases yet.', 'dos-toolkit' ); ?></td></tr>
-				<?php else : ?>
-					<?php foreach ( $rules as $rule ) : ?>
-						<?php $share = DOS_Links_Rules::share( $rule, $rules ); ?>
-						<tr<?php echo $rule['enabled'] ? '' : ' style="opacity:.5"'; ?>>
-							<td><strong><?php echo esc_html( $rule['phrase'] ); ?></strong></td>
-							<td><?php echo esc_html( get_the_title( (int) $rule['target_id'] ) ); ?></td>
-							<td class="description">
-								<?php
-								printf(
-									/* translators: 1: links per page, 2: first-occurrence behaviour, 3: throttle percentage */
-									esc_html__( '%1$d per page, %2$s, %3$d%%', 'dos-toolkit' ),
-									(int) $rule['max_per_page'],
-									'skip' === $rule['first_instance'] ? esc_html__( 'not the first', 'dos-toolkit' ) : esc_html__( 'first allowed', 'dos-toolkit' ),
-									(int) $rule['throttle']
-								);
-								?>
-							</td>
-							<td><strong><?php echo (int) $rule['links_made']; ?></strong></td>
-							<td>
-								<?php echo esc_html( $share ); ?>%
-								<?php if ( $share >= 40 && count( $rules ) > 1 ) : ?>
-									<br><span class="dos-media-warning"><?php esc_html_e( 'doing most of the work', 'dos-toolkit' ); ?></span>
-								<?php endif; ?>
-							</td>
-							<td>
-								<?php echo (int) $rule['opportunities']; ?>
-								<?php $why = DOS_Links_Rules::explain( $rule ); ?>
-								<?php if ( $why ) : ?>
-									<br><span class="description"><?php echo esc_html( $why ); ?></span>
-								<?php endif; ?>
-							</td>
-							<td>
-								<form method="post" style="display:inline">
-									<?php wp_nonce_field( 'dos_links' ); ?>
-									<input type="hidden" name="dos_action" value="links_toggle" />
-									<input type="hidden" name="id" value="<?php echo (int) $rule['id']; ?>" />
-									<input type="hidden" name="enabled" value="<?php echo $rule['enabled'] ? '0' : '1'; ?>" />
-									<button type="submit" class="button-link"><?php echo $rule['enabled'] ? esc_html__( 'Disable', 'dos-toolkit' ) : esc_html__( 'Enable', 'dos-toolkit' ); ?></button>
-								</form>
-								&nbsp;
-								<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'dos-links', 'rescan' => (int) $rule['id'] ), admin_url( 'admin.php' ) ) ); ?>#rescan">
-									<?php esc_html_e( 'Rescan', 'dos-toolkit' ); ?>
-								</a>
-								&nbsp;
-								<form method="post" style="display:inline">
-									<?php wp_nonce_field( 'dos_links' ); ?>
-									<input type="hidden" name="dos_action" value="links_delete" />
-									<input type="hidden" name="id" value="<?php echo (int) $rule['id']; ?>" />
-									<button type="submit" class="button-link"><?php esc_html_e( 'Delete', 'dos-toolkit' ); ?></button>
-								</form>
-							</td>
-						</tr>
-					<?php endforeach; ?>
+				<?php if ( $result['pages'] > 1 ) : ?>
+					<div class="tablenav bottom">
+						<span class="description" style="margin-right:1em">
+							<?php
+							printf(
+								/* translators: 1: current page, 2: total pages */
+								esc_html__( 'Page %1$d of %2$d', 'dos-toolkit' ),
+								(int) $state['page'],
+								(int) $result['pages']
+							);
+							?>
+						</span>
+						<?php if ( $state['page'] > 1 ) : ?>
+							<a class="button" href="<?php echo esc_url( self::url( array( 'paged' => $state['page'] - 1 ) ) ); ?>">&laquo; <?php esc_html_e( 'Previous', 'dos-toolkit' ); ?></a>
+						<?php endif; ?>
+						<?php if ( $state['page'] < $result['pages'] ) : ?>
+							<a class="button" href="<?php echo esc_url( self::url( array( 'paged' => $state['page'] + 1 ) ) ); ?>"><?php esc_html_e( 'Next', 'dos-toolkit' ); ?> &raquo;</a>
+						<?php endif; ?>
+					</div>
 				<?php endif; ?>
-				</tbody>
-			</table>
-
-			<p class="description">
-				<?php esc_html_e( '"Links made" counts links currently in your content. "Still available" is how many more the rule could place if applied now. Both come from the scan, so run it after any change to see current numbers.', 'dos-toolkit' ); ?>
-			</p>
+			</form>
 
 			<?php
 			$rescan_id = isset( $_GET['rescan'] ) ? (int) $_GET['rescan'] : 0;

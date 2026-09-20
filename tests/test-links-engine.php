@@ -122,5 +122,32 @@ check( 'removes links it created', false === strpos( $strip['html'], 'data-dos-l
 check( '  leaves a hand-made link alone', false !== strpos( $strip['html'], '<a href="/manual">roof repair</a>' ), $strip['html'] );
 check( '  counts what it removed', 1 === $strip['removed'] );
 
+echo "\n--- why a rule produced nothing ---\n";
+
+// The single-occurrence case from the canary: one post, one mention.
+$one = '<p>this is a post about open houses in Phoenix.</p>';
+$r   = rule( array( 'phrase' => 'open houses in Phoenix', 'target_id' => 99 ) );
+
+$a = DOS_Links_Engine::analyse( $one, $r, 205 );
+check( 'a straightforward match reports a placement', 1 === $a['placements'] && 1 === $a['occurrences'], json_encode( $a ) );
+check( '  and needs no explanation', '' === $a['reason'], json_encode( $a ) );
+
+$a = DOS_Links_Engine::analyse( $one, $r, 99 );
+check( 'pointing a phrase at the only page containing it reports self', 'self' === $a['reason'], json_encode( $a ) );
+
+$a = DOS_Links_Engine::analyse( $one, rule( array( 'phrase' => 'open houses in Phoenix', 'first_instance' => 'skip' ) ), 205 );
+check( 'skipping the first when there is only one reports first_only', 'first_only' === $a['reason'], json_encode( $a ) );
+check( '  and still admits it found the phrase', 1 === $a['occurrences'] );
+
+$a = DOS_Links_Engine::analyse( $one, rule( array( 'phrase' => 'open houses in Phoenix', 'throttle' => 0 ) ), 205 );
+check( 'a throttle that excludes everything reports throttled', 'throttled' === $a['reason'], json_encode( $a ) );
+
+$a = DOS_Links_Engine::analyse( '<h2>open houses in Phoenix</h2>', $r, 205 );
+check( 'a phrase only inside a heading reports absent', 'absent' === $a['reason'], json_encode( $a ) );
+check( '  and reports no occurrences, since none were linkable', 0 === $a['occurrences'] );
+
+$a = DOS_Links_Engine::analyse( '<p>nothing relevant here</p>', $r, 205 );
+check( 'a phrase that appears nowhere reports absent', 'absent' === $a['reason'] );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

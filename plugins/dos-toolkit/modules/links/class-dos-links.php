@@ -122,16 +122,25 @@ final class DOS_Module_Links extends DOS_Module {
 
 		foreach ( $posts as $post ) {
 			foreach ( $rules as $rule ) {
-				$placements = DOS_Links_Engine::placements( $post->post_content, $rule, $post->ID );
-				$existing   = substr_count( $post->post_content, 'data-dos-link="' . (int) $rule['id'] . '"' );
+				$analysis = DOS_Links_Engine::analyse( $post->post_content, $rule, $post->ID );
+				$existing = substr_count( $post->post_content, 'data-dos-link="' . (int) $rule['id'] . '"' );
 
-				if ( ! $placements && ! $existing ) {
+				if ( $analysis['occurrences'] ) {
+					DOS_Links_Rules::add_found( $rule['id'], $analysis['occurrences'] );
+				}
+
+				// Why a rule produced nothing is worth more than the zero.
+				if ( ! $analysis['placements'] && $analysis['reason'] && 'absent' !== $analysis['reason'] ) {
+					DOS_Links_Rules::set_reason( $rule['id'], $analysis['reason'] );
+				}
+
+				if ( ! $analysis['placements'] && ! $existing ) {
 					continue;
 				}
 
-				DOS_Links_Rules::add_stats( $rule['id'], count( $placements ), $existing, 1 );
+				DOS_Links_Rules::add_stats( $rule['id'], $analysis['placements'], $existing, 1 );
 
-				$total += count( $placements );
+				$total += $analysis['placements'];
 			}
 		}
 
@@ -421,7 +430,13 @@ final class DOS_Module_Links extends DOS_Module {
 									<br><span class="dos-media-warning"><?php esc_html_e( 'doing most of the work', 'dos-toolkit' ); ?></span>
 								<?php endif; ?>
 							</td>
-							<td><?php echo (int) $rule['opportunities']; ?></td>
+							<td>
+								<?php echo (int) $rule['opportunities']; ?>
+								<?php $why = DOS_Links_Rules::explain( $rule ); ?>
+								<?php if ( $why ) : ?>
+									<br><span class="description"><?php echo esc_html( $why ); ?></span>
+								<?php endif; ?>
+							</td>
 							<td>
 								<form method="post" style="display:inline">
 									<?php wp_nonce_field( 'dos_links' ); ?>

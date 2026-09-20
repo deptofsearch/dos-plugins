@@ -5,6 +5,21 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.9.1
+
+The Internal Links dashboard reported nothing to link without saying why.
+
+Found on the canary: a rule matched a phrase that plainly existed in a
+published post, and every count read zero. Several different causes produce
+that same zero and none of them were distinguishable from outside — the
+destination being the only page containing the phrase, a rule set to leave the
+first occurrence alone on a page that has only one, a percentage limit that
+excluded every candidate, or the phrase existing only inside a heading or list
+where links are never placed.
+
+The scan now records which of those it was and the dashboard says so in plain
+words next to the count, with what to change.
+
 ## 0.9.0
 
 Adds the Internal Links module: a keyword phrase, a page it should point at,

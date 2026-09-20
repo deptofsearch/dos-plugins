@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class DOS_Links_Rules {
 
-	const DB_VERSION = '1';
+	const DB_VERSION = '2';
 
 	public static function table() {
 		global $wpdb;
@@ -43,6 +43,8 @@ final class DOS_Links_Rules {
 				links_made bigint(20) unsigned NOT NULL DEFAULT 0,
 				pages_linked bigint(20) unsigned NOT NULL DEFAULT 0,
 				scanned_at datetime NULL DEFAULT NULL,
+				last_reason varchar(20) NOT NULL DEFAULT '',
+				found_in bigint(20) unsigned NOT NULL DEFAULT 0,
 				created datetime NOT NULL,
 				PRIMARY KEY  (id),
 				UNIQUE KEY phrase (phrase)
@@ -174,7 +176,66 @@ final class DOS_Links_Rules {
 
 		$table = self::table();
 
-		$wpdb->query( "UPDATE {$table} SET opportunities = 0, links_made = 0, pages_linked = 0" );
+		$wpdb->query( "UPDATE {$table} SET opportunities = 0, links_made = 0, pages_linked = 0, found_in = 0, last_reason = ''" );
+	}
+
+	/**
+	 * Record why a phrase produced no links, so the dashboard can say so.
+	 * Only the first reason seen is kept: it is a hint, not an audit.
+	 */
+	public static function set_reason( $rule_id, $reason ) {
+		global $wpdb;
+
+		$table = self::table();
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET last_reason = %s WHERE id = %d AND last_reason = ''",
+				substr( (string) $reason, 0, 20 ),
+				(int) $rule_id
+			)
+		);
+	}
+
+	public static function add_found( $rule_id, $count ) {
+		global $wpdb;
+
+		$table = self::table();
+
+		$wpdb->query(
+			$wpdb->prepare( "UPDATE {$table} SET found_in = found_in + %d WHERE id = %d", (int) $count, (int) $rule_id )
+		);
+	}
+
+	/**
+	 * A sentence explaining a rule that produced nothing.
+	 */
+	public static function explain( array $rule ) {
+		if ( (int) $rule['links_made'] || (int) $rule['opportunities'] ) {
+			return '';
+		}
+
+		if ( ! $rule['scanned_at'] ) {
+			return __( 'Not scanned yet. Run “Scan for link opportunities”.', 'dos-toolkit' );
+		}
+
+		if ( (int) $rule['found_in'] < 1 ) {
+			return __( 'This phrase does not appear in the readable text of any published page — or every occurrence sits in a heading, bold text, a list, a table, an existing link or a shortcode, where links are never placed.', 'dos-toolkit' );
+		}
+
+		switch ( $rule['last_reason'] ) {
+			case 'self':
+				return __( 'The only page containing this phrase is the page it points at, and a page never links to itself. Point it somewhere else.', 'dos-toolkit' );
+
+			case 'first_only':
+				return __( 'The phrase appears once on each page that has it, and this rule is set to leave the first occurrence alone — so there is never a second one to link. Switch it to link the first occurrence.', 'dos-toolkit' );
+
+			case 'throttled':
+				return __( 'The phrase was found, but the percentage limit excluded every occurrence. Raise it towards 100%.', 'dos-toolkit' );
+
+			default:
+				return __( 'The phrase was found but every occurrence was excluded by this rule\'s limits.', 'dos-toolkit' );
+		}
 	}
 
 	public static function add_stats( $rule_id, $opportunities, $links_made, $pages ) {

@@ -227,6 +227,63 @@ final class DOS_Links_Engine {
 	 * ------------------------------------------------------------------- */
 
 	/**
+	 * Why a rule found the phrase and linked it anyway — or did not.
+	 *
+	 * A count of zero has several causes that look identical from outside,
+	 * and the operator cannot tell a phrase that appears nowhere from one
+	 * that appears and was filtered out by a limit they set. This reports
+	 * which it was.
+	 *
+	 * @return array occurrences, placements, reason
+	 */
+	public static function analyse( $html, array $rule, $post_id ) {
+		$out = array(
+			'occurrences' => 0,
+			'placements'  => 0,
+			'reason'      => '',
+		);
+
+		if ( (int) $rule['target_id'] === (int) $post_id ) {
+			$out['reason'] = 'self';
+
+			return $out;
+		}
+
+		$occurrences        = self::occurrences( $html, $rule['phrase'] );
+		$out['occurrences'] = count( $occurrences );
+
+		if ( ! $occurrences ) {
+			$out['reason'] = 'absent';
+
+			return $out;
+		}
+
+		$placements        = self::placements( $html, $rule, $post_id );
+		$out['placements'] = count( $placements );
+
+		if ( $placements ) {
+			return $out;
+		}
+
+		// It is here, and something the operator configured removed it.
+		if ( 'skip' === ( isset( $rule['first_instance'] ) ? $rule['first_instance'] : 'link' ) && 1 === count( $occurrences ) ) {
+			$out['reason'] = 'first_only';
+
+			return $out;
+		}
+
+		if ( 100 > (int) ( isset( $rule['throttle'] ) ? $rule['throttle'] : 100 ) ) {
+			$out['reason'] = 'throttled';
+
+			return $out;
+		}
+
+		$out['reason'] = 'filtered';
+
+		return $out;
+	}
+
+	/**
 	 * Narrow a post's occurrences down to the ones a rule would actually
 	 * link.
 	 *

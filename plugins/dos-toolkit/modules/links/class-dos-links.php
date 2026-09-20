@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/class-dos-links-engine.php';
 require_once __DIR__ . '/class-dos-links-rules.php';
+require_once __DIR__ . '/class-dos-links-pages.php';
 
 final class DOS_Module_Links extends DOS_Module {
 
@@ -32,6 +33,7 @@ final class DOS_Module_Links extends DOS_Module {
 
 	public static function init() {
 		add_action( 'admin_init', array( 'DOS_Links_Rules', 'maybe_install' ), 4 );
+		add_action( 'admin_init', array( 'DOS_Links_Pages', 'maybe_install' ), 4 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
 	}
 
@@ -211,6 +213,20 @@ final class DOS_Module_Links extends DOS_Module {
 
 		if ( 0 === $offset ) {
 			DOS_Settings::set( 'links_orphans', 0 );
+
+			// The page index is rebuilt rather than updated: a link removed
+			// since the last scan has nothing left to subtract from.
+			if ( ! $only_rule ) {
+				DOS_Links_Pages::reset();
+			}
+		}
+
+		// Every rule, not just the one being rescanned, so a link can be
+		// attributed to where it points.
+		$targets = array();
+
+		foreach ( DOS_Links_Rules::all() as $any ) {
+			$targets[ (int) $any['id'] ] = (int) $any['target_id'];
 		}
 
 		$rules = self::rules_for( $only_rule );
@@ -220,6 +236,22 @@ final class DOS_Module_Links extends DOS_Module {
 		$valid = DOS_Links_Rules::ids();
 
 		foreach ( $posts as $post ) {
+			if ( ! $only_rule ) {
+				$links = DOS_Links_Pages::analyse_links( $post->post_content, $targets );
+
+				DOS_Links_Pages::add( $post->ID, $links['out_module'], $links['out_manual'] );
+
+				foreach ( $links['to'] as $target_id => $counts ) {
+					DOS_Links_Pages::add(
+						$target_id,
+						0,
+						0,
+						isset( $counts['module'] ) ? $counts['module'] : 0,
+						isset( $counts['manual'] ) ? $counts['manual'] : 0
+					);
+				}
+			}
+
 			// Links whose phrase has since been deleted still sit in the
 			// content and belong to nothing. Nothing else counts them.
 			$orphans = 0;
@@ -655,6 +687,171 @@ final class DOS_Module_Links extends DOS_Module {
 		}
 	}
 
+	private static function pages_state() {
+		return array(
+			'status'   => isset( $_GET['pstatus'] ) ? sanitize_key( wp_unslash( $_GET['pstatus'] ) ) : 'all',
+			'orderby'  => isset( $_GET['porderby'] ) ? sanitize_key( wp_unslash( $_GET['porderby'] ) ) : 'out_total',
+			'order'    => isset( $_GET['porder'] ) && 'asc' === strtolower( $_GET['porder'] ) ? 'asc' : 'desc',
+			'page'     => isset( $_GET['ppaged'] ) ? max( 1, (int) $_GET['ppaged'] ) : 1,
+			'per_page' => 50,
+		);
+	}
+
+	private static function pages_url( array $args ) {
+		$state = self::pages_state();
+
+		return add_query_arg(
+			array_filter(
+				array_merge(
+					array(
+						'page'     => 'dos-links',
+						'pstatus'  => $state['status'],
+						'porderby' => $state['orderby'],
+						'porder'   => $state['order'],
+						'ppaged'   => $state['page'],
+					),
+					$args
+				),
+				'strlen'
+			),
+			admin_url( 'admin.php' )
+		) . '#pages';
+	}
+
+	private static function pages_sort( $column, $label ) {
+		$state = self::pages_state();
+		$is    = $state['orderby'] === $column;
+		$next  = ( $is && 'desc' === $state['order'] ) ? 'asc' : 'desc';
+		$arrow = $is ? ( 'asc' === $state['order'] ? ' ↑' : ' ↓' ) : '';
+
+		printf(
+			'<a href="%s">%s%s</a>',
+			esc_url( self::pages_url( array( 'porderby' => $column, 'porder' => $next, 'ppaged' => 1 ) ) ),
+			esc_html( $label ),
+			esc_html( $arrow )
+		);
+	}
+
+	/**
+	 * Which pages link out, which are linked to, and which do neither.
+	 */
+	private static function render_pages_table() {
+		$state  = self::pages_state();
+		$result = DOS_Links_Pages::query( $state );
+		$totals = DOS_Links_Pages::totals();
+		?>
+		<hr>
+		<h2 id="pages"><?php esc_html_e( 'Pages', 'dos-toolkit' ); ?></h2>
+
+		<?php if ( ! $totals['pages'] ) : ?>
+			<p class="description"><?php esc_html_e( 'Run “Scan for link opportunities” to build this. It counts every internal link on every page, including ones added by hand.', 'dos-toolkit' ); ?></p>
+		<?php else : ?>
+			<p class="description">
+				<?php
+				printf(
+					/* translators: 1: pages indexed, 2: internal links found, 3: pages linking to nothing, 4: pages nothing links to */
+					esc_html__( '%1$d pages · %2$d internal links · %3$d link to nothing · %4$d have nothing pointing at them', 'dos-toolkit' ),
+					(int) $totals['pages'],
+					(int) $totals['links'],
+					(int) $totals['no_out'],
+					(int) $totals['no_in']
+				);
+				?>
+			</p>
+
+			<p class="dos-filters">
+				<?php
+				$views = array(
+					'all'      => __( 'All', 'dos-toolkit' ),
+					'linked'   => __( 'Linking out', 'dos-toolkit' ),
+					'no_out'   => __( 'Linking to nothing', 'dos-toolkit' ),
+					'no_in'    => __( 'Nothing links to them', 'dos-toolkit' ),
+					'isolated' => __( 'Neither', 'dos-toolkit' ),
+				);
+				?>
+				<?php foreach ( $views as $key => $label ) : ?>
+					<a class="button<?php echo $state['status'] === $key ? ' button-primary' : ''; ?>" href="<?php echo esc_url( self::pages_url( array( 'pstatus' => $key, 'ppaged' => 1 ) ) ); ?>">
+						<?php echo esc_html( $label ); ?>
+					</a>
+				<?php endforeach; ?>
+				<span class="description" style="margin-left:.5em">
+					<?php
+					printf(
+						/* translators: 1: rows shown, 2: rows matching */
+						esc_html__( 'showing %1$d of %2$d', 'dos-toolkit' ),
+						count( $result['rows'] ),
+						(int) $result['total']
+					);
+					?>
+				</span>
+			</p>
+
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Page', 'dos-toolkit' ); ?></th>
+						<th><?php self::pages_sort( 'out_total', __( 'Links out', 'dos-toolkit' ) ); ?></th>
+						<th><?php self::pages_sort( 'in_total', __( 'Links in', 'dos-toolkit' ) ); ?></th>
+						<th><?php esc_html_e( 'Placed by', 'dos-toolkit' ); ?></th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php if ( ! $result['rows'] ) : ?>
+					<tr><td colspan="5"><?php esc_html_e( 'Nothing matches.', 'dos-toolkit' ); ?></td></tr>
+				<?php else : ?>
+					<?php foreach ( $result['rows'] as $row ) : ?>
+						<?php
+						$id    = (int) $row['post_id'];
+						$out   = (int) $row['out_module'] + (int) $row['out_manual'];
+						$in    = (int) $row['in_module'] + (int) $row['in_manual'];
+						$title = get_the_title( $id );
+						?>
+						<tr>
+							<td>
+								<strong><?php echo esc_html( $title ? $title : __( '(no title)', 'dos-toolkit' ) ); ?></strong>
+								<span class="description">#<?php echo (int) $id; ?></span>
+							</td>
+							<td<?php echo $out >= self::cap() && self::cap() ? ' class="dos-media-warning"' : ''; ?>><?php echo (int) $out; ?></td>
+							<td<?php echo $in ? '' : ' class="dos-media-warning"'; ?>><?php echo (int) $in; ?></td>
+							<td class="description">
+								<?php
+								printf(
+									/* translators: 1: links placed by the module, 2: links added by hand */
+									esc_html__( '%1$d by this module · %2$d by hand', 'dos-toolkit' ),
+									(int) $row['out_module'],
+									(int) $row['out_manual']
+								);
+								?>
+							</td>
+							<td style="white-space:nowrap">
+								<a href="<?php echo esc_url( get_edit_post_link( $id ) ); ?>"><?php esc_html_e( 'Edit', 'dos-toolkit' ); ?></a>
+								&nbsp;
+								<a href="<?php echo esc_url( get_permalink( $id ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'View', 'dos-toolkit' ); ?></a>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+				</tbody>
+			</table>
+
+			<?php if ( $result['pages'] > 1 ) : ?>
+				<div class="tablenav bottom">
+					<span class="description" style="margin-right:1em">
+						<?php printf( esc_html__( 'Page %1$d of %2$d', 'dos-toolkit' ), (int) $state['page'], (int) $result['pages'] ); ?>
+					</span>
+					<?php if ( $state['page'] > 1 ) : ?>
+						<a class="button" href="<?php echo esc_url( self::pages_url( array( 'ppaged' => $state['page'] - 1 ) ) ); ?>">&laquo; <?php esc_html_e( 'Previous', 'dos-toolkit' ); ?></a>
+					<?php endif; ?>
+					<?php if ( $state['page'] < $result['pages'] ) : ?>
+						<a class="button" href="<?php echo esc_url( self::pages_url( array( 'ppaged' => $state['page'] + 1 ) ) ); ?>"><?php esc_html_e( 'Next', 'dos-toolkit' ); ?> &raquo;</a>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+		<?php endif; ?>
+		<?php
+	}
+
 	public static function render_page() {
 		$error = get_transient( 'dos_links_error' );
 
@@ -1006,6 +1203,8 @@ final class DOS_Module_Links extends DOS_Module {
 				?>
 			<?php endif; ?>
 
+			<?php self::render_pages_table(); ?>
+
 			<hr>
 			<h2><?php esc_html_e( 'Site-wide limit', 'dos-toolkit' ); ?></h2>
 
@@ -1057,6 +1256,8 @@ final class DOS_Module_Links extends DOS_Module {
 				DOS_Batch::render_runner( 'links_apply_' . $rescan_id );
 				?>
 			<?php endif; ?>
+
+			<?php self::render_pages_table(); ?>
 
 			<hr>
 			<h2><?php esc_html_e( 'Site-wide limit', 'dos-toolkit' ); ?></h2>

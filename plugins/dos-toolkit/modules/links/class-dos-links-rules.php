@@ -223,6 +223,82 @@ final class DOS_Links_Rules {
 	}
 
 	/**
+	 * Find pages and posts to point a phrase at.
+	 *
+	 * A site with two thousand pages cannot be chosen from in a dropdown, and
+	 * the dropdown this replaces silently stopped at three hundred — so on a
+	 * large site the page somebody wanted was not missing from the list, it
+	 * was never in it.
+	 *
+	 * An exact reference wins over a title search. Somebody who pastes a URL
+	 * or an ID has already decided, and making them pick it out of a list of
+	 * near-matches afterwards asks the same question twice.
+	 *
+	 * @param string $term       What was typed: a title fragment, or an exact reference.
+	 * @param array  $post_types Types a phrase may point at.
+	 * @return array Each row: id, title, type, url.
+	 */
+	public static function search_targets( $term, array $post_types, $limit = 20 ) {
+		$term  = trim( (string) $term );
+		$limit = max( 1, min( 50, (int) $limit ) );
+		$rows  = array();
+		$seen  = array();
+
+		if ( '' === $term || ! $post_types ) {
+			return $rows;
+		}
+
+		$exact = self::resolve_target( $term );
+
+		if ( $exact && 'publish' === get_post_status( $exact ) && in_array( get_post_type( $exact ), $post_types, true ) ) {
+			$rows[]         = self::target_row( $exact );
+			$seen[ $exact ] = true;
+		}
+
+		$query = new WP_Query(
+			array(
+				'post_type'              => $post_types,
+				'post_status'            => 'publish',
+				's'                      => $term,
+				'posts_per_page'         => $limit,
+				'orderby'                => 'title',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		foreach ( (array) $query->posts as $post ) {
+			$id = is_object( $post ) ? (int) $post->ID : (int) $post;
+
+			if ( isset( $seen[ $id ] ) ) {
+				continue;
+			}
+
+			$seen[ $id ] = true;
+			$rows[]      = self::target_row( $id );
+		}
+
+		return array_slice( $rows, 0, $limit );
+	}
+
+	public static function target_row( $post_id ) {
+		$post_id = (int) $post_id;
+		$type    = get_post_type_object( get_post_type( $post_id ) );
+		$title   = get_the_title( $post_id );
+
+		return array(
+			'id'    => $post_id,
+			'title' => '' !== trim( (string) $title ) ? $title : __( '(no title)', 'dos-toolkit' ),
+			'type'  => $type && isset( $type->labels->singular_name ) ? $type->labels->singular_name : '',
+			// The path, not the whole URL: it is the part that tells two
+			// similarly titled pages apart, and it fits the row.
+			'url'   => wp_make_link_relative( (string) get_permalink( $post_id ) ),
+		);
+	}
+
+	/**
 	 * Add many phrases at once.
 	 *
 	 * One per line: phrase | destination | links per page | first | percent.

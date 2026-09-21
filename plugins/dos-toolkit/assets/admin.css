@@ -57,3 +57,62 @@
 .dos-scroll thead th, .dos-scroll thead td { position: sticky; top: 0; background: #fff; z-index: 1; box-shadow: inset 0 -1px 0 #dcdcde; }
 .dos-tag-toolbar { margin: .8em 0 .5em; }
 .dos-tag-toolbar .description { margin-left: .6em; }
+
+/* Destination picker on the Internal Links screen. */
+.dos-picker {
+	position: relative;
+	max-width: 32em;
+}
+
+.dos-picker-results {
+	position: absolute;
+	z-index: 100;
+	left: 0;
+	right: 0;
+	max-height: 20em;
+	overflow-y: auto;
+	margin-top: 2px;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	box-shadow: 0 2px 6px rgba( 0, 0, 0, .12 );
+}
+
+.dos-picker-result {
+	display: block;
+	width: 100%;
+	padding: .5em .7em;
+	border: 0;
+	border-bottom: 1px solid #f0f0f1;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+
+.dos-picker-result:last-child {
+	border-bottom: 0;
+}
+
+.dos-picker-result:hover,
+.dos-picker-result.is-active {
+	background: #f0f6fc;
+}
+
+.dos-picker-result strong {
+	display: block;
+}
+
+.dos-picker-meta {
+	color: #646970;
+	font-size: 12px;
+}
+
+.dos-picker-empty {
+	margin: 0;
+	padding: .6em .7em;
+	color: #646970;
+}
+
+.dos-picker-chosen {
+	margin: .5em 0 0;
+	font-weight: 600;
+}

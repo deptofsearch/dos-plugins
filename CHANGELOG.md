@@ -5,6 +5,37 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.0
+
+Choosing a destination page is a search rather than a dropdown.
+
+The dropdown held three hundred pages. Not three hundred and one — it was
+capped, and silently, so on a site past that number the page somebody wanted
+was not further down the list, it was never in the list. Nothing said so. Even
+under the cap, finding one page among three hundred in a `select` means
+knowing its exact title and scrolling for it.
+
+The field searches published pages and posts by title as you type, and shows
+each result with its post type, its path and its ID — because a page and a
+post can carry the same title, and the path is what tells them apart.
+
+An exact reference is taken as one. Pasting a URL, a path such as `/agents/`,
+a numeric ID or an exact title resolves straight to that page and puts it
+first, rather than making somebody who has already decided pick their own
+answer out of a list of near-matches. It is the same resolution the import
+panel has always used, so the two ways of naming a destination cannot drift
+apart.
+
+Editing the text after picking clears the pick. Without that the field reads
+as one page while the form carries another, and the rule is saved pointing
+somewhere nobody chose — the sort of fault that is invisible until a link
+appears on the wrong page.
+
+It still works with the script switched off, or when a URL is pasted and
+submitted before the search answers: whatever the field holds is resolved on
+the server the same way. The search never returns a draft, since a rule
+pointing at one would link to nothing.
+
 ## 0.19.1
 
 "View version details" still said "Plugin not found." on a site running the

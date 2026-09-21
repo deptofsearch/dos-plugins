@@ -66,6 +66,30 @@ class FakeWpdb {
 }
 $GLOBALS['wpdb'] = new FakeWpdb();
 
+// Titles and types for the destination picker.
+$GLOBALS['titles'] = array( 99 => 'Phoenix Open Houses', 98 => 'Agents Page', 97 => 'Open House Etiquette', 96 => '' );
+$GLOBALS['types']  = array( 99 => 'page', 98 => 'page', 97 => 'post', 96 => 'page', 50 => 'page' );
+$GLOBALS['search'] = array();
+
+function get_post_type( $id ) { return $GLOBALS['types'][ (int) $id ] ?? 'page'; }
+function get_the_title( $id ) { return $GLOBALS['titles'][ (int) $id ] ?? ''; }
+function get_permalink( $id ) { return 'https://example.com/p' . (int) $id . '/'; }
+function wp_make_link_relative( $url ) { return preg_replace( '|^(https?:)?//[^/]+(/.*)|i', '$2', (string) $url ); }
+function get_post_type_object( $type ) {
+    return (object) array( 'labels' => (object) array( 'singular_name' => ucfirst( (string) $type ) ) );
+}
+
+class WP_Query {
+    public $posts = array();
+    public function __construct( $args ) {
+        $found = array();
+        foreach ( $GLOBALS['search'] as $id => $title ) {
+            if ( false !== stripos( $title, (string) $args['s'] ) ) { $found[] = (object) array( 'ID' => $id ); }
+        }
+        $this->posts = array_slice( $found, 0, (int) $args['posts_per_page'] );
+    }
+}
+
 require PLUGIN . '/includes/class-dos-settings.php';
 require PLUGIN . '/modules/links/class-dos-links-rules.php';
 
@@ -153,6 +177,46 @@ check( 'deleting several', 1 === DOS_Links_Rules::bulk( 'delete', array( $ids[0]
 check( '  actually removed the row', ! isset( $GLOBALS['rows'][ $ids[0] ] ) );
 check( 'an empty selection does nothing', 0 === DOS_Links_Rules::bulk( 'delete', array() ) );
 check( 'a nonsense action changes nothing', 1 === DOS_Links_Rules::bulk( 'explode', array( $ids[1] ) ) && isset( $GLOBALS['rows'][ $ids[1] ] ) );
+
+echo "\n--- finding a destination without a dropdown ---\n";
+$GLOBALS['posts'][97] = 'publish';
+$GLOBALS['posts'][96] = 'publish';
+$GLOBALS['search'] = array( 99 => 'Phoenix Open Houses', 97 => 'Open House Etiquette', 96 => '' );
+$types = array( 'page', 'post' );
+
+$rows = DOS_Links_Rules::search_targets( 'open house', $types );
+check( 'a title fragment finds every page carrying it', 2 === count( $rows ), json_encode( array_column( $rows, 'id' ) ) );
+check( '  and each row carries what it takes to tell them apart', isset( $rows[0]['id'], $rows[0]['title'], $rows[0]['type'], $rows[0]['url'] ) );
+check( '  including the post type, since a page and a post can share a title', 'Page' === $rows[0]['type'], json_encode( $rows[0] ) );
+check( '  and a path rather than a full URL, which is what fits the row', '/p99/' === $rows[0]['url'], $rows[0]['url'] );
+
+check( 'nothing typed returns nothing rather than everything', array() === DOS_Links_Rules::search_targets( '', $types ) );
+check( 'one character is not a search', array() === DOS_Links_Rules::search_targets( 'zzzznomatch', $types ) );
+
+$rows = DOS_Links_Rules::search_targets( '/agents/', $types );
+check( 'a pasted path resolves straight to its page', 1 === count( $rows ) && 98 === $rows[0]['id'], json_encode( $rows ) );
+
+$rows = DOS_Links_Rules::search_targets( '99', $types );
+check( 'so does an ID', 99 === $rows[0]['id'], json_encode( $rows ) );
+
+// The exact match is put first and must not then appear again from the
+// title search, which would read as two different pages with one name.
+$GLOBALS['search'] = array( 99 => 'Phoenix Open Houses' );
+$rows = DOS_Links_Rules::search_targets( '99', $types );
+check( 'an exact reference is not also listed as a search result', 1 === count( $rows ), json_encode( $rows ) );
+
+$GLOBALS['posts'][50] = 'draft';
+$GLOBALS['search'] = array();
+$rows = DOS_Links_Rules::search_targets( '50', $types );
+check( 'a draft is not offered as a destination', array() === $rows, json_encode( $rows ) );
+
+$GLOBALS['search'] = array( 96 => '' );
+$rows = DOS_Links_Rules::search_targets( '96', $types );
+check( 'an untitled page is labelled rather than shown blank', '(no title)' === $rows[0]['title'], json_encode( $rows ) );
+
+$GLOBALS['search'] = array( 99 => 'Phoenix Open Houses', 97 => 'Open House Etiquette' );
+check( 'the limit is honoured', 1 === count( DOS_Links_Rules::search_targets( 'open house', $types, 1 ) ) );
+check( 'and a type nobody links to returns nothing', array() === DOS_Links_Rules::search_targets( 'open house', array() ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

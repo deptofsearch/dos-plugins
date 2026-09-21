@@ -35,6 +35,8 @@ final class DOS_Module_Links extends DOS_Module {
 		add_action( 'admin_init', array( 'DOS_Links_Rules', 'maybe_install' ), 4 );
 		add_action( 'admin_init', array( 'DOS_Links_Pages', 'maybe_install' ), 4 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+		add_action( 'wp_ajax_dos_links_search_targets', array( __CLASS__, 'ajax_search_targets' ) );
 	}
 
 	public static function pages() {
@@ -50,6 +52,49 @@ final class DOS_Module_Links extends DOS_Module {
 	/* ---------------------------------------------------------------------
 	 * What gets walked
 	 * ------------------------------------------------------------------- */
+
+	const SEARCH_NONCE = 'dos_links_search';
+
+	/** Enough to choose from without becoming a list to scroll. */
+	const SEARCH_LIMIT = 20;
+
+	public static function enqueue( $hook ) {
+		if ( false === strpos( (string) $hook, 'dos-links' ) ) {
+			return;
+		}
+
+		wp_enqueue_script( 'dos-toolkit-link-picker', DOS_TOOLKIT_URL . 'assets/link-picker.js', array(), DOS_TOOLKIT_VERSION, true );
+
+		wp_localize_script(
+			'dos-toolkit-link-picker',
+			'dosLinkPicker',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( self::SEARCH_NONCE ),
+				'strings' => array(
+					'searching' => __( 'Searching…', 'dos-toolkit' ),
+					'none'      => __( 'Nothing matched. An ID, a URL or a path works too.', 'dos-toolkit' ),
+					'failed'    => __( 'The search could not be run. Type an ID, a URL or a path instead.', 'dos-toolkit' ),
+					'chosen'    => __( 'Links to', 'dos-toolkit' ),
+					'change'    => __( 'Change', 'dos-toolkit' ),
+				),
+			)
+		);
+	}
+
+	public static function ajax_search_targets() {
+		check_ajax_referer( self::SEARCH_NONCE, 'nonce' );
+
+		if ( ! current_user_can( DOS_Settings::capability() ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'dos-toolkit' ) ), 403 );
+		}
+
+		$term = isset( $_POST['term'] ) ? sanitize_text_field( wp_unslash( $_POST['term'] ) ) : '';
+
+		wp_send_json_success(
+			array( 'results' => DOS_Links_Rules::search_targets( $term, self::post_types(), self::SEARCH_LIMIT ) )
+		);
+	}
 
 	public static function post_types() {
 		$types = get_post_types( array( 'public' => true ), 'names' );
@@ -462,9 +507,19 @@ final class DOS_Module_Links extends DOS_Module {
 
 		switch ( $action ) {
 			case 'links_add':
+				// The picker fills target_id. Without JavaScript, or when a URL
+				// is pasted and submitted before the search answers, `target`
+				// is what the field holds and is resolved the same way the
+				// import panel resolves a destination.
+				$target_id = isset( $_POST['target_id'] ) ? (int) $_POST['target_id'] : 0;
+
+				if ( ! $target_id && ! empty( $_POST['target'] ) ) {
+					$target_id = DOS_Links_Rules::resolve_target( sanitize_text_field( wp_unslash( $_POST['target'] ) ) );
+				}
+
 				$result = DOS_Links_Rules::add(
 					isset( $_POST['phrase'] ) ? sanitize_text_field( wp_unslash( $_POST['phrase'] ) ) : '',
-					isset( $_POST['target_id'] ) ? (int) $_POST['target_id'] : 0,
+					$target_id,
 					array(
 						'max_per_page'   => isset( $_POST['max_per_page'] ) ? (int) $_POST['max_per_page'] : 1,
 						'first_instance' => isset( $_POST['first_instance'] ) ? sanitize_key( wp_unslash( $_POST['first_instance'] ) ) : 'link',
@@ -859,16 +914,6 @@ final class DOS_Module_Links extends DOS_Module {
 			delete_transient( 'dos_links_error' );
 		}
 
-		$targets = get_posts(
-			array(
-				'post_type'      => self::post_types(),
-				'post_status'    => 'publish',
-				'posts_per_page' => 300,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-			)
-		);
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Internal Links', 'dos-toolkit' ); ?></h1>
@@ -942,14 +987,21 @@ final class DOS_Module_Links extends DOS_Module {
 							</td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="target_id"><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></label></th>
+							<th scope="row"><label for="target_search"><?php esc_html_e( 'Links to', 'dos-toolkit' ); ?></label></th>
 							<td>
-								<select id="target_id" name="target_id" required>
-									<option value=""><?php esc_html_e( '— choose a page —', 'dos-toolkit' ); ?></option>
-									<?php foreach ( $targets as $target ) : ?>
-										<option value="<?php echo (int) $target->ID; ?>"><?php echo esc_html( $target->post_title ? $target->post_title : __( '(no title)', 'dos-toolkit' ) ); ?></option>
-									<?php endforeach; ?>
-								</select>
+								<div class="dos-picker" data-dos-picker>
+									<input type="search" id="target_search" name="target" class="regular-text" autocomplete="off"
+										placeholder="<?php esc_attr_e( 'Start typing a title, or paste a URL, a path or an ID', 'dos-toolkit' ); ?>"
+										aria-describedby="target_help" />
+									<input type="hidden" name="target_id" value="" data-dos-picker-value />
+
+									<div class="dos-picker-results" data-dos-picker-results hidden></div>
+									<p class="dos-picker-chosen" data-dos-picker-chosen hidden></p>
+
+									<p class="description" id="target_help">
+										<?php esc_html_e( 'Searches published pages and posts by title. A URL, a path such as /agents/, a numeric ID or an exact title can be entered directly and does not need the search.', 'dos-toolkit' ); ?>
+									</p>
+								</div>
 							</td>
 						</tr>
 						<tr>

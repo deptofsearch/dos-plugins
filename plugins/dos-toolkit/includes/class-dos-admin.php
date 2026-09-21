@@ -457,6 +457,65 @@ final class DOS_Admin {
 				</tr>
 			</table>
 
+			<h3><?php esc_html_e( 'View version details', 'dos-toolkit' ); ?></h3>
+
+			<?php $check = DOS_Updater::diagnose(); ?>
+
+			<p class="description">
+				<?php esc_html_e( 'The details screen on the Plugins page is an iframe with room for one line, so when it fails it cannot say which plugin took the question. Any plugin can answer that request. One that answers without checking which plugin it was asked about sends WordPress to wordpress.org, which has never heard of a self-hosted plugin and replies "Plugin not found."', 'dos-toolkit' ); ?>
+			</p>
+
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Asking as', 'dos-toolkit' ); ?></th>
+					<td>
+						<code><?php echo esc_html( $check['slug'] ? $check['slug'] : 'dos-toolkit' ); ?></code>
+						<?php if ( ! $check['slug'] ) : ?>
+							<span class="description"><?php esc_html_e( 'the update list carries no slug for this plugin, so this is the fallback', 'dos-toolkit' ); ?></span>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Answer', 'dos-toolkit' ); ?></th>
+					<td>
+						<?php if ( $check['ours'] ) : ?>
+							<strong><?php esc_html_e( 'This plugin answered.', 'dos-toolkit' ); ?></strong>
+							<span class="description"><?php echo esc_html( $check['result'] ); ?></span>
+							<p class="description"><?php esc_html_e( 'The details screen should work. If it does not, open the link below directly — the page will show the real error instead of the one line the modal has room for.', 'dos-toolkit' ); ?></p>
+						<?php else : ?>
+							<span class="dos-media-warning"><strong><?php esc_html_e( 'Something else answered.', 'dos-toolkit' ); ?></strong></span>
+							<p class="description"><code><?php echo esc_html( $check['result'] ); ?></code></p>
+							<p class="description"><?php esc_html_e( 'Look for a plugin below that is not this one and not core. Its updater is answering for every plugin rather than only its own.', 'dos-toolkit' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Open directly', 'dos-toolkit' ); ?></th>
+					<td><a href="<?php echo esc_url( $check['url'] ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Details screen, outside the modal', 'dos-toolkit' ); ?></a></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Answering the request', 'dos-toolkit' ); ?></th>
+					<td>
+						<?php if ( ! $check['callbacks'] ) : ?>
+							<span class="dos-media-warning"><?php esc_html_e( 'Nothing at all, including this plugin. That should not happen.', 'dos-toolkit' ); ?></span>
+						<?php else : ?>
+							<table class="widefat striped" style="max-width:48em">
+								<thead><tr><th><?php esc_html_e( 'Order', 'dos-toolkit' ); ?></th><th><?php esc_html_e( 'Handler', 'dos-toolkit' ); ?></th></tr></thead>
+								<tbody>
+								<?php foreach ( $check['callbacks'] as $callback ) : ?>
+									<tr>
+										<td><?php echo (int) $callback['priority']; ?></td>
+										<td><code><?php echo esc_html( $callback['name'] ); ?></code></td>
+									</tr>
+								<?php endforeach; ?>
+								</tbody>
+							</table>
+							<p class="description"><?php esc_html_e( 'Lowest number runs first. Later handlers can overwrite an earlier answer, which is why this plugin answers twice.', 'dos-toolkit' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			</table>
+
 			<form method="post">
 				<?php wp_nonce_field( 'dos_check_updates' ); ?>
 				<input type="hidden" name="dos_action" value="check_updates" />

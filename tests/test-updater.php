@@ -201,5 +201,22 @@ $GLOBALS['transients'] = array();
 $GLOBALS['http'] = ok_response( array( 'dos-toolkit-v0.6.0' ) );
 check( 'accepts an array of arguments as well as an object', is_object( DOS_Updater::plugin_info( false, 'plugin_information', array( 'slug' => 'dos-toolkit' ) ) ) );
 
+check( 'and the plugin file, since not every caller passes the slug', is_object( DOS_Updater::plugin_info( false, 'plugin_information', (object) array( 'slug' => DOS_TOOLKIT_BASENAME ) ) ) );
+check( '  but still nothing that is neither', false === DOS_Updater::plugin_info( false, 'plugin_information', (object) array( 'slug' => 'dos-toolkit/other.php' ) ) );
+
+echo "\n--- naming whoever else answered ---\n";
+// The details modal has room for one line and cannot say who took the
+// question. Reading the hook back is the only way to name the culprit.
+define( 'WP_PLUGIN_DIR', '/wp-content/plugins' );
+check( 'a plain function', 'some_updater_filter' === DOS_Updater::callable_name( 'some_updater_filter' ) );
+check( 'a static method', 'DOS_Updater::plugin_info' === DOS_Updater::callable_name( array( 'DOS_Updater', 'plugin_info' ) ) );
+
+class Fake_Updater { public function api() {} }
+check( 'a method on an instance names its class', 'Fake_Updater::api' === DOS_Updater::callable_name( array( new Fake_Updater(), 'api' ) ) );
+
+$closure = DOS_Updater::callable_name( function () {} );
+check( 'a closure is located rather than called unknown', false !== strpos( $closure, 'line' ), $closure );
+check( '  and names the file it came from', false !== strpos( $closure, 'test-updater.php' ), $closure );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

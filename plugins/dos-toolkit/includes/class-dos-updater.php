@@ -32,6 +32,14 @@ final class DOS_Updater {
 	public static function boot() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject_update' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
+
+		// And again, last. Another plugin's updater that answers `plugins_api`
+		// without checking the slug it was asked about will overwrite our
+		// answer at any priority above ours, and the symptom is core falling
+		// through to wordpress.org and reporting this plugin as missing. The
+		// handler only ever acts on its own slug, so running it twice is
+		// harmless and asserting last is the only way to be sure.
+		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), PHP_INT_MAX, 3 );
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_source_dir' ), 10, 4 );
 		add_action( 'upgrader_process_complete', array( __CLASS__, 'after_update' ), 10, 2 );
 	}
@@ -238,6 +246,119 @@ final class DOS_Updater {
 	}
 
 	/**
+	 * Ask the same question the "View version details" modal asks, and report
+	 * who answered it.
+	 *
+	 * That screen is an iframe that renders a single line on failure, so
+	 * there is nowhere for it to say which plugin took the question. Every
+	 * plugin on the site can filter `plugins_api`, and one that answers
+	 * without checking which plugin it was asked about will send core off to
+	 * wordpress.org, which has never heard of a self-hosted plugin.
+	 */
+	public static function diagnose() {
+		$out = array(
+			'registered' => false,
+			'callbacks'  => array(),
+			'slug'       => '',
+			'url'        => '',
+			'result'     => '',
+			'ours'       => false,
+		);
+
+		// Everything listening on plugins_api, in the order it will run.
+		if ( isset( $GLOBALS['wp_filter']['plugins_api'] ) && is_object( $GLOBALS['wp_filter']['plugins_api'] ) ) {
+			$callbacks = $GLOBALS['wp_filter']['plugins_api']->callbacks;
+
+			ksort( $callbacks );
+
+			foreach ( $callbacks as $priority => $hooked ) {
+				foreach ( $hooked as $entry ) {
+					$name = self::callable_name( $entry['function'] );
+
+					$out['callbacks'][] = array(
+						'priority' => (int) $priority,
+						'name'     => $name,
+					);
+
+					if ( false !== strpos( $name, 'DOS_Updater::plugin_info' ) ) {
+						$out['registered'] = true;
+					}
+				}
+			}
+		}
+
+		// The slug the details link is actually built from.
+		$transient = get_site_transient( 'update_plugins' );
+
+		if ( is_object( $transient ) ) {
+			foreach ( array( 'response', 'no_update' ) as $list ) {
+				$items = isset( $transient->$list ) ? (array) $transient->$list : array();
+
+				if ( isset( $items[ DOS_TOOLKIT_BASENAME ] ) && ! empty( $items[ DOS_TOOLKIT_BASENAME ]->slug ) ) {
+					$out['slug'] = (string) $items[ DOS_TOOLKIT_BASENAME ]->slug;
+
+					break;
+				}
+			}
+		}
+
+		$out['url'] = self_admin_url(
+			'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( $out['slug'] ? $out['slug'] : self::SLUG ) . '&section=changelog'
+		);
+
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+
+		$api = plugins_api( 'plugin_information', array( 'slug' => $out['slug'] ? $out['slug'] : self::SLUG ) );
+
+		if ( is_wp_error( $api ) ) {
+			$out['result'] = sprintf( '%s: %s', $api->get_error_code(), $api->get_error_message() );
+
+			return $out;
+		}
+
+		$out['ours']   = is_object( $api ) && isset( $api->plugin ) && DOS_TOOLKIT_BASENAME === $api->plugin;
+		$out['result'] = sprintf(
+			/* translators: %s: version number the details screen would show */
+			__( 'answered, version %s', 'dos-toolkit' ),
+			is_object( $api ) && isset( $api->version ) ? $api->version : '?'
+		);
+
+		return $out;
+	}
+
+	/**
+	 * A readable name for whatever was hooked, including closures.
+	 */
+	public static function callable_name( $callable ) {
+		if ( is_string( $callable ) ) {
+			return $callable;
+		}
+
+		if ( is_array( $callable ) && 2 === count( $callable ) ) {
+			$class = is_object( $callable[0] ) ? get_class( $callable[0] ) : (string) $callable[0];
+
+			return $class . '::' . (string) $callable[1];
+		}
+
+		if ( $callable instanceof Closure ) {
+			$reflection = new ReflectionFunction( $callable );
+
+			return sprintf(
+				/* translators: 1: file the closure was defined in, 2: line number */
+				__( 'closure in %1$s line %2$d', 'dos-toolkit' ),
+				str_replace( WP_PLUGIN_DIR . '/', '', (string) $reflection->getFileName() ),
+				(int) $reflection->getStartLine()
+			);
+		}
+
+		if ( is_object( $callable ) ) {
+			return get_class( $callable ) . '::__invoke';
+		}
+
+		return __( 'unknown', 'dos-toolkit' );
+	}
+
+	/**
 	 * `dos-toolkit-v0.2.0` => `0.2.0`. Anything else, including another
 	 * plugin's tag, returns null so it is skipped.
 	 */
@@ -343,7 +464,8 @@ final class DOS_Updater {
 		$slug = is_object( $args ) && isset( $args->slug ) ? $args->slug : '';
 		$slug = ( '' === $slug && is_array( $args ) && isset( $args['slug'] ) ) ? $args['slug'] : $slug;
 
-		if ( self::SLUG !== $slug ) {
+		// Callers are supposed to pass the slug. Some pass the plugin file.
+		if ( self::SLUG !== $slug && DOS_TOOLKIT_BASENAME !== $slug ) {
 			return $result;
 		}
 

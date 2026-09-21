@@ -5,6 +5,38 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.19.1
+
+"View version details" still said "Plugin not found." on a site running the
+0.17.1 fix, so the fix was not the whole story.
+
+0.17.1 made this plugin always answer `plugins_api` for its own slug. That is
+necessary and it is not sufficient: `plugins_api` is a filter, every plugin on
+the site can hook it, and anything running after this plugin can overwrite the
+answer. An updater that answers the hook without checking which plugin it was
+asked about does exactly that, and WordPress then asks wordpress.org, which
+has never heard of a self-hosted plugin.
+
+So the handler is registered twice now, at the normal priority and again last.
+It only ever acts on its own slug, so answering twice changes nothing except
+that the last word belongs to the plugin the question was about.
+
+It also accepts the plugin file where the slug is expected, since not every
+caller passes what the documentation says it passes.
+
+The larger problem was that none of this could be seen. The details screen is
+an iframe with room for one line, and that line cannot name whoever took the
+question. The Updates panel now asks the same question the modal asks and
+reports who answered, lists every handler on the hook in the order it runs —
+closures included, located by file and line — and links to the details screen
+outside the modal, where the page shows the real error rather than a summary
+of it.
+
+A sixth instance of the defect being correct behaviour that cannot be told
+apart from a fault, and the second on this same screen. The first fix made
+this plugin answer correctly. It could not make anything reveal that a
+correct answer was being discarded.
+
 ## 0.19.0
 
 The library job rescales as well as re-encodes.

@@ -799,7 +799,12 @@ final class DOS_Module_Links extends DOS_Module {
 		<h2 id="pages"><?php esc_html_e( 'Pages', 'dos-toolkit' ); ?></h2>
 
 		<?php if ( ! $totals['pages'] ) : ?>
-			<p class="description"><?php esc_html_e( 'Run “Scan for link opportunities” to build this. It counts every internal link on every page, including ones added by hand.', 'dos-toolkit' ); ?></p>
+			<p class="description">
+				<?php esc_html_e( 'Nothing indexed yet. Run “Scan for link opportunities” below — the full scan, not a single phrase’s Rescan. A rescan looks at one phrase and does not walk every page, so it cannot build this.', 'dos-toolkit' ); ?>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'The index is built as the full scan walks the content, and it counts every internal link on every page, including ones written by hand. It is rebuilt from scratch each time, so a link removed since the last scan is not left behind.', 'dos-toolkit' ); ?>
+			</p>
 		<?php else : ?>
 			<p class="description">
 				<?php

@@ -26,8 +26,25 @@ final class DOS_Links_Pages {
 		return $wpdb->prefix . 'dos_link_pages';
 	}
 
+
+	/**
+	 * The stored version says this table was created once. It does not say
+	 * the table is there now. A restore from a partial backup, a move between
+	 * hosts, a `dbDelta` that failed quietly — each leaves the flag set and
+	 * the table gone, and every screen reading it then reports an empty
+	 * result rather than a missing table. Empty is a plausible answer, which
+	 * is what makes it the wrong one to give.
+	 */
+	public static function table_exists() {
+		global $wpdb;
+
+		$table = self::table();
+
+		return (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
+	}
+
 	public static function maybe_install() {
-		if ( DOS_Settings::get( 'links_pages_db_version' ) === self::DB_VERSION ) {
+		if ( DOS_Settings::get( 'links_pages_db_version' ) === self::DB_VERSION && self::table_exists() ) {
 			return;
 		}
 

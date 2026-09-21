@@ -39,6 +39,14 @@ function is_wp_error( $t ) { return $t instanceof WP_Error; }
 class FakeWpdb {
     public $prefix = 'wp_'; public $insert_id = 0;
     public function get_charset_collate() { return ''; }
+    public function esc_like( $v ) { return addcslashes( (string) $v, '_%\\' ); }
+    public function get_var( $q ) {
+        if ( preg_match( "/SHOW TABLES LIKE '([^']*)'/", $q, $m ) ) {
+            $name = stripslashes( $m[1] );
+            return in_array( $name, $GLOBALS['tables'], true ) ? $name : null;
+        }
+        return null;
+    }
     public function prepare( $q, ...$a ) {
         foreach ( $a as $v ) { $q = preg_replace( '/%[sd]/', is_int( $v ) ? (string) $v : "'" . $v . "'", $q, 1 ); }
         return $q;
@@ -64,6 +72,7 @@ class FakeWpdb {
     public function delete( $t, $w, $f = null ) { unset( $GLOBALS['rows'][ (int) $w['id'] ] ); return 1; }
     public function query( $q ) { return 0; }
 }
+$GLOBALS['tables'] = array( 'wp_dos_link_rules' );
 $GLOBALS['wpdb'] = new FakeWpdb();
 
 // Titles and types for the destination picker.
@@ -217,6 +226,18 @@ check( 'an untitled page is labelled rather than shown blank', '(no title)' === 
 $GLOBALS['search'] = array( 99 => 'Phoenix Open Houses', 97 => 'Open House Etiquette' );
 check( 'the limit is honoured', 1 === count( DOS_Links_Rules::search_targets( 'open house', $types, 1 ) ) );
 check( 'and a type nobody links to returns nothing', array() === DOS_Links_Rules::search_targets( 'open house', array() ) );
+
+echo "\n--- a table the version flag says exists ---\n";
+// Every screen reading a missing table reports an empty result, and empty is
+// a plausible answer. That is what makes it the wrong one to give.
+$GLOBALS['tables'] = array( 'wp_dos_link_rules' );
+check( 'the table is found when it is there', DOS_Links_Rules::table_exists() );
+
+$GLOBALS['tables'] = array();
+check( 'and reported missing when it is not', ! DOS_Links_Rules::table_exists() );
+
+$GLOBALS['tables'] = array( 'wp_dos_link_rules_backup', 'wp_posts' );
+check( 'a similarly named table is not mistaken for it', ! DOS_Links_Rules::table_exists() );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

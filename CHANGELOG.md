@@ -5,6 +5,34 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.1
+
+The Pages report was empty on the older of the two sites and populated on the
+new one, which is the first thing the second install turned up.
+
+The index is built by the full scan as it walks the content. A per-phrase
+Rescan — the link on each row, added in 0.9.3 — deliberately does not walk
+every page, so it cannot build it. On a site where the rules were set up
+before 0.14.0 and only ever rescanned one at a time since, the index stays
+empty and the screen says to run the scan. That instruction was correct and
+too easy to read as already done, so it now names the full scan and says why a
+Rescan is not the same thing.
+
+The second cause has the same appearance and the instruction would not have
+helped. Every table in the toolkit was installed on the strength of a version
+number kept in the settings: if the stored version matched, the table was
+assumed to be there. A restore from a partial backup, a move between hosts or
+a `dbDelta` that failed quietly all leave that flag set and the table gone —
+and a screen reading a missing table reports an empty result rather than a
+missing table. Empty is a plausible answer, which is what makes it the wrong
+one to give.
+
+All four tables — link rules, the page index, the activity log and redirects —
+now confirm the table exists as well as the version, and rebuild it if not.
+The check is cheap, runs on `admin_init` where the install already ran, and
+means a missing table heals on the next admin page load rather than presenting
+as a feature that does nothing.
+
 ## 0.20.0
 
 Choosing a destination page is a search rather than a dropdown.

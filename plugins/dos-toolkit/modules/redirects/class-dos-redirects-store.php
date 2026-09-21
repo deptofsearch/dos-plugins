@@ -35,19 +35,28 @@ final class DOS_Redirects_Store {
 
 
 	/**
-	 * The stored version says this table was created once. It does not say
-	 * the table is there now. A restore from a partial backup, a move between
-	 * hosts, a `dbDelta` that failed quietly — each leaves the flag set and
-	 * the table gone, and every screen reading it then reports an empty
-	 * result rather than a missing table. Empty is a plausible answer, which
-	 * is what makes it the wrong one to give.
+	 * The stored version says these tables were created once. It does not say
+	 * they are there now. A restore from a partial backup, a move between
+	 * hosts, a `dbDelta` that failed quietly — each leaves the flag set and a
+	 * table gone, and every screen reading it then reports an empty result
+	 * rather than a missing table. Empty is a plausible answer, which is what
+	 * makes it the wrong one to give.
+	 *
+	 * This module owns two tables and needs both, so either one missing means
+	 * the install has to run again.
 	 */
 	public static function table_exists() {
 		global $wpdb;
 
-		$table = self::table();
+		foreach ( array( self::redirects_table(), self::log_table() ) as $table ) {
+			$found = (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
 
-		return (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
+			if ( $found !== $table ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public static function maybe_install() {

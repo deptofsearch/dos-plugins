@@ -5,6 +5,36 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.3
+
+Fatal error on every admin page. The canary went down.
+
+    Call to undefined method DOS_Redirects_Store::table()
+    class-dos-redirects-store.php:48, from maybe_install() on admin_init
+
+The table-existence guard added in 0.20.1 went into four classes. Three of
+them have a `table()` method. The redirects store has two tables and names
+them `redirects_table()` and `log_table()`, and the guard was pasted into it
+unread. It runs on `admin_init`, so it fataled on every admin page load rather
+than on some screen nobody visits.
+
+It checks both tables now, and either one missing means the install runs
+again.
+
+Two things made this worse than a typo. The guard was added to four files by
+pattern rather than by reading each one, and nothing in the suite called
+`table_exists()` on three of the four — so a full green run said nothing about
+the code that took the site down. PHP's linter cannot see an undefined method,
+and neither can a test that is never written.
+
+`DOS_Redirects_Store::table_exists()` is now covered directly: both tables
+present, either one absent, neither present. The same coverage the rules table
+already had, which is why the rules table was the one that worked.
+
+The site was reachable throughout via WordPress's recovery mode, which paused
+the plugin rather than leaving the admin dead. That is the only reason this
+cost an update rather than FTP access.
+
 ## 0.20.2
 
 The update check read one page of releases and the repository now has more

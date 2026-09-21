@@ -53,6 +53,8 @@ class WP_Error {
 function is_wp_error( $t ) { return $t instanceof WP_Error; }
 
 /** Minimal $wpdb over an in-memory row list. */
+$GLOBALS['tables'] = array( 'wp_dos_redirects', 'wp_dos_404' );
+
 class FakeWpdb {
     public $prefix = 'wp_';
     public $insert_id = 0;
@@ -76,7 +78,14 @@ class FakeWpdb {
         }
         return null;
     }
-    public function get_var( $q ) { return count( $GLOBALS['rows'] ); }
+    public function esc_like( $v ) { return addcslashes( (string) $v, '_%\\' ); }
+    public function get_var( $q ) {
+        if ( preg_match( "/SHOW TABLES LIKE '([^']*)'/", $q, $m ) ) {
+            $name = stripslashes( $m[1] );
+            return in_array( $name, $GLOBALS['tables'], true ) ? $name : null;
+        }
+        return count( $GLOBALS['rows'] );
+    }
     public function insert( $t, $data, $fmt = null ) {
         $id = $GLOBALS['next_id']++;
         $data['id'] = $id; $data['enabled'] = $data['enabled'] ?? 1; $data['hits'] = 0;
@@ -174,6 +183,24 @@ foreach ( array( '/wp-config.php', '/.env', '/vendor/phpunit/x', '/admin.asp', '
 foreach ( array( '/about-us', '/2024/09/old-post', '/images/photo.jpg', '/services/roof-repair' ) as $real ) {
     check( "keeps $real", ! DOS_Redirects_Router::is_noise( $real ) );
 }
+
+echo "\n--- the tables the version flag says exist ---\n";
+// This module owns two tables. The guard that checks them shipped calling a
+// method this class does not have, which fataled on admin_init and took the
+// whole of wp-admin down on the canary. Nothing exercised it.
+$GLOBALS['tables'] = array( 'wp_dos_redirects', 'wp_dos_404' );
+check( 'both tables present reads as installed', DOS_Redirects_Store::table_exists() );
+
+$GLOBALS['tables'] = array( 'wp_dos_redirects' );
+check( 'the 404 log missing is not installed', ! DOS_Redirects_Store::table_exists() );
+
+$GLOBALS['tables'] = array( 'wp_dos_404' );
+check( 'the redirects table missing is not installed', ! DOS_Redirects_Store::table_exists() );
+
+$GLOBALS['tables'] = array();
+check( 'neither present is not installed', ! DOS_Redirects_Store::table_exists() );
+
+$GLOBALS['tables'] = array( 'wp_dos_redirects', 'wp_dos_404' );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

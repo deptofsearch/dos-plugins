@@ -5,6 +5,34 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.2
+
+The update check read one page of releases and the repository now has more
+than one page of them.
+
+Found while confirming the releases were all published rather than by anything
+going wrong, which is the only reason it was found at all. The check asked
+GitHub for thirty releases and took the highest version among them. Thirty was
+enough on the first day and is not a property of the repository: this is a
+monorepo, the list holds every plugin's releases together, and there were
+forty-three within a day of the first one.
+
+GitHub does not order that endpoint by version, so "the newest thirty" is not
+the same as "the thirty highest versions". Once the newest release for this
+plugin falls past the end of the page it stops being seen, and the check
+reports no update available — which is a plausible answer, indistinguishable
+from being up to date, and so the wrong one to give. Nothing on any screen
+would have looked wrong.
+
+The check now walks pages of a hundred until a short page ends the list, and
+stops at five pages so a long history cannot make an admin page load wait on
+it. Hitting that cap without finding a release is reported as a failure rather
+than as being up to date.
+
+Selection was never the problem: it has always compared versions across
+everything it was given rather than trusting the order. The fault was only in
+how much it was given.
+
 ## 0.20.1
 
 The Pages report was empty on the older of the two sites and populated on the

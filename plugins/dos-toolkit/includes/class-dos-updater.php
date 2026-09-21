@@ -29,6 +29,10 @@ final class DOS_Updater {
 	const MISS_TTL = 15 * MINUTE_IN_SECONDS;
 	const DEFAULT_REPO = 'deptofsearch/dos-plugins';
 
+	/** Releases fetched per request, and how many requests are worth making. */
+	const PER_PAGE  = 100;
+	const MAX_PAGES = 5;
+
 	public static function boot() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject_update' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
@@ -125,17 +129,49 @@ final class DOS_Updater {
 			$args['headers']['Authorization'] = 'Bearer ' . $token;
 		}
 
-		$response = wp_remote_get( 'https://api.github.com/repos/' . $repo . '/releases?per_page=30', $args );
+		$releases = array();
 
-		if ( is_wp_error( $response ) ) {
-			self::remember_miss( $response->get_error_message() );
+		// GitHub does not order this endpoint by version, and in a monorepo
+		// the list holds every plugin's releases at once. One page of thirty
+		// was enough on day one and is not a property of the repository: once
+		// the newest release for this plugin falls past the end of the page
+		// it stops being seen, and the symptom is "no update available",
+		// which is a plausible answer and so the wrong one to give.
+		for ( $page = 1; $page <= self::MAX_PAGES; $page++ ) {
+			$response = wp_remote_get(
+				sprintf( 'https://api.github.com/repos/%s/releases?per_page=%d&page=%d', $repo, self::PER_PAGE, $page ),
+				$args
+			);
 
-			return null;
+			if ( is_wp_error( $response ) ) {
+				self::remember_miss( $response->get_error_message() );
+
+				return null;
+			}
+
+			$code = (int) wp_remote_retrieve_response_code( $response );
+
+			if ( 200 !== $code ) {
+				break;
+			}
+
+			$batch = json_decode( wp_remote_retrieve_body( $response ), true );
+
+			if ( ! is_array( $batch ) || ! $batch ) {
+				break;
+			}
+
+			$releases = array_merge( $releases, $batch );
+
+			// A short page is the last page.
+			if ( count( $batch ) < self::PER_PAGE ) {
+				break;
+			}
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
+		$code = isset( $response ) && ! is_wp_error( $response ) ? (int) wp_remote_retrieve_response_code( $response ) : 0;
 
-		if ( 200 !== $code ) {
+		if ( ! $releases && 200 !== $code ) {
 			self::remember_miss( sprintf(
 				/* translators: %d: HTTP status code returned by the GitHub API */
 				__( 'GitHub returned HTTP %d. A 403 usually means the request was rate limited.', 'dos-toolkit' ),
@@ -145,10 +181,8 @@ final class DOS_Updater {
 			return null;
 		}
 
-		$releases = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( ! is_array( $releases ) ) {
-			self::remember_miss( __( 'GitHub returned something that was not a release list.', 'dos-toolkit' ) );
+		if ( ! $releases ) {
+			self::remember_miss( __( 'GitHub returned no releases for this repository.', 'dos-toolkit' ) );
 
 			return null;
 		}

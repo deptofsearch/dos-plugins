@@ -38,7 +38,17 @@ class WP_Error {
     public function get_error_message() { return $this->msg; }
 }
 function is_wp_error( $t ) { return $t instanceof WP_Error; }
-function wp_remote_get( $url, $args = array() ) { $GLOBALS['calls']++; return $GLOBALS['http']; }
+$GLOBALS['pages'] = null;   // when set, answer per page instead
+function wp_remote_get( $url, $args = array() ) {
+    $GLOBALS['calls']++;
+    if ( is_array( $GLOBALS['pages'] ) ) {
+        preg_match( '/[?&]page=(\\d+)/', $url, $m );
+        $page = isset( $m[1] ) ? (int) $m[1] : 1;
+        $GLOBALS['requested'][] = $page;
+        return $GLOBALS['pages'][ $page ] ?? array( 'response' => array( 'code' => 200 ), 'body' => '[]' );
+    }
+    return $GLOBALS['http'];
+}
 function wp_remote_retrieve_response_code( $r ) { return $r['response']['code'] ?? 0; }
 function wp_remote_retrieve_body( $r ) { return $r['body'] ?? ''; }
 
@@ -217,6 +227,42 @@ check( 'a method on an instance names its class', 'Fake_Updater::api' === DOS_Up
 $closure = DOS_Updater::callable_name( function () {} );
 check( 'a closure is located rather than called unknown', false !== strpos( $closure, 'line' ), $closure );
 check( '  and names the file it came from', false !== strpos( $closure, 'test-updater.php' ), $closure );
+
+echo "\n--- more releases than fit on one page ---\n";
+// A monorepo's release list holds every plugin's tags at once and GitHub does
+// not order it by version. Once the newest release for this plugin falls past
+// the end of the first page it stops being seen, and the symptom is "no
+// update available" — a plausible answer, and so the wrong one to give.
+function full_page( $prefix, $count ) {
+    $tags = array();
+    for ( $i = 0; $i < $count; $i++ ) { $tags[] = $prefix . $i; }
+    return array( 'response' => array( 'code' => 200 ), 'body' => releases_json( $tags ) );
+}
+
+$GLOBALS['transients'] = array();
+$GLOBALS['requested']  = array();
+$GLOBALS['pages'] = array(
+    // A full page of another plugin's releases, which this one must skip.
+    1 => full_page( 'other-plugin-v1.0.', 100 ),
+    2 => ok_response( array( 'dos-toolkit-v0.20.1', 'dos-toolkit-v0.9.3' ) ),
+);
+
+$s = DOS_Updater::status( true );
+check( 'a release on the second page is still found', '0.20.1' === $s['latest'], json_encode( $s ) );
+check( '  and the first page was fetched before it', in_array( 1, $GLOBALS['requested'], true ) );
+check( '  and the short second page ended the walk', ! in_array( 3, $GLOBALS['requested'], true ), json_encode( $GLOBALS['requested'] ) );
+
+// Walking must stop somewhere, or a repository with thousands of releases
+// would make an admin page load wait on all of them.
+$GLOBALS['transients'] = array();
+$GLOBALS['requested']  = array();
+$GLOBALS['pages'] = array_fill( 1, 20, full_page( 'other-plugin-v1.0.', 100 ) );
+
+$s = DOS_Updater::status( true );
+check( 'the walk is capped rather than following every page', count( $GLOBALS['requested'] ) <= 5, json_encode( $GLOBALS['requested'] ) );
+check( '  and says it found nothing rather than claiming to be up to date', '' === $s['latest'] && $s['miss'], json_encode( $s ) );
+
+$GLOBALS['pages'] = null;
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

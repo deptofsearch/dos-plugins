@@ -34,6 +34,11 @@ final class DOS_Module_SEO extends DOS_Module {
 		remove_action( 'wp_head', 'rel_canonical' );
 		add_action( 'wp_head', array( __CLASS__, 'render_head' ), 1 );
 
+		// Core's wp_robots filter (5.7+) always prints its own <meta name="robots">,
+		// so a second one from render_head() duplicated the tag. Feeding this
+		// filter instead lets core own the single tag while we still set its content.
+		add_filter( 'wp_robots', array( __CLASS__, 'filter_robots' ) );
+
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ), 10, 2 );
 
@@ -93,12 +98,6 @@ final class DOS_Module_SEO extends DOS_Module {
 
 		echo "\n<!-- DoS SEO -->\n";
 
-		if ( $ctx['noindex'] ) {
-			echo '<meta name="robots" content="noindex, follow">' . "\n";
-		} else {
-			echo '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">' . "\n";
-		}
-
 		if ( $ctx['description'] ) {
 			printf( '<meta name="description" content="%s">' . "\n", esc_attr( $ctx['description'] ) );
 		}
@@ -112,6 +111,42 @@ final class DOS_Module_SEO extends DOS_Module {
 		self::render_schema( $ctx );
 
 		echo "<!-- /DoS SEO -->\n\n";
+	}
+
+	/**
+	 * Content for core's single <meta name="robots"> tag. A site set to
+	 * discourage search engines already gets that from robots.txt, so it is
+	 * left alone here rather than have this module contradict it.
+	 */
+	public static function filter_robots( $robots ) {
+		if ( ! get_option( 'blog_public' ) ) {
+			return $robots;
+		}
+
+		// Something has already objected to this page being indexed. Core
+		// marks oEmbed iframes and the login screen that way, and other
+		// plugins use the same hook. This module adds directives; it does not
+		// overrule a noindex it did not set. Turning a page back to indexable
+		// is the one mistake here that leaves no trace on the page — it reads
+		// exactly like a page nobody objected to.
+		if ( ! empty( $robots['noindex'] ) ) {
+			return $robots;
+		}
+
+		$ctx = self::context();
+
+		if ( $ctx['noindex'] ) {
+			$robots['noindex'] = true;
+			$robots['follow']  = true;
+			unset( $robots['index'], $robots['max-image-preview'], $robots['max-snippet'] );
+		} else {
+			$robots['index']             = true;
+			$robots['follow']            = true;
+			$robots['max-image-preview'] = 'large';
+			$robots['max-snippet']       = -1;
+		}
+
+		return $robots;
 	}
 
 	private static function render_open_graph( $ctx ) {
@@ -195,7 +230,32 @@ final class DOS_Module_SEO extends DOS_Module {
 	 * Context: what page is this, and what should it say about itself
 	 * ------------------------------------------------------------------- */
 
-	private static function context() {
+	/**
+	 * Nothing in production calls this — see the note on the static inside
+	 * context(). It exists so tests, which render several fake requests in
+	 * one PHP process, can start each one from a clean cache.
+	 */
+	public static function reset_context_cache() {
+		self::context( true );
+	}
+
+	private static function context( $reset = false ) {
+		// wp_robots now runs this on every request (wp_head priority 1) and
+		// render_head() runs it again a moment later — memoize so the work,
+		// including the DB reads inside it, happens once per request. A real
+		// request is a fresh PHP process, so this never needs to be cleared
+		// outside of tests, which render several fake requests in one process.
+		static $context = null;
+
+		if ( $reset ) {
+			$context = null;
+			return null;
+		}
+
+		if ( null !== $context ) {
+			return $context;
+		}
+
 		$ctx = array(
 			'title'       => self::plain( wp_get_document_title() ),
 			'description' => '',
@@ -271,7 +331,9 @@ final class DOS_Module_SEO extends DOS_Module {
 			$ctx['description'] = self::floor_description( $ctx['title'] );
 		}
 
-		return $ctx;
+		$context = $ctx;
+
+		return $context;
 	}
 
 	private static function floor_description( $title ) {

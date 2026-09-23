@@ -5,6 +5,39 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.4
+
+Every page carried two `<meta name="robots">` tags.
+
+Found by reading the canary's live HTML rather than by anything reporting it.
+WordPress 5.7 moved robots directives behind the `wp_robots` filter and core
+prints the tag itself; this module went on echoing its own alongside it. The
+404 showed the cost plainly:
+
+    <meta name='robots' content='max-image-preview:large' />   core: indexable
+    <meta name="robots" content="noindex, follow">             this module
+
+Two directives contradicting each other on one page. Google resolves a
+conflict by taking the most restrictive, so the intended answer probably won —
+but which tag is authoritative was never this module's to decide, and other
+crawlers do not all agree.
+
+The directives now go through `wp_robots`, so core renders one tag and this
+module supplies its content. A site set to discourage search engines is left
+alone: that already comes through robots.txt and contradicting it here would
+be the same fault again.
+
+One rule matters more than the rest. The module never overrules a `noindex`
+it did not set. Core marks oEmbed iframes and the login screen that way before
+this filter runs, and the first version of this fix set `index` unconditionally
+— which would have quietly turned those back into indexable pages. That is the
+worst shape a bug can take here: a page reading exactly like one nobody had
+objected to, with nothing on it to show an objection had been overwritten. It
+is covered by a test that was confirmed to fail without the guard.
+
+`context()` is memoized now, since it runs once for the filter and again for
+the head output.
+
 ## 0.20.3
 
 Fatal error on every admin page. The canary went down.

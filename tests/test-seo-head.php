@@ -107,6 +107,47 @@ $GLOBALS['state'] = array(
 ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();
 check( '  and the raw entity never reaches the schema', false === strpos( $out, '&#8211;' ), $out );
 
+echo "AMPERSAND IN SITE NAME\n";
+// hvactricities.com: get_bloginfo('name') returns display-filtered text, where
+// an "&" is already the entity "&amp;" — right for an HTML attribute, wrong
+// inside JSON-LD, where it is literal text a consumer reads back as "&amp;".
+DOS_Module_SEO::reset_context_cache();
+$GLOBALS['state'] = array(
+    'view'      => 'singular',
+    'post_type' => 'page',
+    'queried_id'=> 11,
+    'title'     => 'Emergency Repairs | Acme Heating &amp; Air',
+    'post'      => (object) array( 'ID' => 11, 'post_excerpt' => '', 'post_content' => '' ),
+);
+ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();
+
+preg_match( '#<script type="application/ld\+json">(.*?)</script>#s', $out, $m );
+$json  = $m ? json_decode( $m[1], true ) : array( '@graph' => array() );
+$nodes = array();
+foreach ( $json['@graph'] as $node ) {
+    $nodes[ $node['@type'] ] = $node;
+}
+
+check( '  Organization name is decoded, not the raw entity', ( $nodes['Organization']['name'] ?? null ) === 'Acme Heating & Air', $nodes['Organization']['name'] ?? 'missing' );
+check( '  WebSite name is decoded too', ( $nodes['WebSite']['name'] ?? null ) === 'Acme Heating & Air', $nodes['WebSite']['name'] ?? 'missing' );
+
+preg_match( '#<meta property="og:site_name" content="([^"]*)">#', $out, $m );
+$site_name_attr = $m[1] ?? '';
+check(
+    '  og:site_name reads &amp; exactly once, not double-encoded',
+    1 === substr_count( $site_name_attr, '&amp;' ) && false === strpos( $site_name_attr, '&amp;amp;' ),
+    $site_name_attr
+);
+
+preg_match( '#<meta name="description" content="([^"]*)">#', $out, $m );
+$description_attr = $m[1] ?? '';
+check(
+    '  floor_description strips " | Acme Heating & Air" off the fallback title, ampersand and all',
+    'Emergency Repairs — A site about things' === $description_attr,
+    $description_attr
+);
+echo "\n";
+
 echo "SCHEMA MODE\n";
 DOS_Settings::set( 'seo_schema_mode', 'minimal' );
 ob_start(); DOS_Module_SEO::render_head(); $out = ob_get_clean();

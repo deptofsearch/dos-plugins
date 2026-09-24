@@ -29,10 +29,12 @@ function current_user_can() { return true; }
 function get_current_user_id() { return 1; }
 function current_time() { return date( 'Y-m-d H:i:s' ); }
 function home_url( $p = '/' ) { return 'https://example.com' . $p; }
+// The ampersand here is deliberate: get_bloginfo() returns display-filtered
+// text, exactly what a real WordPress install hands back, entity and all.
 function get_bloginfo( $w ) {
-    return array( 'name' => 'Example Site', 'description' => 'A site about things', 'language' => 'en-US' )[ $w ] ?? '';
+    return array( 'name' => 'Acme Heating &amp; Air', 'description' => 'A site about things', 'language' => 'en-US' )[ $w ] ?? '';
 }
-function wp_get_document_title() { return $GLOBALS['state']['title'] ?? 'A Post Title | Example Site'; }
+function wp_get_document_title() { return $GLOBALS['state']['title'] ?? 'A Post Title | Acme Heating &amp; Air'; }
 function get_query_var( $v ) { return $GLOBALS['state'][ $v ] ?? 0; }
 function get_pagenum_link( $n ) { return 'https://example.com/page/' . $n . '/'; }
 function get_queried_object_id() { return $GLOBALS['state']['queried_id'] ?? 0; }

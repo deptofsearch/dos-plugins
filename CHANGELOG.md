@@ -5,6 +5,39 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.20.5
+
+HTML entities were reaching JSON-LD again, by a route the 0.7.1 fix did not
+cover.
+
+Found on the second site, whose title carries an ampersand:
+
+    "name": "HVAC in Tri-Cities - Best HVAC Companies | Residential &amp; Commercial"
+
+`get_bloginfo( 'name' )` returns display-filtered text — the ampersand comes
+back already encoded. That is correct for an HTML attribute and wrong for
+JSON-LD, which is data: a consumer reads the characters `&amp;`. The module
+has had the right helper since 0.7.1, and titles and descriptions go through
+it. The site name did not, in four places.
+
+Three are the obvious ones: the Organization node, the WebSite node and
+`og:site_name`. The fourth is worth naming on its own. `floor_description()`
+builds a pattern from the site name to strip the trailing " | Site Name" off a
+fallback description — and matched it against a title `plain()` had already
+decoded. On a site whose name contains an ampersand the two forms could never
+match, so the suffix was never stripped and the fallback description carried
+the site name twice. Nothing about that looked like an encoding problem from
+the outside.
+
+Every remaining `get_bloginfo()` call in the module was checked; the rest were
+already inside `clean()`, which decodes the same way.
+
+Each of the four fixes was reverted on its own to confirm the assertion
+covering it actually fails without it. The `og:site_name` one is the reason to
+bother: its output is byte-identical either way, because `esc_attr()` does not
+double-encode, so only a test that watches for `&amp;amp;` can tell the
+correct version from the lucky one.
+
 ## 0.20.4
 
 Every page carried two `<meta name="robots">` tags.

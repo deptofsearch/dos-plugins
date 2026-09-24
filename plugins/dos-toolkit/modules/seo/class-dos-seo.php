@@ -155,7 +155,9 @@ final class DOS_Module_SEO extends DOS_Module {
 			'og:title'       => $ctx['title'],
 			'og:description' => $ctx['description'],
 			'og:url'         => $ctx['canonical'],
-			'og:site_name'   => get_bloginfo( 'name' ),
+			// get_bloginfo() display-filters this to entity-encoded HTML; esc_attr()
+			// below re-encodes it, so decoding first here avoids a double-encode.
+			'og:site_name'   => self::plain( get_bloginfo( 'name' ) ),
 			'og:locale'      => str_replace( '-', '_', get_bloginfo( 'language' ) ),
 		);
 
@@ -337,7 +339,10 @@ final class DOS_Module_SEO extends DOS_Module {
 	}
 
 	private static function floor_description( $title ) {
-		$title   = self::clean( preg_replace( '/\s*[|–—-]\s*' . preg_quote( get_bloginfo( 'name' ), '/' ) . '\s*$/u', '', (string) $title ) );
+		// $title has already been through plain(), which decodes entities — the
+		// pattern built from the site name has to match that, or a name with an
+		// "&" in it never strips off the end of the fallback title.
+		$title   = self::clean( preg_replace( '/\s*[|–—-]\s*' . preg_quote( self::plain( get_bloginfo( 'name' ) ), '/' ) . '\s*$/u', '', (string) $title ) );
 		$tagline = self::clean( get_bloginfo( 'description' ) );
 
 		if ( $title && $tagline ) {
@@ -458,7 +463,9 @@ final class DOS_Module_SEO extends DOS_Module {
 		$organization = array(
 			'@type' => 'Organization',
 			'@id'   => $org_id,
-			'name'  => get_bloginfo( 'name' ),
+			// JSON-LD is data, not markup — get_bloginfo() returns display-filtered
+			// (entity-encoded) text, so it needs decoding here the same way titles do.
+			'name'  => self::plain( get_bloginfo( 'name' ) ),
 			'url'   => $site_url,
 		);
 
@@ -485,7 +492,7 @@ final class DOS_Module_SEO extends DOS_Module {
 				'@type'     => 'WebSite',
 				'@id'       => $site_id,
 				'url'       => $site_url,
-				'name'      => get_bloginfo( 'name' ),
+				'name'      => self::plain( get_bloginfo( 'name' ) ),
 				'publisher' => array( '@id' => $org_id ),
 			);
 		}

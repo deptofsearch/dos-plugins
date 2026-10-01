@@ -18,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Full history and tags: the release notes below are bounded by this
+      # plugin's previous tag, which a shallow clone does not have.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve plugin and version from the tag
         id: meta
@@ -46,6 +50,23 @@ jobs:
 
           if [ "$HEADER" != "$VERSION" ]; then
             echo "::error::Tag says ${VERSION}, plugin header says ${HEADER}. Bump the header before tagging."
+            exit 1
+          fi
+
+      - name: Check the version constant matches the tag
+        run: |
+          set -euo pipefail
+          SLUG="${{ steps.meta.outputs.slug }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+
+          # The header is what WordPress reads; the constant is what the plugin
+          # and its updater compare against. If they disagree the site is told
+          # about an update it already has, or never told about one. Not every
+          # plugin has the constant, so its absence is fine.
+          CONST=$(grep -m1 -E "define\([[:space:]]*'[A-Za-z0-9_]*_VERSION'[[:space:]]*," "plugins/${SLUG}/${SLUG}.php" | sed -E "s/.*,[[:space:]]*'([^']*)'.*/\1/" || true)
+
+          if [ -n "$CONST" ] && [ "$CONST" != "$VERSION" ]; then
+            echo "::error::Tag says ${VERSION}, the version constant says ${CONST}. Bump the constant before tagging."
             exit 1
           fi
 
@@ -84,6 +105,17 @@ jobs:
           SLUG="${{ steps.meta.outputs.slug }}"
           VERSION="${{ steps.meta.outputs.version }}"
 
+          # The repository holds several plugins, so GitHub's default notes
+          # (everything since the previous release of any kind) would list
+          # other plugins' commits. Start from this plugin's previous tag.
+          PREVIOUS=$(git tag -l "${SLUG}-v*" --sort=-v:refname | grep -vxF "${GITHUB_REF_NAME}" | head -n1 || true)
+
+          NOTES_ARGS=()
+          if [ -n "$PREVIOUS" ]; then
+            NOTES_ARGS=(--notes-start-tag "$PREVIOUS")
+          fi
+
           gh release create "${GITHUB_REF_NAME}" "${SLUG}.zip" \
             --title "${SLUG} ${VERSION}" \
-            --generate-notes
+            --generate-notes \
+            "${NOTES_ARGS[@]}"

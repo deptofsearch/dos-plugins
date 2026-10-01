@@ -71,9 +71,11 @@ the most care:
 
 - **SEO** writes to `wp_head`. View source on a post, a page, an archive and
   the homepage, and confirm there is exactly one canonical, one meta
-  description and one JSON-LD block. If Yoast, Rank Math or SEOPress is
-  active, the module stands down and says so on its own screen — that is
-  expected, not a failure.
+  description and one JSON-LD block. If Yoast, All in One SEO, Rank Math,
+  SEOPress or The SEO Framework is active, the module stands down and says so
+  on its own screen — that is expected, not a failure. To replace Yoast or
+  AIOSEO, use the import jobs on that screen first (dry run, live run,
+  spot-check), then deactivate the old plugin.
 - **Images** buffers the whole page to rewrite markup. It has two switches for
   a reason: turn on inspection first, load a few pages, read the report on the
   module screen, and only then turn on rewriting.
@@ -94,9 +96,9 @@ Nothing is deleted, so it can be reactivated from the Plugins screen if
 something turns out to be missing. It happens on enabling the module rather
 than on activating the toolkit, so a site is never left with neither.
 
-Third-party plugins are never deactivated. If a site runs Yoast, Rank Math or
-SEOPress, the SEO module stands down instead and reports that it has, on the
-Modules screen and on its own.
+Third-party plugins are never deactivated. If a site runs Yoast, All in One
+SEO, Rank Math, SEOPress or The SEO Framework, the SEO module stands down
+instead and reports that it has, on the Modules screen and on its own.
 
 **Carry settings rather than retyping them.** Configure one site, then use
 **Utilities → Export settings** and import the file elsewhere. Access tokens

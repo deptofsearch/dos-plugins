@@ -18,11 +18,11 @@ Installing adds a top-level **DoS Tools** menu:
 
 | Key | Name | Scope |
 |---|---|---|
-| `seo` | SEO | Meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Stands down if Yoast, Rank Math or SEOPress is active. |
+| `seo` | SEO | Per-post SEO titles and meta descriptions, Open Graph and Twitter Cards, canonicals on every view, and a schema graph that can be reduced to Organization alone where a theme emits its own. Imports titles and descriptions from Yoast and All in One SEO. Stands down if Yoast, All in One SEO, Rank Math, SEOPress or The SEO Framework is active. |
 | `ai` | AI Search | Per-bot crawler policy separating training crawlers from the ones that cite you, opt-in FAQ schema per page, optional `llms.txt`. |
 | `images` | Images & Media | JPEG quality and upload scaling, compression of new uploads, a quality finder that measures the trade-off on your own photographs, a weight audit, responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `links` | Internal Links | Keyword phrases linked to chosen pages, written into the content behind a dry run. Capped at ten links per page by default, with the allowance given to the least-used phrases first. Never links inside headings, bold, lists, tables, existing links, code or shortcodes, never links a page to itself, and throttles a phrase by percentage so one does not carry the whole profile. |
-| `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Exact paths only. |
+| `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Imports enabled exact-URL rules from Redirection. Exact paths only. |
 | `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, next/previous navigation in the editor, permalink flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when

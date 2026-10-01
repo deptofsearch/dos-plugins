@@ -144,6 +144,20 @@ DOS_Conflicts::maybe_deactivate();
 check( 'NEVER deactivates a third-party plugin', ! in_array( 'akismet/akismet.php', $GLOBALS['deactivated'], true ) );
 check( '  and Yoast is not in the superseded list at all', ! array_key_exists( 'WPSEO_VERSION', DOS_Conflicts::superseded() ) );
 
+// All in One SEO is found by its accessor when the constant has not been
+// defined — some builds define it late. Left undefined here on purpose.
+function aioseo() { return null; }
+$third = DOS_Conflicts::active_third_party();
+check( 'detects All in One SEO by aioseo() with no constant defined', isset( $third['AIOSEO_VERSION'] ) && ! defined( 'AIOSEO_VERSION' ) );
+check( '  attributes it to the SEO module', 'seo' === ( $third['AIOSEO_VERSION']['module'] ?? '' ) );
+check( '  and does not report The SEO Framework, which is not there', ! isset( $third['THE_SEO_FRAMEWORK_VERSION'] ) );
+check( 'All in One SEO is never in the superseded list either', ! array_key_exists( 'AIOSEO_VERSION', DOS_Conflicts::superseded() ) );
+
+define( 'THE_SEO_FRAMEWORK_VERSION', '5.0' );
+$third = DOS_Conflicts::active_third_party();
+check( 'detects The SEO Framework', isset( $third['THE_SEO_FRAMEWORK_VERSION'] ) && 'The SEO Framework' === $third['THE_SEO_FRAMEWORK_VERSION']['name'] );
+check( 'neither is ever offered for deactivation', ! array_key_exists( 'THE_SEO_FRAMEWORK_VERSION', DOS_Conflicts::superseded() ) );
+
 echo "\n--- every superseded entry is well formed ---\n";
 $ok = true;
 foreach ( DOS_Conflicts::superseded() as $file => $entry ) {

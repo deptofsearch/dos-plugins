@@ -12,11 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-dos-seo-import.php';
+
 final class DOS_Module_SEO extends DOS_Module {
 
 	const KEY       = 'seo';
 	const DESC_KEY  = '_dos_seo_description';
 	const IMAGE_KEY = '_dos_seo_image';
+	const TITLE_KEY = '_dos_seo_title';
 
 	// SAAB Toolkit's keys. Read-only fallback so per-post overrides written
 	// before the port are not silently lost on the site it came from.
@@ -25,6 +28,15 @@ final class DOS_Module_SEO extends DOS_Module {
 	const MAX_DESC  = 155;
 
 	public static function init() {
+		// The settings screen and its save handler come before the conflict
+		// check on purpose. The usual migration order is import first, then
+		// deactivate the old plugin, so this screen and the import jobs must
+		// work while Yoast or AIOSEO is still active — and the notice on that
+		// screen promises settings are saved while the module stands down.
+		// Nothing hooked here touches the front end.
+		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+
 		// If a full SEO plugin is ever installed, get out of its way entirely.
 		if ( self::conflicting_plugin() ) {
 			return;
@@ -39,11 +51,64 @@ final class DOS_Module_SEO extends DOS_Module {
 		// filter instead lets core own the single tag while we still set its content.
 		add_filter( 'wp_robots', array( __CLASS__, 'filter_robots' ) );
 
+		// A per-post SEO title replaces the whole document title. Hooked here,
+		// after the conflict check, so it never fights another plugin's titles.
+		add_filter( 'pre_get_document_title', array( __CLASS__, 'filter_title' ) );
+		add_filter( 'wp_title', array( __CLASS__, 'filter_wp_title' ) );
+
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ), 10, 2 );
+	}
 
-		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
-		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+	/**
+	 * The hand-written SEO title for this view, if there is one.
+	 *
+	 * Returning a non-empty string from pre_get_document_title makes
+	 * wp_get_document_title() stop there, so this is the whole title — no site
+	 * name is appended, and on a paginated post "Page 2" is not either.
+	 * context() reads that same function, which is how the og:title, twitter
+	 * title and schema WebPage name come to agree with the <title> without any
+	 * of them knowing about this key. A static front page is a singular view
+	 * in core; the second test covers it for any caller that has not set that
+	 * up.
+	 *
+	 * The value is returned HTML-escaped. That early return skips the
+	 * 'document_title' filter where core escapes, and _wp_render_title_tag()
+	 * echoes what it gets, so a stored value decoded by plain() — which
+	 * sanitize_text_field() does not stop from carrying "&lt;/title&gt;&lt;script&gt;"
+	 * — would print as live markup in <head>. Escaping here is also what
+	 * keeps an ampersand right: "&amp;" in the tag, "&" once context() decodes
+	 * it again for og:title and the schema.
+	 */
+	public static function filter_title( $title ) {
+		$custom = self::custom_title();
+
+		return '' !== $custom ? esc_html( $custom ) : $title;
+	}
+
+	/**
+	 * Same value for themes that print wp_title() instead of using
+	 * add_theme_support( 'title-tag' ). pre_get_document_title only exists on
+	 * the second path, so without this the browser tab and og:title disagree.
+	 */
+	public static function filter_wp_title( $title ) {
+		$custom = self::custom_title();
+
+		return '' !== $custom ? esc_html( $custom ) : $title;
+	}
+
+	private static function custom_title() {
+		if ( ! is_singular() && ! ( is_front_page() && get_queried_object_id() ) ) {
+			return '';
+		}
+
+		$post_id = get_queried_object_id();
+
+		if ( ! $post_id ) {
+			return '';
+		}
+
+		return self::plain( get_post_meta( $post_id, self::TITLE_KEY, true ) );
 	}
 
 	/**
@@ -52,7 +117,7 @@ final class DOS_Module_SEO extends DOS_Module {
 	 */
 	public static function enqueue( $hook ) {
 		$on_settings = isset( $_GET['page'] ) && 'dos-seo' === $_GET['page'];
-		$on_editor   = in_array( $hook, array( 'post.php', 'post-new.php' ), true );
+		$on_editor   = ! self::conflicting_plugin() && in_array( $hook, array( 'post.php', 'post-new.php' ), true );
 
 		if ( $on_settings || $on_editor ) {
 			DOS_Media_Field::enqueue();
@@ -74,6 +139,16 @@ final class DOS_Module_SEO extends DOS_Module {
 
 		if ( defined( 'SEOPRESS_VERSION' ) ) {
 			return 'SEOPress';
+		}
+
+		// Some AIOSEO builds define the constant late, so its accessor is
+		// checked too. Keep in step with DOS_Conflicts::third_party().
+		if ( defined( 'AIOSEO_VERSION' ) || function_exists( 'aioseo' ) ) {
+			return 'All in One SEO';
+		}
+
+		if ( defined( 'THE_SEO_FRAMEWORK_VERSION' ) ) {
+			return 'The SEO Framework';
 		}
 
 		return '';
@@ -561,7 +636,10 @@ final class DOS_Module_SEO extends DOS_Module {
 					'@context' => 'https://schema.org',
 					'@graph'   => $graph,
 				),
-				JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+				// JSON_HEX_TAG: titles are decoded to plain text first, so a stored
+				// "&lt;/script&gt;" arrives here as a real "</script>", and
+				// JSON_UNESCAPED_SLASHES would print it inside the script block.
+				JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG
 			)
 		);
 	}
@@ -664,10 +742,20 @@ final class DOS_Module_SEO extends DOS_Module {
 	public static function render_meta_box( $post ) {
 		wp_nonce_field( 'dos_seo_save', 'dos_seo_nonce' );
 
+		$seo_title   = get_post_meta( $post->ID, self::TITLE_KEY, true );
 		$description = get_post_meta( $post->ID, self::DESC_KEY, true );
 		$image_id    = (int) get_post_meta( $post->ID, self::IMAGE_KEY, true );
 		$auto        = self::describe_post( $post->ID );
 		?>
+		<p>
+			<label for="dos_seo_title"><strong><?php esc_html_e( 'SEO title', 'dos-toolkit' ); ?></strong></label><br>
+			<input type="text" id="dos_seo_title" name="dos_seo_title" value="<?php echo esc_attr( $seo_title ); ?>" style="width:100%">
+			<span class="description">
+				<?php esc_html_e( 'Aim for 60 characters or fewer. This is the whole title shown in search results and the browser tab, so include the site name if you want it.', 'dos-toolkit' ); ?>
+				<?php esc_html_e( 'Leave blank to use the normal page title:', 'dos-toolkit' ); ?><br>
+				<em><?php echo esc_html( self::plain( get_the_title( $post->ID ) ) ); ?></em>
+			</span>
+		</p>
 		<p>
 			<label for="dos_seo_description"><strong><?php esc_html_e( 'Meta description', 'dos-toolkit' ); ?></strong></label><br>
 			<textarea id="dos_seo_description" name="dos_seo_description" rows="3" style="width:100%" maxlength="200"><?php echo esc_textarea( $description ); ?></textarea>
@@ -705,6 +793,16 @@ final class DOS_Module_SEO extends DOS_Module {
 			return;
 		}
 
+		$seo_title = isset( $_POST['dos_seo_title'] )
+			? sanitize_text_field( wp_unslash( $_POST['dos_seo_title'] ) )
+			: '';
+
+		if ( $seo_title ) {
+			update_post_meta( $post_id, self::TITLE_KEY, $seo_title );
+		} else {
+			delete_post_meta( $post_id, self::TITLE_KEY );
+		}
+
 		$description = isset( $_POST['dos_seo_description'] )
 			? sanitize_text_field( wp_unslash( $_POST['dos_seo_description'] ) )
 			: '';
@@ -722,6 +820,321 @@ final class DOS_Module_SEO extends DOS_Module {
 		} else {
 			delete_post_meta( $post_id, self::IMAGE_KEY );
 		}
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Import from another SEO plugin
+	 *
+	 * Reads the other plugin's stored data directly rather than through its
+	 * API, so it works whether that plugin is still active or has already been
+	 * deactivated. Nothing is ever deleted from the source, which is why these
+	 * jobs are not marked destructive: the way back is to reactivate it.
+	 * ------------------------------------------------------------------- */
+
+	const BATCH = 50;
+
+	const YOAST_TITLE_KEY     = '_yoast_wpseo_title';
+	const YOAST_DESC_KEY      = '_yoast_wpseo_metadesc';
+	const YOAST_NOINDEX_KEY   = '_yoast_wpseo_meta-robots-noindex';
+	const YOAST_CANONICAL_KEY = '_yoast_wpseo_canonical';
+
+	public static function jobs() {
+		return array(
+			'seo_import_yoast' => array(
+				'label'       => __( 'Import titles and descriptions from Yoast SEO', 'dos-toolkit' ),
+				'description' => __( 'Copies each post\'s Yoast SEO title and meta description into the Search & Social box, resolving Yoast\'s %%variables%%. Never overwrites a title or description already set here. Reads Yoast\'s saved data, so it works after Yoast is deactivated. Nothing is removed from Yoast.', 'dos-toolkit' ),
+				'batch_size'  => self::BATCH,
+				'count'       => array( __CLASS__, 'count_yoast' ),
+				'step'        => array( __CLASS__, 'step_yoast' ),
+			),
+			'seo_import_aioseo' => array(
+				'label'       => __( 'Import titles and descriptions from All in One SEO', 'dos-toolkit' ),
+				'description' => __( 'Copies each post\'s AIOSEO title and meta description into the Search & Social box, resolving AIOSEO\'s #smart_tags. Never overwrites a title or description already set here. Reads AIOSEO\'s saved data, so it works after AIOSEO is deactivated. Nothing is removed from AIOSEO.', 'dos-toolkit' ),
+				'batch_size'  => self::BATCH,
+				'count'       => array( __CLASS__, 'count_aioseo' ),
+				'step'        => array( __CLASS__, 'step_aioseo' ),
+			),
+		);
+	}
+
+	private static function yoast_keys() {
+		return array( self::YOAST_TITLE_KEY, self::YOAST_DESC_KEY, self::YOAST_NOINDEX_KEY, self::YOAST_CANONICAL_KEY );
+	}
+
+	private static function aioseo_table() {
+		global $wpdb;
+
+		return $wpdb->prefix . 'aioseo_posts';
+	}
+
+	private static function table_exists( $table ) {
+		global $wpdb;
+
+		return (string) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
+	}
+
+	private static function aioseo_where() {
+		// robots_default = 1 means "use the site-wide setting", and AIOSEO then
+		// ignores the per-post robots_noindex, so only a post that has switched
+		// the default off carries a noindex of its own.
+		return "( title <> '' OR description <> '' OR ( robots_default = 0 AND robots_noindex = 1 ) OR canonical_url <> '' )";
+	}
+
+	/**
+	 * Posts carrying anything Yoast saved that this importer reads or reports.
+	 * The source is never modified, so a page of it keeps the same offsets for
+	 * the whole run.
+	 */
+	public static function count_yoast() {
+		global $wpdb;
+
+		$keys = self::yoast_keys();
+		$in   = implode( ', ', array_fill( 0, count( $keys ), '%s' ) );
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key IN ( {$in} ) AND meta_value <> ''", $keys )
+		);
+	}
+
+	public static function count_aioseo() {
+		global $wpdb;
+
+		$table = self::aioseo_table();
+
+		if ( ! self::table_exists( $table ) ) {
+			return 0;
+		}
+
+		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . self::aioseo_where() );
+	}
+
+	public static function step_yoast( $offset, $size, $dry_run ) {
+		global $wpdb;
+
+		$keys = self::yoast_keys();
+		$in   = implode( ', ', array_fill( 0, count( $keys ), '%s' ) );
+		$ids  = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT post_id FROM {$wpdb->postmeta} WHERE meta_key IN ( {$in} ) AND meta_value <> '' ORDER BY post_id ASC LIMIT %d OFFSET %d",
+				array_merge( $keys, array( (int) $size, (int) $offset ) )
+			)
+		);
+
+		$settings  = get_option( 'wpseo_titles', array() );
+		$separator = DOS_SEO_Import::yoast_separator( is_array( $settings ) && isset( $settings['separator'] ) ? $settings['separator'] : '' );
+		$rows      = array();
+
+		foreach ( (array) $ids as $post_id ) {
+			$post_id = (int) $post_id;
+
+			$rows[] = array(
+				'post_id'   => $post_id,
+				'title'     => (string) get_post_meta( $post_id, self::YOAST_TITLE_KEY, true ),
+				'desc'      => (string) get_post_meta( $post_id, self::YOAST_DESC_KEY, true ),
+				'noindex'   => '1' === (string) get_post_meta( $post_id, self::YOAST_NOINDEX_KEY, true ),
+				'canonical' => (string) get_post_meta( $post_id, self::YOAST_CANONICAL_KEY, true ),
+			);
+		}
+
+		return self::import_rows(
+			$rows,
+			array( 'DOS_SEO_Import', 'resolve_yoast' ),
+			$separator,
+			'Yoast SEO',
+			'import_yoast',
+			$dry_run
+		);
+	}
+
+	public static function step_aioseo( $offset, $size, $dry_run ) {
+		global $wpdb;
+
+		$table = self::aioseo_table();
+
+		if ( ! self::table_exists( $table ) ) {
+			// Said once, on the opening pass; count_aioseo() reported zero, so
+			// this is also the only pass.
+			return array(
+				'processed' => 0,
+				'changed'   => 0,
+				'notes'     => array(
+					/* translators: %s: database table name */
+					sprintf( __( 'The table %s does not exist, so there is nothing to import. All in One SEO may never have been installed here, or its data was removed.', 'dos-toolkit' ), $table ),
+				),
+			);
+		}
+
+		$found = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT post_id, title, description, robots_default, robots_noindex, canonical_url FROM ' . $table . ' WHERE ' . self::aioseo_where() . ' ORDER BY post_id ASC LIMIT %d OFFSET %d',
+				(int) $size,
+				(int) $offset
+			),
+			ARRAY_A
+		);
+
+		$separator = DOS_SEO_Import::aioseo_separator( get_option( 'aioseo_options', '' ) );
+		$rows      = array();
+
+		foreach ( (array) $found as $row ) {
+			$rows[] = array(
+				'post_id'   => (int) $row['post_id'],
+				'title'     => (string) $row['title'],
+				'desc'      => (string) $row['description'],
+				'noindex'   => '1' === (string) $row['robots_noindex'] && '0' === (string) $row['robots_default'],
+				'canonical' => (string) $row['canonical_url'],
+			);
+		}
+
+		return self::import_rows(
+			$rows,
+			array( 'DOS_SEO_Import', 'resolve_aioseo' ),
+			$separator,
+			'All in One SEO',
+			'import_aioseo',
+			$dry_run
+		);
+	}
+
+	/**
+	 * The part both importers share: resolve, decline to overwrite, write.
+	 *
+	 * @param array    $rows      post_id, title, desc, noindex, canonical.
+	 * @param callable $resolve   Template resolver from DOS_SEO_Import.
+	 * @param string   $separator Character the plugin's separator variable means.
+	 * @param string   $source    Plugin name, for messages.
+	 * @param string   $action    Audit-log action.
+	 * @param bool     $dry_run   When true nothing is written.
+	 */
+	private static function import_rows( array $rows, $resolve, $separator, $source, $action, $dry_run ) {
+		$notes = array();
+		$stats = array(
+			'changed'   => 0,
+			'titles'    => 0,
+			'descs'     => 0,
+			'kept'      => 0,
+			'noindex'   => 0,
+			'canonical' => 0,
+		);
+
+		$sitename = self::plain( get_bloginfo( 'name' ) );
+
+		foreach ( $rows as $row ) {
+			$post_id = $row['post_id'];
+			$post    = get_post( $post_id );
+
+			if ( ! $post ) {
+				/* translators: 1: post ID, 2: plugin name */
+				$notes[] = sprintf( __( 'Post %1$d: no longer exists, so its %2$s data was skipped.', 'dos-toolkit' ), $post_id, $source );
+				continue;
+			}
+
+			$categories = get_the_category( $post_id );
+
+			$vars = array(
+				'title'    => self::plain( $post->post_title ),
+				'sitename' => $sitename,
+				'sep'      => $separator,
+				'excerpt'  => self::plain( $post->post_excerpt ),
+				'category' => $categories ? self::plain( $categories[0]->name ) : '',
+			);
+
+			$wrote = false;
+
+			$fields = array(
+				array( 'raw' => $row['title'], 'key' => self::TITLE_KEY, 'label' => __( 'SEO title', 'dos-toolkit' ), 'stat' => 'titles' ),
+				array( 'raw' => $row['desc'], 'key' => self::DESC_KEY, 'label' => __( 'meta description', 'dos-toolkit' ), 'stat' => 'descs' ),
+			);
+
+			foreach ( $fields as $field ) {
+				if ( '' === trim( $field['raw'] ) ) {
+					continue;
+				}
+
+				// "Already set" includes the SAAB key the description still
+				// falls back to; replacing it would change a live page.
+				$existing = get_post_meta( $post_id, $field['key'], true );
+
+				if ( '' === (string) $existing && self::DESC_KEY === $field['key'] ) {
+					$existing = get_post_meta( $post_id, self::LEGACY_DESC_KEY, true );
+				}
+
+				if ( '' !== (string) $existing ) {
+					$stats['kept']++;
+					/* translators: 1: post ID, 2: field name */
+					$notes[] = sprintf( __( 'Post %1$d: %2$s already set here, left alone.', 'dos-toolkit' ), $post_id, $field['label'] );
+					continue;
+				}
+
+				$resolved = call_user_func( $resolve, $field['raw'], $vars );
+
+				if ( $resolved['unresolved'] ) {
+					/* translators: 1: post ID, 2: field name, 3: list of variables */
+					$notes[] = sprintf( __( 'Post %1$d: %2$s contained %3$s, which cannot be resolved here. Removed it; check the result.', 'dos-toolkit' ), $post_id, $field['label'], implode( ', ', $resolved['unresolved'] ) );
+				}
+
+				$value = sanitize_text_field( self::plain( $resolved['text'] ) );
+
+				if ( '' === $value ) {
+					/* translators: 1: post ID, 2: field name */
+					$notes[] = sprintf( __( 'Post %1$d: %2$s resolved to nothing, so it was not imported.', 'dos-toolkit' ), $post_id, $field['label'] );
+					continue;
+				}
+
+				if ( ! $dry_run ) {
+					update_post_meta( $post_id, $field['key'], $value );
+				}
+
+				$stats[ $field['stat'] ]++;
+				$wrote = true;
+			}
+
+			// No equivalent here. Counted and named so it is handled by hand
+			// rather than lost without anyone noticing.
+			if ( $row['noindex'] ) {
+				$stats['noindex']++;
+				/* translators: 1: post ID, 2: plugin name */
+				$notes[] = sprintf( __( 'Post %1$d: set to noindex in %2$s. DoS Toolkit has no per-post noindex, so this was not imported.', 'dos-toolkit' ), $post_id, $source );
+			}
+
+			if ( '' !== trim( $row['canonical'] ) ) {
+				$stats['canonical']++;
+				/* translators: 1: post ID, 2: plugin name, 3: URL */
+				$notes[] = sprintf( __( 'Post %1$d: has a custom canonical in %2$s (%3$s). DoS Toolkit has no per-post canonical, so this was not imported.', 'dos-toolkit' ), $post_id, $source, $row['canonical'] );
+			}
+
+			if ( $wrote ) {
+				$stats['changed']++;
+			}
+		}
+
+		$notes[] = sprintf(
+			/* translators: 1: posts examined, 2: titles, 3: descriptions, 4: kept, 5: noindex, 6: canonical */
+			$dry_run
+				? __( 'This pass: %1$d posts examined. Would write %2$d titles and %3$d descriptions; %4$d left alone because already set; %5$d noindex and %6$d canonical overrides not importable.', 'dos-toolkit' )
+				: __( 'This pass: %1$d posts examined. Wrote %2$d titles and %3$d descriptions; %4$d left alone because already set; %5$d noindex and %6$d canonical overrides not importable.', 'dos-toolkit' ),
+			count( $rows ),
+			$stats['titles'],
+			$stats['descs'],
+			$stats['kept'],
+			$stats['noindex'],
+			$stats['canonical']
+		);
+
+		if ( $stats['titles'] || $stats['descs'] ) {
+			self::log(
+				$action,
+				sprintf( '%s: %d titles and %d descriptions across %d posts.', $source, $stats['titles'], $stats['descs'], $stats['changed'] ),
+				0,
+				$dry_run
+			);
+		}
+
+		return array(
+			'processed' => count( $rows ),
+			'changed'   => $stats['changed'],
+			'notes'     => $notes,
+		);
 	}
 
 	/* ---------------------------------------------------------------------
@@ -845,6 +1258,23 @@ final class DOS_Module_SEO extends DOS_Module {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<hr>
+
+			<h2><?php esc_html_e( 'Import from another SEO plugin', 'dos-toolkit' ); ?></h2>
+
+			<p class="description">
+				<?php esc_html_e( 'Moves per-post SEO titles and meta descriptions across before you switch plugins. These work while the other plugin is still active, and after it is deactivated. Suggested order: run the import as a dry run and read the notes, run it for real, spot-check a few pages in the editor, then deactivate the old plugin.', 'dos-toolkit' ); ?>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'A title or description already set in the Search & Social box is never overwritten. Per-post noindex and canonical overrides have no equivalent here and are reported, not imported — the notes name each post so it can be handled by hand. Nothing is deleted from the other plugin.', 'dos-toolkit' ); ?>
+			</p>
+
+			<?php
+			foreach ( array( 'seo_import_yoast', 'seo_import_aioseo' ) as $job ) {
+				DOS_Batch::render_runner( $job );
+			}
+			?>
 		</div>
 		<?php
 	}

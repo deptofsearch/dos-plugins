@@ -17,6 +17,9 @@ final class DOS_Redirects_Store {
 	const DB_VERSION = '1';
 	const MAP_KEY    = 'dos_redirect_map';
 
+	/** Status codes a rule may carry. Anything else is stored as 301. */
+	const CODES = array( 301, 302, 307, 410 );
+
 	/* ---------------------------------------------------------------------
 	 * Tables
 	 * ------------------------------------------------------------------- */
@@ -249,11 +252,13 @@ final class DOS_Redirects_Store {
 	 * ------------------------------------------------------------------- */
 
 	/**
-	 * @return int|WP_Error Redirect ID, or why it was refused.
+	 * Whether a source and target may be stored, and their normalised forms.
+	 * Split out of add() so an importer can ask the same question in a dry run
+	 * without writing anything, and cannot drift from what add() enforces.
+	 *
+	 * @return array|WP_Error array( source, target ), or why it was refused.
 	 */
-	public static function add( $source, $target, $code = 301, $origin = 'manual' ) {
-		global $wpdb;
-
+	public static function validate( $source, $target ) {
 		$source = self::normalise( $source );
 		$target = self::clean_target( $target );
 
@@ -279,7 +284,24 @@ final class DOS_Redirects_Store {
 			return new WP_Error( 'dos_too_long', __( 'That path is too long to index. Redirect a shorter path.', 'dos-toolkit' ) );
 		}
 
-		$code = in_array( (int) $code, array( 301, 302, 307, 410 ), true ) ? (int) $code : 301;
+		return array( $source, $target );
+	}
+
+	/**
+	 * @return int|WP_Error Redirect ID, or why it was refused.
+	 */
+	public static function add( $source, $target, $code = 301, $origin = 'manual' ) {
+		global $wpdb;
+
+		$checked = self::validate( $source, $target );
+
+		if ( is_wp_error( $checked ) ) {
+			return $checked;
+		}
+
+		list( $source, $target ) = $checked;
+
+		$code = in_array( (int) $code, self::CODES, true ) ? (int) $code : 301;
 
 		$existing = self::find( $source );
 

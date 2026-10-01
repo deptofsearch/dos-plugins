@@ -5,6 +5,116 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.21.0
+
+DoS Toolkit can now replace Yoast SEO, All in One SEO and Redirection on a live
+site, rather than only sit beside them.
+
+**The AIOSEO gap.** The SEO module stood down for Yoast, Rank Math and SEOPress
+and for nothing else. On a site running All in One SEO it would have carried on
+regardless, and enabling the module beside it would have printed a second
+description, a second canonical and a second schema graph on every page. It now
+recognises All in One SEO (`AIOSEO_VERSION`, and also `aioseo()`, because some
+builds define the constant late) and The SEO Framework. The Conflicts list in
+`DOS_Conflicts` was a second hand-kept copy of the same plugins and had the same
+gap; both are updated, and a test now defines every constant in that list and
+requires the module to stand down for each, so the two cannot drift apart
+quietly again.
+
+Standing down meant returning from `init()` before anything was hooked — which
+included the settings save handler, so the notice promising that settings are
+"saved but unused" while a conflict lasts was not true. The save handler and the
+media-picker script are now hooked before the check. The head output, robots
+filter, title filter and editor box are still hooked after it.
+
+**A per-post SEO title.** The Search & Social box gains an SEO title above the
+meta description. When set, it is the whole document title on that post or page,
+including a static front page, through `pre_get_document_title`. There is no
+separate plumbing for the other places a title appears: `og:title` and the
+schema WebPage name already read `wp_get_document_title()`, so they follow it.
+The stored value goes through the same decoding as every other title in the
+module (see 0.20.5 and 0.7.1), and is then HTML-escaped on the way out.
+
+That second step is a security fix caught in review before release. Returning a
+non-empty string from `pre_get_document_title` makes `wp_get_document_title()`
+return it at once, skipping the `document_title` filter where core does its
+escaping, and `_wp_render_title_tag()` echoes whatever it is given. Decoding
+alone was therefore unsafe: `sanitize_text_field()` does not decode entities, so
+a Contributor could save `&lt;/title&gt;&lt;script&gt;…`, have it decoded, and
+see it printed as live markup in `<head>`. Escaping at the filter closes that,
+and `og:title` and the schema name are unaffected, because `context()` decodes
+the title again. The same payload exposed a second route: JSON-LD was written
+with `JSON_UNESCAPED_SLASHES`, so a decoded `</script>` inside a title closed
+the schema block early. The encoder now also sets `JSON_HEX_TAG`. Both have a
+test that was confirmed to fail with the fix reverted.
+
+Themes that print `wp_title()` rather than declare title-tag support never reach
+`pre_get_document_title`, so the browser tab would have disagreed with `og:title`.
+The same escaped value is returned from `wp_title` too. The custom title replaces
+the whole title, so on a paginated post "Page 2" is not appended. There is no
+`twitter:title` tag to keep in step; Twitter reads the `og:*` tags.
+
+**Importing from Yoast and AIOSEO.** Two jobs on the SEO screen copy each post's
+title and meta description across. Yoast and AIOSEO both store a template
+rather than a title — `%%title%% %%sep%% %%sitename%%`, `#post_title
+#separator_sa #site_title` — so each is resolved against the post first: title,
+site name, separator (Yoast's `sc-pipe` style keys mapped to the character,
+AIOSEO's from its own option), excerpt and first category. A variable that
+cannot be resolved is removed, along with the separator it leaves stranded, and
+the post's ID is named in the notes so someone can look at it. A literal
+variable in a title tag is worse than a missing clause. AIOSEO tags are matched
+by name, so a hashtag in a title is left alone. Yoast's "<" separator is saved as
+`&lt;` by `sanitize_text_field()`; it is decoded on output, so the page shows "<",
+but the field in the editor shows the entity until it is retyped.
+
+AIOSEO's per-post `robots_noindex` only counts when `robots_default` is 0. While
+`robots_default` is 1 AIOSEO ignores the stored noindex, so those rows are not
+reported as noindex.
+
+Both jobs read the saved data directly, so they work with the other plugin still
+active or already gone. That matters because the sensible order is import first,
+deactivate afterwards, and it is why the SEO screen and its jobs stay registered
+while the module is standing down. A title or description already set here is
+never overwritten, including a description still sitting in the old SAAB key.
+Neither job is destructive, because nothing is removed from the source.
+
+**Importing from Redirection.** A third job on the Redirects screen copies
+enabled, exact-URL redirects, using the store's own path normalising, target
+cleaning and loop refusal, so an imported rule is held to exactly what one typed
+by hand is. The match is looser than Redirection's: the store ignores case and
+trailing slashes and carries the visitor's query string across, where
+Redirection can be told to treat those as different. A path that already has a rule here is skipped, never updated. The
+store's `add()` now delegates its checks to a new `validate()` so the dry run can
+ask the same questions without writing.
+
+**What is deliberately not imported.**
+
+- Regex rules. Redirects here match exact paths, so a regex imported as a
+  literal path would match nothing and look as if it worked. The note shows the
+  pattern and target so each can be rewritten by hand as one rule per path.
+- Disabled rules, and rules in a Redirection group that is disabled. Neither was
+  running; importing them would switch them on.
+- Any match type other than URL (login state, referrer, agent, cookie, role,
+  server, IP, page, language, custom filter) and any action other than a
+  redirect. Importing a login-only rule as a plain one would redirect people it
+  never applied to.
+- A rule whose source carries a query string. The store drops the query string
+  from a path and carries the visitor's own across, so it would redirect the
+  whole page.
+- Per-post noindex and canonical overrides, from either SEO plugin. There is no
+  per-post equivalent here. They are counted and each post is named in the notes
+  for handling by hand.
+- Status codes the store does not carry (such as 308) are imported as 301, with
+  a note.
+
+**Migration order.** For each plugin: run the import as a dry run and read the
+notes; run it for real; open a few pages and look at the title, description and
+`view-source` — and read through the notes for anything flagged; then deactivate
+the old plugin. Nothing is deleted from it, so it can be reactivated if
+something was missed. A dry run cannot see two Redirection rules that normalise
+to the same path (`/About` and `/about/`) as a conflict, because the first has
+not been written yet; the live run skips the second as already existing.
+
 ## 0.20.5
 
 HTML entities were reaching JSON-LD again, by a route the 0.7.1 fix did not

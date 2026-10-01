@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/class-dos-redirects-store.php';
 require_once __DIR__ . '/class-dos-redirects-router.php';
 require_once __DIR__ . '/class-dos-redirects-slug.php';
+require_once __DIR__ . '/class-dos-redirects-import.php';
 
 final class DOS_Module_Redirects extends DOS_Module {
 
@@ -34,6 +35,40 @@ final class DOS_Module_Redirects extends DOS_Module {
 				'callback' => array( __CLASS__, 'render_page' ),
 			),
 		);
+	}
+
+	/**
+	 * Registered whether or not Redirection is still active: the job reads
+	 * its tables directly, and the usual order is to import before
+	 * deactivating it.
+	 */
+	public static function jobs() {
+		return array(
+			'redirects_import_redirection' => array(
+				'label'       => __( 'Import from Redirection', 'dos-toolkit' ),
+				'description' => __( 'Copies enabled, exact-URL redirects from the Redirection plugin. Regex rules, disabled rules, rules that match on anything but the URL, and non-redirect actions are skipped and listed so you can deal with them by hand. Imported rules match more loosely than they did in Redirection: case and trailing slashes are ignored and the visitor\'s query string is passed through. A path that already has a redirect here is never overwritten. Nothing is removed from Redirection.', 'dos-toolkit' ),
+				'batch_size'  => 100,
+				'count'       => array( 'DOS_Redirects_Import', 'count' ),
+				'step'        => array( __CLASS__, 'step_import_redirection' ),
+			),
+		);
+	}
+
+	public static function step_import_redirection( $offset, $size, $dry_run ) {
+		$result = DOS_Redirects_Import::run( $offset, $size, $dry_run );
+
+		if ( $result['imported'] ) {
+			self::log(
+				'redirects_imported',
+				sprintf( 'Redirection: %d rules. %s', count( $result['imported'] ), implode( '; ', array_slice( $result['imported'], 0, 20 ) ) ),
+				0,
+				$dry_run
+			);
+		}
+
+		unset( $result['imported'] );
+
+		return $result;
 	}
 
 	/* ---------------------------------------------------------------------
@@ -210,7 +245,17 @@ final class DOS_Module_Redirects extends DOS_Module {
 							<td><code><?php echo esc_html( $rule['target'] ); ?></code></td>
 							<td><?php echo (int) $rule['code']; ?></td>
 							<td><?php echo (int) $rule['hits']; ?></td>
-							<td><?php echo 'slug-change' === $rule['origin'] ? esc_html__( 'slug change', 'dos-toolkit' ) : esc_html__( 'by hand', 'dos-toolkit' ); ?></td>
+							<td>
+								<?php
+								if ( 'slug-change' === $rule['origin'] ) {
+									esc_html_e( 'slug change', 'dos-toolkit' );
+								} elseif ( 'redirection' === $rule['origin'] ) {
+									esc_html_e( 'Redirection import', 'dos-toolkit' );
+								} else {
+									esc_html_e( 'by hand', 'dos-toolkit' );
+								}
+								?>
+							</td>
 							<td>
 								<form method="post" style="display:inline">
 									<?php wp_nonce_field( 'dos_redirects' ); ?>
@@ -285,6 +330,15 @@ final class DOS_Module_Redirects extends DOS_Module {
 				<input type="hidden" name="dos_action" value="redirects_clear_404s" />
 				<button type="submit" class="button"><?php esc_html_e( 'Clear the 404 log', 'dos-toolkit' ); ?></button>
 			</form>
+
+			<hr>
+			<h2><?php esc_html_e( 'Import from Redirection', 'dos-toolkit' ); ?></h2>
+
+			<p class="description">
+				<?php esc_html_e( 'Works while Redirection is still active, and after it is deactivated. Suggested order: run it as a dry run and read the notes, run it for real, spot-check a few redirects, then deactivate Redirection. Imported rules appear above marked "Redirection import".', 'dos-toolkit' ); ?>
+			</p>
+
+			<?php DOS_Batch::render_runner( 'redirects_import_redirection' ); ?>
 
 			<hr>
 			<h2><?php esc_html_e( 'Settings', 'dos-toolkit' ); ?></h2>

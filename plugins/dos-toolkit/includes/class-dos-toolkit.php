@@ -21,7 +21,7 @@ final class DOS_Toolkit {
 			'class' => 'DOS_Module_SEO',
 			'file'  => 'seo/class-dos-seo.php',
 			'label' => 'SEO',
-			'blurb' => 'Meta descriptions, Open Graph and Twitter Cards, canonicals, and an Organization/WebSite/WebPage schema graph. Stands down automatically if Yoast, Rank Math or SEOPress is active.',
+			'blurb' => 'SEO titles and meta descriptions, Open Graph and Twitter Cards, canonicals, and an Organization/WebSite/WebPage schema graph. Imports from Yoast and All in One SEO. Stands down automatically if Yoast, All in One SEO, Rank Math, SEOPress or The SEO Framework is active.',
 		),
 		'ai' => array(
 			'class' => 'DOS_Module_AI',
@@ -45,7 +45,7 @@ final class DOS_Toolkit {
 			'class' => 'DOS_Module_Redirects',
 			'file'  => 'redirects/class-dos-redirects.php',
 			'label' => 'Redirects & 404s',
-			'blurb' => 'Logs requests that hit nothing, and redirects the ones worth keeping. Renaming a published page redirects its old URL automatically.',
+			'blurb' => 'Logs requests that hit nothing, and redirects the ones worth keeping. Renaming a published page redirects its old URL automatically. Imports from Redirection.',
 		),
 		'utilities' => array(
 			'class' => 'DOS_Module_Utilities',

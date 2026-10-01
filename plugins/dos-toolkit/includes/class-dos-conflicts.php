@@ -103,6 +103,19 @@ final class DOS_Conflicts {
 				'name'   => 'SEOPress',
 				'module' => 'seo',
 			),
+			// Some AIOSEO builds define the constant after plugins_loaded, or
+			// not at all on a lite install, so the plugin's own accessor is
+			// the second thing asked. Keep this list and
+			// DOS_Module_SEO::conflicting_plugin() in step.
+			'AIOSEO_VERSION' => array(
+				'name'     => 'All in One SEO',
+				'module'   => 'seo',
+				'function' => 'aioseo',
+			),
+			'THE_SEO_FRAMEWORK_VERSION' => array(
+				'name'   => 'The SEO Framework',
+				'module' => 'seo',
+			),
 		);
 	}
 
@@ -163,7 +176,7 @@ final class DOS_Conflicts {
 		$found = array();
 
 		foreach ( self::third_party() as $constant => $entry ) {
-			if ( defined( $constant ) ) {
+			if ( defined( $constant ) || ( ! empty( $entry['function'] ) && function_exists( $entry['function'] ) ) ) {
 				$found[ $constant ] = $entry;
 			}
 		}

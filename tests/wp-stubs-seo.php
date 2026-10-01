@@ -9,10 +9,23 @@ define( 'MINUTE_IN_SECONDS', 60 );
 $GLOBALS['options'] = array();
 $GLOBALS['state']   = array();
 
+// Kept apart from $GLOBALS['state'], which tests replace wholesale per request.
+$GLOBALS['filters'] = array();   // tag => list of callbacks
+$GLOBALS['actions'] = array();   // tag => list of callbacks
+$GLOBALS['pmeta']   = array();   // post id => key => value (per-post meta)
+$GLOBALS['written'] = array();   // every update/delete_post_meta call, in order
+$GLOBALS['log']     = array();   // every DOS_Log::add call
+
 function get_option( $k, $d = false ) { return $GLOBALS['options'][ $k ] ?? $d; }
 function update_option( $k, $v, $a = null ) { $GLOBALS['options'][ $k ] = $v; return true; }
-function apply_filters( $t, $v ) { return $v; }
-function add_action() {} function remove_action() {} function add_filter() {}
+// Filters run, as in core, so a callback hooked by init() actually takes part.
+function add_filter( $t, $cb, $p = 10, $n = 1 ) { $GLOBALS['filters'][ $t ][] = $cb; return true; }
+function apply_filters( $t, $v ) {
+    foreach ( $GLOBALS['filters'][ $t ] ?? array() as $cb ) { $v = call_user_func( $cb, $v ); }
+    return $v;
+}
+function add_action( $t, $cb = null, $p = 10, $n = 1 ) { $GLOBALS['actions'][ $t ][] = $cb; return true; }
+function remove_action() {}
 function __( $s, $d = '' ) { return $s; }
 function esc_attr( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
 function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES, 'UTF-8' ); }
@@ -34,7 +47,12 @@ function home_url( $p = '/' ) { return 'https://example.com' . $p; }
 function get_bloginfo( $w ) {
     return array( 'name' => 'Acme Heating &amp; Air', 'description' => 'A site about things', 'language' => 'en-US' )[ $w ] ?? '';
 }
-function wp_get_document_title() { return $GLOBALS['state']['title'] ?? 'A Post Title | Acme Heating &amp; Air'; }
+// As in core: a non-empty pre_get_document_title ends the lookup there.
+function wp_get_document_title() {
+    $pre = apply_filters( 'pre_get_document_title', '' );
+    if ( ! empty( $pre ) ) { return $pre; }
+    return $GLOBALS['state']['title'] ?? 'A Post Title | Acme Heating &amp; Air';
+}
 function get_query_var( $v ) { return $GLOBALS['state'][ $v ] ?? 0; }
 function get_pagenum_link( $n ) { return 'https://example.com/page/' . $n . '/'; }
 function get_queried_object_id() { return $GLOBALS['state']['queried_id'] ?? 0; }
@@ -50,15 +68,30 @@ function get_the_date( $f, $id = 0 ) { return '2026-01-15T09:00:00+00:00'; }
 function get_post_time( $f, $gmt = false, $post = null, $translate = false ) { return '2026-01-15T09:00:00+00:00'; }
 function get_post_modified_time( $f, $gmt = false, $post = null, $translate = false ) { return '2026-02-01T11:30:00+00:00'; }
 function get_the_modified_date( $f, $id = 0 ) { return '2026-02-01T11:30:00+00:00'; }
-function get_the_category( $id = 0 ) { return array( (object) array( 'name' => 'News' ) ); }
+function get_the_category( $id = 0 ) {
+    $names = $GLOBALS['state']['categories'][ $id ] ?? array( 'News' );
+    return array_map( function ( $n ) { return (object) array( 'name' => $n ); }, $names );
+}
 function get_the_archive_description() { return ''; }
 function get_the_archive_title() { return 'Archives'; }
 function get_post_thumbnail_id( $id ) { return $GLOBALS['state']['thumb_id'] ?? 0; }
 function attachment_url_to_postid( $u ) { return 0; }
 function strip_shortcodes( $c ) { return $c; }
-function get_post_meta( $id, $k, $s = false ) { return $GLOBALS['state']['meta'][ $k ] ?? ''; }
-function update_post_meta() {} function delete_post_meta() {}
-function get_post( $id = 0 ) { return $GLOBALS['state']['post'] ?? null; }
+function get_post_meta( $id, $k, $s = false ) {
+    if ( isset( $GLOBALS['pmeta'][ $id ][ $k ] ) ) { return $GLOBALS['pmeta'][ $id ][ $k ]; }
+    return $GLOBALS['state']['meta'][ $k ] ?? '';
+}
+function update_post_meta( $id, $k, $v ) {
+    $GLOBALS['written'][] = array( 'update', $id, $k, $v );
+    $GLOBALS['pmeta'][ $id ][ $k ] = $v;
+    return true;
+}
+function delete_post_meta( $id, $k ) {
+    $GLOBALS['written'][] = array( 'delete', $id, $k );
+    unset( $GLOBALS['pmeta'][ $id ][ $k ] );
+    return true;
+}
+function get_post( $id = 0 ) { return $GLOBALS['state']['posts'][ $id ] ?? $GLOBALS['state']['post'] ?? null; }
 function wp_get_attachment_image_src( $id, $size ) {
     return array( 'https://example.com/wp-content/uploads/hero.jpg', 1200, 630 );
 }
@@ -75,7 +108,9 @@ function is_search() { return $GLOBALS['state']['view'] === 'search'; }
 function is_404() { return $GLOBALS['state']['view'] === '404'; }
 function is_archive() { return in_array( $GLOBALS['state']['view'], array( 'archive', 'category', 'author' ), true ); }
 
-class DOS_Log { public static function add() {} }
+class DOS_Log { public static function add() { $GLOBALS['log'][] = func_get_args(); } }
+function wp_unslash( $s ) { return $s; }
+function wp_verify_nonce() { return true; }
 class FakeQuery { public $max_num_pages = 5; }
 $GLOBALS['wp_query'] = new FakeQuery();
 $GLOBALS['wp'] = (object) array( 'request' => 'archive' );

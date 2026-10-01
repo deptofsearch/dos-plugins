@@ -1,10 +1,12 @@
 <?php
 /**
- * Plugin Name: DoS Market Images
+ * Plugin Name: DoS - Market Images
+ * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Illustrated market images for Real Estate Values Near Me — a city carousel in the homepage "Popular Real Estate Markets" section and image buttons on the By State page. Manage under Tools → Market Images. Also adds 2-post topic grids to homepage sections. Shortcodes: [revnm_market_carousel], [revnm_state_buttons].
- * Version: 1.5.2
+ * Version: 1.6.0
  * Author: Department of Search
  * Text Domain: dos-market-images
+ * Update URI: https://github.com/deptofsearch/dos-plugins
  * Requires at least: 5.8
  * Requires PHP: 7.4
  */
@@ -13,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_MI_VERSION', '1.5.2' );
+define( 'DOS_MI_VERSION', '1.6.0' );
 define( 'DOS_MI_PALETTES', 'dos_market_images_palettes' );
 define( 'DOS_MI_DATA', 'dos_market_images_data' );
 define( 'DOS_MI_OPTION', 'dos_market_images_settings' );
@@ -21,6 +23,19 @@ define( 'DOS_MI_OPTION', 'dos_market_images_settings' );
 if ( is_admin() ) {
 	require_once __DIR__ . '/includes/admin.php';
 }
+
+// Not behind is_admin(): WP-Cron and the REST API run the update check too.
+require_once __DIR__ . '/includes/class-dos-github-updater.php';
+
+( new DOS_GitHub_Updater(
+	array(
+		'slug'        => 'dos-market-images',
+		'basename'    => plugin_basename( __FILE__ ),
+		'version'     => DOS_MI_VERSION,
+		'name'        => 'DoS - Market Images',
+		'description' => 'Illustrated market images for Real Estate Values Near Me: a city carousel, state image buttons, state page heroes and homepage topic grids.',
+	)
+) )->boot();
 
 function dos_mi_defaults() {
 	return array(
@@ -162,8 +177,22 @@ function dos_mi_state_buttons( $counts = array() ) {
 		. '<p class="rv-mi-empty" hidden>No states match that filter.</p></div>';
 }
 
-add_shortcode( 'revnm_market_carousel', 'dos_mi_carousel' );
-add_shortcode( 'revnm_state_buttons', 'dos_mi_state_buttons' );
+// Closures, not the functions themselves: WordPress passes a shortcode callback its
+// attributes, which is an empty string for a bare [revnm_state_buttons]. That landed in
+// dos_mi_state_buttons()'s $counts parameter, which is meant for the by-state page's city
+// counts, so it only worked while nothing indexed into it.
+add_shortcode(
+	'revnm_market_carousel',
+	function () {
+		return dos_mi_carousel();
+	}
+);
+add_shortcode(
+	'revnm_state_buttons',
+	function () {
+		return dos_mi_state_buttons();
+	}
+);
 
 /**
  * Homepage: swap the text links in "Popular Real Estate Markets" for the carousel.

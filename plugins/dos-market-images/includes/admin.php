@@ -12,7 +12,7 @@ define( 'DOS_MI_PAGE', 'dos-market-images' );
 add_action(
 	'admin_menu',
 	function () {
-		add_management_page( 'DoS Market Images', 'Market Images', 'manage_options', DOS_MI_PAGE, 'dos_mi_render_page' );
+		add_management_page( 'DoS - Market Images', 'Market Images', 'manage_options', DOS_MI_PAGE, 'dos_mi_render_page' );
 	}
 );
 
@@ -222,7 +222,7 @@ function dos_mi_render_page() {
 	$sp    = get_page_by_path( $s['states_page'] );
 	?>
 <div class="wrap">
-<h1>DoS Market Images</h1>
+<h1>DoS - Market Images</h1>
 <p>Illustrated images for the homepage <strong>Popular Real Estate Markets</strong> carousel and the <strong>By State</strong> page buttons.
 	<?php echo $front ? '<a href="' . esc_url( get_permalink( $front ) ) . '" target="_blank" rel="noopener">View homepage</a>' : ''; ?>
 	<?php echo $sp ? ' · <a href="' . esc_url( get_permalink( $sp ) ) . '" target="_blank" rel="noopener">View By State page</a>' : ''; ?></p>

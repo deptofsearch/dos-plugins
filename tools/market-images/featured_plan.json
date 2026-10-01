@@ -1,0 +1,320 @@
+[
+ {
+  "slug": "alabama",
+  "page_id": 67044,
+  "old_featured": 0,
+  "new_featured": 85412
+ },
+ {
+  "slug": "alaska",
+  "page_id": 67043,
+  "old_featured": 0,
+  "new_featured": 85413
+ },
+ {
+  "slug": "arizona",
+  "page_id": 67048,
+  "old_featured": 0,
+  "new_featured": 85414
+ },
+ {
+  "slug": "arkansas",
+  "page_id": 67047,
+  "old_featured": 0,
+  "new_featured": 85415
+ },
+ {
+  "slug": "california",
+  "page_id": 67049,
+  "old_featured": 0,
+  "new_featured": 85416
+ },
+ {
+  "slug": "colorado",
+  "page_id": 67050,
+  "old_featured": 0,
+  "new_featured": 85417
+ },
+ {
+  "slug": "connecticut",
+  "page_id": 67051,
+  "old_featured": 0,
+  "new_featured": 85418
+ },
+ {
+  "slug": "delaware",
+  "page_id": 67053,
+  "old_featured": 0,
+  "new_featured": 85419
+ },
+ {
+  "slug": "district-of-columbia",
+  "page_id": 67052,
+  "old_featured": 0,
+  "new_featured": 85420
+ },
+ {
+  "slug": "florida",
+  "page_id": 67054,
+  "old_featured": 0,
+  "new_featured": 85421
+ },
+ {
+  "slug": "georgia",
+  "page_id": 67055,
+  "old_featured": 0,
+  "new_featured": 85422
+ },
+ {
+  "slug": "hawaii",
+  "page_id": 67056,
+  "old_featured": 0,
+  "new_featured": 85423
+ },
+ {
+  "slug": "idaho",
+  "page_id": 67058,
+  "old_featured": 0,
+  "new_featured": 85424
+ },
+ {
+  "slug": "illinois",
+  "page_id": 67059,
+  "old_featured": 0,
+  "new_featured": 85425
+ },
+ {
+  "slug": "indiana",
+  "page_id": 67060,
+  "old_featured": 0,
+  "new_featured": 85426
+ },
+ {
+  "slug": "iowa",
+  "page_id": 67057,
+  "old_featured": 0,
+  "new_featured": 85427
+ },
+ {
+  "slug": "kansas",
+  "page_id": 67061,
+  "old_featured": 0,
+  "new_featured": 85428
+ },
+ {
+  "slug": "kentucky",
+  "page_id": 67062,
+  "old_featured": 0,
+  "new_featured": 85429
+ },
+ {
+  "slug": "louisiana",
+  "page_id": 67063,
+  "old_featured": 0,
+  "new_featured": 85430
+ },
+ {
+  "slug": "maine",
+  "page_id": 67066,
+  "old_featured": 0,
+  "new_featured": 85431
+ },
+ {
+  "slug": "maryland",
+  "page_id": 67065,
+  "old_featured": 0,
+  "new_featured": 85432
+ },
+ {
+  "slug": "massachusetts",
+  "page_id": 67064,
+  "old_featured": 0,
+  "new_featured": 85433
+ },
+ {
+  "slug": "michigan",
+  "page_id": 67067,
+  "old_featured": 0,
+  "new_featured": 85434
+ },
+ {
+  "slug": "minnesota",
+  "page_id": 67068,
+  "old_featured": 0,
+  "new_featured": 85435
+ },
+ {
+  "slug": "mississippi",
+  "page_id": 67070,
+  "old_featured": 0,
+  "new_featured": 85436
+ },
+ {
+  "slug": "missouri",
+  "page_id": 67069,
+  "old_featured": 0,
+  "new_featured": 85437
+ },
+ {
+  "slug": "montana",
+  "page_id": 67071,
+  "old_featured": 0,
+  "new_featured": 85438
+ },
+ {
+  "slug": "nebraska",
+  "page_id": 67074,
+  "old_featured": 0,
+  "new_featured": 85439
+ },
+ {
+  "slug": "nevada",
+  "page_id": 67078,
+  "old_featured": 0,
+  "new_featured": 85440
+ },
+ {
+  "slug": "new-hampshire",
+  "page_id": 67075,
+  "old_featured": 0,
+  "new_featured": 85441
+ },
+ {
+  "slug": "new-jersey",
+  "page_id": 67076,
+  "old_featured": 0,
+  "new_featured": 85442
+ },
+ {
+  "slug": "new-mexico",
+  "page_id": 67077,
+  "old_featured": 0,
+  "new_featured": 85443
+ },
+ {
+  "slug": "new-york",
+  "page_id": 67079,
+  "old_featured": 0,
+  "new_featured": 85444
+ },
+ {
+  "slug": "north-carolina",
+  "page_id": 67072,
+  "old_featured": 0,
+  "new_featured": 85445
+ },
+ {
+  "slug": "north-dakota",
+  "page_id": 67073,
+  "old_featured": 0,
+  "new_featured": 85446
+ },
+ {
+  "slug": "ohio",
+  "page_id": 67080,
+  "old_featured": 0,
+  "new_featured": 85447
+ },
+ {
+  "slug": "oklahoma",
+  "page_id": 67081,
+  "old_featured": 0,
+  "new_featured": 85448
+ },
+ {
+  "slug": "oregon",
+  "page_id": 67082,
+  "old_featured": 0,
+  "new_featured": 85449
+ },
+ {
+  "slug": "pennsylvania",
+  "page_id": 67083,
+  "old_featured": 0,
+  "new_featured": 85450
+ },
+ {
+  "slug": "puerto-rico",
+  "page_id": 67084,
+  "old_featured": 0,
+  "new_featured": 85451
+ },
+ {
+  "slug": "rhode-island",
+  "page_id": 67085,
+  "old_featured": 0,
+  "new_featured": 85452
+ },
+ {
+  "slug": "south-carolina",
+  "page_id": 67086,
+  "old_featured": 0,
+  "new_featured": 85453
+ },
+ {
+  "slug": "south-dakota",
+  "page_id": 67087,
+  "old_featured": 0,
+  "new_featured": 85454
+ },
+ {
+  "slug": "tennessee",
+  "page_id": 67088,
+  "old_featured": 0,
+  "new_featured": 85455
+ },
+ {
+  "slug": "texas",
+  "page_id": 67089,
+  "old_featured": 0,
+  "new_featured": 85456
+ },
+ {
+  "slug": "utah",
+  "page_id": 67090,
+  "old_featured": 0,
+  "new_featured": 85457
+ },
+ {
+  "slug": "vermont",
+  "page_id": 67093,
+  "old_featured": 0,
+  "new_featured": 85458
+ },
+ {
+  "slug": "us-virgin-islands",
+  "page_id": 67042,
+  "old_featured": 0,
+  "new_featured": 85459
+ },
+ {
+  "slug": "virginia",
+  "page_id": 67091,
+  "old_featured": 0,
+  "new_featured": 85460
+ },
+ {
+  "slug": "washington",
+  "page_id": 32,
+  "old_featured": 0,
+  "new_featured": 85461
+ },
+ {
+  "slug": "west-virginia",
+  "page_id": 67096,
+  "old_featured": 0,
+  "new_featured": 85462
+ },
+ {
+  "slug": "wisconsin",
+  "page_id": 67095,
+  "old_featured": 0,
+  "new_featured": 85463
+ },
+ {
+  "slug": "wyoming",
+  "page_id": 67097,
+  "old_featured": 0,
+  "new_featured": 85464
+ }
+]

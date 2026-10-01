@@ -1,0 +1,902 @@
+[
+ {
+  "city": "New York",
+  "state": "NY",
+  "soldPerDay": 94.17,
+  "population": 8516202,
+  "dataMode": "sold",
+  "wpPageId": 32867,
+  "title": "New York NY \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Houston",
+  "state": "TX",
+  "soldPerDay": 70.9,
+  "population": 2300419,
+  "dataMode": "active",
+  "wpPageId": 12486,
+  "title": "Houston TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Chicago",
+  "state": "IL",
+  "soldPerDay": 67.43,
+  "population": 2707648,
+  "dataMode": "sold",
+  "wpPageId": 17248,
+  "title": "Chicago IL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Los Angeles",
+  "state": "CA",
+  "soldPerDay": 50.2,
+  "population": 3857897,
+  "dataMode": "sold",
+  "wpPageId": 9903,
+  "title": "Los Angeles CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Philadelphia",
+  "state": "PA",
+  "soldPerDay": 47.77,
+  "population": 1582432,
+  "dataMode": "sold",
+  "wpPageId": 29698,
+  "title": "Philadelphia PA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Las Vegas",
+  "state": "NV",
+  "soldPerDay": 45.63,
+  "population": 650873,
+  "dataMode": "sold",
+  "wpPageId": 9971,
+  "title": "Las Vegas NV \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Austin",
+  "state": "TX",
+  "soldPerDay": 45.23,
+  "population": 967862,
+  "dataMode": "active",
+  "wpPageId": 12008,
+  "title": "Austin TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Dallas",
+  "state": "TX",
+  "soldPerDay": 42.07,
+  "population": 1299553,
+  "dataMode": "active",
+  "wpPageId": 13036,
+  "title": "Dallas TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "San Antonio",
+  "state": "TX",
+  "soldPerDay": 41.1,
+  "population": 1458954,
+  "dataMode": "active",
+  "wpPageId": 12161,
+  "title": "San Antonio TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Phoenix",
+  "state": "AZ",
+  "soldPerDay": 37.67,
+  "population": 1624832,
+  "dataMode": "sold",
+  "wpPageId": 10600,
+  "title": "Phoenix AZ \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Jacksonville",
+  "state": "FL",
+  "soldPerDay": 37.1,
+  "population": 961739,
+  "dataMode": "sold",
+  "wpPageId": 25824,
+  "title": "Jacksonville FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Fort Worth",
+  "state": "TX",
+  "soldPerDay": 36.03,
+  "population": 941311,
+  "dataMode": "active",
+  "wpPageId": 12760,
+  "title": "Fort Worth TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Brooklyn",
+  "state": "NY",
+  "soldPerDay": 33.33,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 32719,
+  "title": "Brooklyn NY \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Conroe",
+  "state": "TX",
+  "soldPerDay": 33.33,
+  "population": 96976,
+  "dataMode": "active",
+  "wpPageId": 12454,
+  "title": "Conroe TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Katy",
+  "state": "TX",
+  "soldPerDay": 33.33,
+  "population": 23900,
+  "dataMode": "active",
+  "wpPageId": 12392,
+  "title": "Katy TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Charlotte",
+  "state": "NC",
+  "soldPerDay": 32.37,
+  "population": 886283,
+  "dataMode": "sold",
+  "wpPageId": 27183,
+  "title": "Charlotte NC \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Indianapolis",
+  "state": "IN",
+  "soldPerDay": 29.83,
+  "population": 882043,
+  "dataMode": "sold",
+  "wpPageId": 22017,
+  "title": "Indianapolis IN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Louisville",
+  "state": "KY",
+  "soldPerDay": 29.43,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 23798,
+  "title": "Louisville KY \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Columbus",
+  "state": "OH",
+  "soldPerDay": 28.63,
+  "population": 906480,
+  "dataMode": "sold",
+  "wpPageId": 23041,
+  "title": "Columbus OH \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Celina",
+  "state": "TX",
+  "soldPerDay": 28.03,
+  "population": 27141,
+  "dataMode": "active",
+  "wpPageId": 13106,
+  "title": "Celina TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Nashville",
+  "state": "TN",
+  "soldPerDay": 26.6,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 24747,
+  "title": "Nashville TN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "San Diego",
+  "state": "CA",
+  "soldPerDay": 25.47,
+  "population": 1385061,
+  "dataMode": "sold",
+  "wpPageId": 9780,
+  "title": "San Diego CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Spring",
+  "state": "TX",
+  "soldPerDay": 24.93,
+  "population": 67103,
+  "dataMode": "active",
+  "wpPageId": 12453,
+  "title": "Spring TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Baltimore",
+  "state": "MD",
+  "soldPerDay": 24.8,
+  "population": 577193,
+  "dataMode": "sold",
+  "wpPageId": 29236,
+  "title": "Baltimore MD \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "New Braunfels",
+  "state": "TX",
+  "soldPerDay": 24.47,
+  "population": 98700,
+  "dataMode": "active",
+  "wpPageId": 12183,
+  "title": "New Braunfels TX \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Orlando",
+  "state": "FL",
+  "soldPerDay": 23.57,
+  "population": 311732,
+  "dataMode": "sold",
+  "wpPageId": 25665,
+  "title": "Orlando FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Seattle",
+  "state": "WA",
+  "soldPerDay": 23.23,
+  "population": 741440,
+  "dataMode": "sold",
+  "wpPageId": 9,
+  "title": "Seattle WA \u2013 What's My Home Worth"
+ },
+ {
+  "city": "Tucson",
+  "state": "AZ",
+  "soldPerDay": 21.93,
+  "population": 543348,
+  "dataMode": "sold",
+  "wpPageId": 10457,
+  "title": "Tucson AZ \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Colorado Springs",
+  "state": "CO",
+  "soldPerDay": 21.8,
+  "population": 483099,
+  "dataMode": "sold",
+  "wpPageId": 11490,
+  "title": "Colorado Springs CO \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Portland",
+  "state": "OR",
+  "soldPerDay": 21.53,
+  "population": 642715,
+  "dataMode": "sold",
+  "wpPageId": 8477,
+  "title": "Portland OR \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Tampa",
+  "state": "FL",
+  "soldPerDay": 21.33,
+  "population": 393389,
+  "dataMode": "sold",
+  "wpPageId": 25570,
+  "title": "Tampa FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Denver",
+  "state": "CO",
+  "soldPerDay": 20.97,
+  "population": 713734,
+  "dataMode": "sold",
+  "wpPageId": 11670,
+  "title": "Denver CO \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Naples",
+  "state": "FL",
+  "soldPerDay": 20.77,
+  "population": 19421,
+  "dataMode": "sold",
+  "wpPageId": 25503,
+  "title": "Naples FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Miami",
+  "state": "FL",
+  "soldPerDay": 20.03,
+  "population": 446663,
+  "dataMode": "sold",
+  "wpPageId": 25625,
+  "title": "Miami FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Ocala",
+  "state": "FL",
+  "soldPerDay": 19.8,
+  "population": 64903,
+  "dataMode": "sold",
+  "wpPageId": 25465,
+  "title": "Ocala FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Raleigh",
+  "state": "NC",
+  "soldPerDay": 19.5,
+  "population": 470763,
+  "dataMode": "sold",
+  "wpPageId": 27351,
+  "title": "Raleigh NC \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Pittsburgh",
+  "state": "PA",
+  "soldPerDay": 19.23,
+  "population": 303620,
+  "dataMode": "sold",
+  "wpPageId": 31204,
+  "title": "Pittsburgh PA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Milwaukee",
+  "state": "WI",
+  "soldPerDay": 19.17,
+  "population": 569756,
+  "dataMode": "sold",
+  "wpPageId": 19929,
+  "title": "Milwaukee WI \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Cape Coral",
+  "state": "FL",
+  "soldPerDay": 18.63,
+  "population": 206387,
+  "dataMode": "sold",
+  "wpPageId": 25505,
+  "title": "Cape Coral FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Memphis",
+  "state": "TN",
+  "soldPerDay": 18.43,
+  "population": 629063,
+  "dataMode": "sold",
+  "wpPageId": 24484,
+  "title": "Memphis TN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Omaha",
+  "state": "NE",
+  "soldPerDay": 18.1,
+  "population": 488197,
+  "dataMode": "sold",
+  "wpPageId": 15103,
+  "title": "Omaha NE \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Oklahoma City",
+  "state": "OK",
+  "soldPerDay": 18,
+  "population": 688693,
+  "dataMode": "sold",
+  "wpPageId": 13583,
+  "title": "Oklahoma City OK \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Kansas City",
+  "state": "MO",
+  "soldPerDay": 16.47,
+  "population": 508233,
+  "dataMode": "active",
+  "wpPageId": 15950,
+  "title": "Kansas City MO \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Albuquerque",
+  "state": "NM",
+  "soldPerDay": 16.47,
+  "population": 562488,
+  "dataMode": "active",
+  "wpPageId": 10281,
+  "title": "Albuquerque NM \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Knoxville",
+  "state": "TN",
+  "soldPerDay": 16.47,
+  "population": 193721,
+  "dataMode": "sold",
+  "wpPageId": 24535,
+  "title": "Knoxville TN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "New Orleans",
+  "state": "LA",
+  "soldPerDay": 16.3,
+  "population": 376035,
+  "dataMode": "active",
+  "wpPageId": 14612,
+  "title": "New Orleans LA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Saint Louis",
+  "state": "MO",
+  "soldPerDay": 16.03,
+  "population": 0,
+  "dataMode": "active",
+  "wpPageId": 16247,
+  "title": "Saint Louis MO \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Henderson",
+  "state": "NV",
+  "soldPerDay": 15.8,
+  "population": 324523,
+  "dataMode": "sold",
+  "wpPageId": 9974,
+  "title": "Henderson NV \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Sacramento",
+  "state": "CA",
+  "soldPerDay": 15.73,
+  "population": 524802,
+  "dataMode": "sold",
+  "wpPageId": 8852,
+  "title": "Sacramento CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Mesa",
+  "state": "AZ",
+  "soldPerDay": 15.53,
+  "population": 507478,
+  "dataMode": "sold",
+  "wpPageId": 10572,
+  "title": "Mesa AZ \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "San Jose",
+  "state": "CA",
+  "soldPerDay": 15.53,
+  "population": 990054,
+  "dataMode": "sold",
+  "wpPageId": 9156,
+  "title": "San Jose CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "San Francisco",
+  "state": "CA",
+  "soldPerDay": 15.13,
+  "population": 836321,
+  "dataMode": "sold",
+  "wpPageId": 9292,
+  "title": "San Francisco CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Scottsdale",
+  "state": "AZ",
+  "soldPerDay": 14.87,
+  "population": 242169,
+  "dataMode": "sold",
+  "wpPageId": 10573,
+  "title": "Scottsdale AZ \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Washington",
+  "state": "DC",
+  "soldPerDay": 14.83,
+  "population": 672079,
+  "dataMode": "sold",
+  "wpPageId": 29465,
+  "title": "Washington DC \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Fort Myers",
+  "state": "FL",
+  "soldPerDay": 14.83,
+  "population": 91730,
+  "dataMode": "sold",
+  "wpPageId": 25504,
+  "title": "Fort Myers FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Baton Rouge",
+  "state": "LA",
+  "soldPerDay": 14.73,
+  "population": 223699,
+  "dataMode": "active",
+  "wpPageId": 14410,
+  "title": "Baton Rouge LA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Cincinnati",
+  "state": "OH",
+  "soldPerDay": 14.67,
+  "population": 309595,
+  "dataMode": "sold",
+  "wpPageId": 22113,
+  "title": "Cincinnati OH \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Atlanta",
+  "state": "GA",
+  "soldPerDay": 14.63,
+  "population": 499287,
+  "dataMode": "sold",
+  "wpPageId": 23876,
+  "title": "Atlanta GA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Sarasota",
+  "state": "FL",
+  "soldPerDay": 14.63,
+  "population": 56218,
+  "dataMode": "sold",
+  "wpPageId": 25480,
+  "title": "Sarasota FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Aurora",
+  "state": "CO",
+  "soldPerDay": 14.37,
+  "population": 390201,
+  "dataMode": "sold",
+  "wpPageId": 11692,
+  "title": "Aurora CO \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Minneapolis",
+  "state": "MN",
+  "soldPerDay": 14.33,
+  "population": 426845,
+  "dataMode": "sold",
+  "wpPageId": 19179,
+  "title": "Minneapolis MN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "soldPerDay": 14.17,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 25563,
+  "title": "Saint Petersburg FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Boston",
+  "state": "MA",
+  "soldPerDay": 14.03,
+  "population": 663972,
+  "dataMode": "sold",
+  "wpPageId": 34933,
+  "title": "Boston MA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Tulsa",
+  "state": "OK",
+  "soldPerDay": 13.93,
+  "population": 412322,
+  "dataMode": "sold",
+  "wpPageId": 13333,
+  "title": "Tulsa OK \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Fort Wayne",
+  "state": "IN",
+  "soldPerDay": 13.8,
+  "population": 266235,
+  "dataMode": "sold",
+  "wpPageId": 21867,
+  "title": "Fort Wayne IN \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Cleveland",
+  "state": "OH",
+  "soldPerDay": 13.5,
+  "population": 367523,
+  "dataMode": "sold",
+  "wpPageId": 22696,
+  "title": "Cleveland OH \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Port Saint Lucie",
+  "state": "FL",
+  "soldPerDay": 13.4,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 25421,
+  "title": "Port Saint Lucie FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Summerville",
+  "state": "SC",
+  "soldPerDay": 13.33,
+  "population": 51262,
+  "dataMode": "sold",
+  "wpPageId": 26665,
+  "title": "Summerville SC \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Wichita",
+  "state": "KS",
+  "soldPerDay": 13.3,
+  "population": 396488,
+  "dataMode": "active",
+  "wpPageId": 15406,
+  "title": "Wichita KS \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Bakersfield",
+  "state": "CA",
+  "soldPerDay": 12.53,
+  "population": 408366,
+  "dataMode": "sold",
+  "wpPageId": 9461,
+  "title": "Bakersfield CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Toledo",
+  "state": "OH",
+  "soldPerDay": 12.5,
+  "population": 268461,
+  "dataMode": "sold",
+  "wpPageId": 22904,
+  "title": "Toledo OH \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Buffalo",
+  "state": "NY",
+  "soldPerDay": 12.4,
+  "population": 276397,
+  "dataMode": "sold",
+  "wpPageId": 31558,
+  "title": "Buffalo NY \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Edmond",
+  "state": "OK",
+  "soldPerDay": 12.37,
+  "population": 95618,
+  "dataMode": "sold",
+  "wpPageId": 13594,
+  "title": "Edmond OK \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Spokane",
+  "state": "WA",
+  "soldPerDay": 12.37,
+  "population": 229228,
+  "dataMode": "sold",
+  "wpPageId": 6476,
+  "title": "Spokane WA \u2013 What's My Home Worth"
+ },
+ {
+  "city": "Fresno",
+  "state": "CA",
+  "soldPerDay": 12.3,
+  "population": 543615,
+  "dataMode": "sold",
+  "wpPageId": 9336,
+  "title": "Fresno CA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Myrtle Beach",
+  "state": "SC",
+  "soldPerDay": 12.3,
+  "population": 37214,
+  "dataMode": "sold",
+  "wpPageId": 26619,
+  "title": "Myrtle Beach SC \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Saint Augustine",
+  "state": "FL",
+  "soldPerDay": 12.27,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 25867,
+  "title": "Saint Augustine FL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Detroit",
+  "state": "MI",
+  "soldPerDay": 11.77,
+  "population": 636644,
+  "dataMode": "sold",
+  "wpPageId": 21319,
+  "title": "Detroit MI \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Richmond",
+  "state": "VA",
+  "soldPerDay": 11.5,
+  "population": 227595,
+  "dataMode": "sold",
+  "wpPageId": 28710,
+  "title": "Richmond VA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Meridian",
+  "state": "ID",
+  "soldPerDay": 10.93,
+  "population": 124865,
+  "dataMode": "active",
+  "wpPageId": 10924,
+  "title": "Meridian ID \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Park City",
+  "state": "UT",
+  "soldPerDay": 10,
+  "population": 8365,
+  "dataMode": "active",
+  "wpPageId": 10785,
+  "title": "Park City UT \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Honolulu",
+  "state": "HI",
+  "soldPerDay": 9.57,
+  "population": 0,
+  "dataMode": "sold",
+  "wpPageId": 8585,
+  "title": "Honolulu HI \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Saint George",
+  "state": "UT",
+  "soldPerDay": 9.17,
+  "population": 0,
+  "dataMode": "active",
+  "wpPageId": 10602,
+  "title": "Saint George UT \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Des Moines",
+  "state": "IA",
+  "soldPerDay": 8.5,
+  "population": 212464,
+  "dataMode": "sold",
+  "wpPageId": 20485,
+  "title": "Des Moines IA \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Huntsville",
+  "state": "AL",
+  "soldPerDay": 7.83,
+  "population": 218814,
+  "dataMode": "sold",
+  "wpPageId": 25177,
+  "title": "Huntsville AL \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Billings",
+  "state": "MT",
+  "soldPerDay": 7.57,
+  "population": 118321,
+  "dataMode": "active",
+  "wpPageId": 17776,
+  "title": "Billings MT \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Sioux Falls",
+  "state": "SD",
+  "soldPerDay": 7.57,
+  "population": 197642,
+  "dataMode": "sold",
+  "wpPageId": 18516,
+  "title": "Sioux Falls SD \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Little Rock",
+  "state": "AR",
+  "soldPerDay": 7.13,
+  "population": 202739,
+  "dataMode": "sold",
+  "wpPageId": 13957,
+  "title": "Little Rock AR \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Gulfport",
+  "state": "MS",
+  "soldPerDay": 6.4,
+  "population": 72533,
+  "dataMode": "active",
+  "wpPageId": 23981,
+  "title": "Gulfport MS \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Anchorage",
+  "state": "AK",
+  "soldPerDay": 6.37,
+  "population": 289069,
+  "dataMode": "active",
+  "wpPageId": 8077,
+  "title": "Anchorage AK \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Wilmington",
+  "state": "DE",
+  "soldPerDay": 6,
+  "population": 71124,
+  "dataMode": "sold",
+  "wpPageId": 29546,
+  "title": "Wilmington DE \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Cheyenne",
+  "state": "WY",
+  "soldPerDay": 5.97,
+  "population": 64976,
+  "dataMode": "active",
+  "wpPageId": 11300,
+  "title": "Cheyenne WY \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Toms River",
+  "state": "NJ",
+  "soldPerDay": 5.7,
+  "population": 93915,
+  "dataMode": "sold",
+  "wpPageId": 32932,
+  "title": "Toms River NJ \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Fargo",
+  "state": "ND",
+  "soldPerDay": 4.6,
+  "population": 129064,
+  "dataMode": "active",
+  "wpPageId": 18163,
+  "title": "Fargo ND \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Stamford",
+  "state": "CT",
+  "soldPerDay": 3.93,
+  "population": 135806,
+  "dataMode": "sold",
+  "wpPageId": 33446,
+  "title": "Stamford CT \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Manchester",
+  "state": "NH",
+  "soldPerDay": 3.77,
+  "population": 115415,
+  "dataMode": "sold",
+  "wpPageId": 34669,
+  "title": "Manchester NH \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Warwick",
+  "state": "RI",
+  "soldPerDay": 3.27,
+  "population": 82871,
+  "dataMode": "sold",
+  "wpPageId": 34721,
+  "title": "Warwick RI \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Morgantown",
+  "state": "WV",
+  "soldPerDay": 3.13,
+  "population": 30273,
+  "dataMode": "sold",
+  "wpPageId": 27691,
+  "title": "Morgantown WV \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Portland",
+  "state": "ME",
+  "soldPerDay": 2.3,
+  "population": 68505,
+  "dataMode": "sold",
+  "wpPageId": 34363,
+  "title": "Portland ME \u2013 What\u2019s My Home Worth"
+ },
+ {
+  "city": "Burlington",
+  "state": "VT",
+  "soldPerDay": 1.7,
+  "population": 44649,
+  "dataMode": "sold",
+  "wpPageId": 33889,
+  "title": "Burlington VT \u2013 What\u2019s My Home Worth"
+ }
+]

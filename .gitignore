@@ -3,3 +3,17 @@ build/
 *.zip
 node_modules/
 vendor/
+
+# Market Images tooling: generated images, logs and credentials stay local.
+tools/market-images/raw/
+tools/market-images/raw_posts/
+tools/market-images/web/
+tools/market-images/web_posts/
+tools/market-images/post-sheets/
+*.log
+tools/**/*.jpg
+tools/**/*.png
+tools/**/*.webp
+tools/**/wp.env
+*.env
+__pycache__/

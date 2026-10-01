@@ -1,0 +1,1230 @@
+{
+ "palettes": {
+  "AL": "Gulf Coast teal, magnolia white, red clay, pine green, cotton cream, deep bayou ink",
+  "AK": "glacier blue, aurora green, spruce teal, tundra rust, snowfield white, midnight indigo",
+  "AZ": "terra cotta, canyon rust, saguaro green, desert sand, turquoise sky, dusk purple",
+  "AR": "Ozark forest green, bluff limestone gray, river-bottom brown, diamond-mine gold, morning mist cream, deep hollow navy",
+  "CA": "Pacific blue, golden poppy orange, sunlit yellow, sand cream, eucalyptus sage, sunset coral",
+  "CO": "alpine spruce, columbine violet, Rocky Mountain slate blue, aspen gold, high-plains tan, night-sky ink",
+  "CT": "Yankee brick red, tidewater gray-blue, maple amber, stone-wall gray, colonial cream, Long Island Sound navy",
+  "DE": "First State colonial blue, salt-marsh olive, oyster-shell cream, Delaware Bay slate, brick rose, deep tidal ink",
+  "DC": "Potomac blue-gray, cherry blossom pink, marble white, Capitol dome cream, park lawn green, dark federal navy",
+  "FL": "flamingo pink, Gulf turquoise, palm green, sunshine yellow, sugar-sand cream, deep lagoon navy",
+  "GA": "peach orange, Georgia red clay, magnolia cream, live-oak green, marsh gold, deep pine ink",
+  "HI": "lava black, tropical ocean teal, hibiscus red, taro leaf green, plumeria cream, volcanic charcoal",
+  "ID": "Sawtooth granite gray, potato-field gold, lupine purple, pine green, snowcap cream, basalt ink",
+  "IL": "prairie wheat gold, Lake Michigan steel blue, cornfield green, brick red, limestone cream, midwest storm charcoal",
+  "IN": "limestone buff, cornfield green, Hoosier barn red, racing checker cream, sycamore gray-green, deep river indigo",
+  "IA": "tasselled corn gold, rolling-field green, red barn, prairie sky blue, silo white, rich black soil ink",
+  "KS": "sunflower yellow, wheat gold, tallgrass sage, big-sky blue, prairie dust tan, storm-cloud charcoal",
+  "KY": "bluegrass blue-green, bourbon amber, horse-fence white, limestone gray, tobacco-barn brown, midnight hollow ink",
+  "LA": "bayou green, cypress gray-brown, Mardi Gras purple, crawfish red, wrought-iron ink, magnolia cream",
+  "ME": "spruce green, North Atlantic navy, lobster red, granite gray, blueberry indigo, lighthouse white",
+  "MD": "Chesapeake blue, blue-crab red, black-eyed-Susan gold, oyster gray, tidewater cream, deep bay ink",
+  "MA": "cranberry red, Atlantic slate blue, New England clapboard white, autumn maple orange, harbor navy, sail cream",
+  "MI": "Great Lakes deep blue, white pine green, cherry-orchard red, dune sand, birch cream, iron-ore charcoal",
+  "MN": "lake blue, north-woods green, iron-range rust, wild-rice gold, loon-black ink, winter frost cream",
+  "MS": "Delta mud brown, magnolia white, cotton-boll cream, kudzu green, river blue-gray, deep blues ink",
+  "MO": "Mississippi mud brown, Ozark green, limestone tan, river-bluff rust, prairie gold, dusk ink",
+  "MT": "big-sky blue, Rockies granite gray, prairie gold, pine green, snow cream, dark ink",
+  "NE": "Sandhills grass gold, cornhusk yellow, sod-house brown, Platte River silver-blue, cream haze, dark ink",
+  "NV": "Mojave sand, sagebrush gray-green, neon magenta, silver-mine gray, dark night ink, bone cream",
+  "NH": "granite gray, White Mountain blue, autumn maple red, white pine green, snow cream, deep notch ink",
+  "NJ": "Garden State green, Jersey shore sand, boardwalk red, Atlantic blue, salt-air cream, dark harbor ink",
+  "NM": "adobe clay, Sangre de Cristo rose, chile red, turquoise, bleached bone cream, deep mesa purple ink",
+  "NY": "Hudson River blue-gray, Adirondack green, brownstone brown, taxi-cab yellow, mist cream, dark subway ink",
+  "NC": "Blue Ridge hazy blue, Outer Banks sand, tobacco-leaf gold, Carolina pine green, morning fog cream, deep ridge ink",
+  "ND": "Badlands clay, sunflower gold, wheat tan, big-sky azure, pale prairie cream, dark grain-elevator ink",
+  "OH": "buckeye brown, Lake Erie gray-blue, cardinal red, cornfield green, limestone cream, deep river ink",
+  "OK": "red dirt, Dust Bowl tan, prairie sage, Oklahoma sky blue, pale dust cream, dark storm ink",
+  "OR": "Douglas fir green, moss green, bark brown, river-stone tan, overcast cream, basalt charcoal",
+  "PA": "Keystone steel gray, Amish barn red, Allegheny forest green, Delaware River blue, coal-seam black, limestone cream",
+  "PR": "Caribbean turquoise, coral pink, El Yunque rainforest green, colonial Spanish yellow, sea-foam cream, deep indigo ink",
+  "RI": "Narragansett Bay blue, Newport mansion limestone, sailcloth white, rosehip red, harbor navy ink, cream",
+  "SC": "Lowcountry marsh green, palmetto green, indigo blue, rice-field gold, Carolina moon white, deep tide ink",
+  "SD": "Badlands buff, Black Hills pine green, prairie gold, Missouri River blue, bone cream, dark ink",
+  "TN": "Smoky Mountain blue haze, Appalachian green, honky-tonk neon red, whiskey amber, limestone cream, deep hollow ink",
+  "TX": "bluebonnet blue, Hill Country limestone, longhorn rust, cactus green, caliche cream, dark mesquite ink",
+  "UT": "slickrock orange, arch sandstone red, Salt Flat white, juniper green, bone cream, deep shadow ink",
+  "VT": "Green Mountain green, maple syrup amber, sugar-maple red, barn red, birch cream, dark woodsmoke ink",
+  "VI": "Caribbean aquamarine, coral reef pink, bougainvillea magenta, sugar-sand cream, palm frond green, deep sea navy",
+  "VA": "Blue Ridge haze blue, Shenandoah green, colonial brick red, tobacco gold, Virginia pine ink, parchment cream",
+  "WA": "deep evergreen, fir green, Puget Sound blue, slate gray-blue, misty cream, snowcap white",
+  "WV": "mountain laurel green, coal-seam charcoal, New River blue, autumn ridge orange, hill-country brown, pale cream",
+  "WI": "dairy-farm red, cheddar yellow, north-woods green, Great Lakes blue, cream, deep lake ink",
+  "WY": "high-plains sage, Teton granite gray-blue, geyser steam white, sunrise gold, bison brown, dark ink"
+ },
+ "items": [
+  {
+   "kind": "state",
+   "key": "alabama",
+   "label": "Alabama",
+   "code": "AL",
+   "scene": "Cheaha Mountain ridgeline rolling into the Gulf coastal plain, with a longleaf pine and a wide Gulf shoreline of sea oats and dunes in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "alaska",
+   "label": "Alaska",
+   "code": "AK",
+   "scene": "Denali rising above a spruce-and-tundra valley with a winding glacial river and a moose standing at the water's edge."
+  },
+  {
+   "kind": "state",
+   "key": "arizona",
+   "label": "Arizona",
+   "code": "AZ",
+   "scene": "The Grand Canyon's layered rim at sunset with a lone saguaro cactus and a ponderosa silhouette in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "arkansas",
+   "label": "Arkansas",
+   "code": "AR",
+   "scene": "A misty Ozark Mountain valley with a winding Buffalo River below tall limestone bluffs and hardwood forest."
+  },
+  {
+   "kind": "state",
+   "key": "california",
+   "label": "California",
+   "code": "CA",
+   "scene": "Yosemite Valley with El Capitan and Half Dome above the Merced River, with poppies and oaks in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "colorado",
+   "label": "Colorado",
+   "code": "CO",
+   "scene": "A jagged Rocky Mountain range above an alpine lake with a stand of aspen trees and wildflower meadow in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "connecticut",
+   "label": "Connecticut",
+   "code": "CT",
+   "scene": "A rolling Litchfield Hills landscape with a steepled village church, a stone wall and a covered bridge over a river."
+  },
+  {
+   "kind": "state",
+   "key": "delaware",
+   "label": "Delaware",
+   "code": "DE",
+   "scene": "The Delaware coast: a tall striped lighthouse above sandy dunes with sea oats and a boardwalk path leading down to calm Atlantic water."
+  },
+  {
+   "kind": "state",
+   "key": "district-of-columbia",
+   "label": "District of Columbia",
+   "code": "DC",
+   "scene": "The Tidal Basin with blossoming cherry trees framing the Jefferson Memorial and the Washington Monument beyond."
+  },
+  {
+   "kind": "state",
+   "key": "florida",
+   "label": "Florida",
+   "code": "FL",
+   "scene": "The Everglades sawgrass prairie with a great egret, cypress hammocks and a wide sky, with palms along a distant beach."
+  },
+  {
+   "kind": "state",
+   "key": "georgia",
+   "label": "Georgia",
+   "code": "GA",
+   "scene": "A Lowcountry marsh at the barrier islands with live oaks draped in Spanish moss and a winding tidal creek."
+  },
+  {
+   "kind": "state",
+   "key": "hawaii",
+   "label": "Hawaii",
+   "code": "HI",
+   "scene": "A dramatic Na Pali-style lush ridge plunging to the Pacific with a curling wave, palms and a small outrigger canoe on the beach."
+  },
+  {
+   "kind": "state",
+   "key": "idaho",
+   "label": "Idaho",
+   "code": "ID",
+   "scene": "The jagged Sawtooth Mountains reflected in a still alpine lake with lodgepole pines along the shore."
+  },
+  {
+   "kind": "state",
+   "key": "illinois",
+   "label": "Illinois",
+   "code": "IL",
+   "scene": "Endless prairie farmland under a huge sky with a barn, a silo and a tall-grass foreground, with a distant faint skyline smudge on the horizon."
+  },
+  {
+   "kind": "state",
+   "key": "indiana",
+   "label": "Indiana",
+   "code": "IN",
+   "scene": "Rolling cornfields and a barn beside a country lane, with a covered bridge and sycamore trees in the distance."
+  },
+  {
+   "kind": "state",
+   "key": "iowa",
+   "label": "Iowa",
+   "code": "IA",
+   "scene": "Rolling cornfields in orderly rows with a barn and silo beneath big towering clouds."
+  },
+  {
+   "kind": "state",
+   "key": "kansas",
+   "label": "Kansas",
+   "code": "KS",
+   "scene": "A tallgrass prairie with a field of sunflowers, a windmill and a vast sky."
+  },
+  {
+   "kind": "state",
+   "key": "kentucky",
+   "label": "Kentucky",
+   "code": "KY",
+   "scene": "Bluegrass horse country with rolling pastures, a plank fence, a thoroughbred grazing and a stone-walled farm barn."
+  },
+  {
+   "kind": "state",
+   "key": "louisiana",
+   "label": "Louisiana",
+   "code": "LA",
+   "scene": "A cypress bayou at dawn with Spanish moss hanging over still water and an egret perched on a stump."
+  },
+  {
+   "kind": "state",
+   "key": "maine",
+   "label": "Maine",
+   "code": "ME",
+   "scene": "A rocky Atlantic coastline at sunrise with a lighthouse, spruce trees and crashing surf on granite ledges."
+  },
+  {
+   "kind": "state",
+   "key": "maryland",
+   "label": "Maryland",
+   "code": "MD",
+   "scene": "Chesapeake Bay at dusk with a skipjack sailboat, marsh grass and a waterman's dock in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "massachusetts",
+   "label": "Massachusetts",
+   "code": "MA",
+   "scene": "Cape Cod shoreline with dune grass, a weathered shingled cottage, a lighthouse and a cranberry bog."
+  },
+  {
+   "kind": "state",
+   "key": "michigan",
+   "label": "Michigan",
+   "code": "MI",
+   "scene": "The Sleeping Bear Dunes rising above a Great Lake with beach grass and pines in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "minnesota",
+   "label": "Minnesota",
+   "code": "MN",
+   "scene": "A northwoods lake at dawn with birch trees, a canoe pulled up on the shore and loons on the water."
+  },
+  {
+   "kind": "state",
+   "key": "mississippi",
+   "label": "Mississippi",
+   "code": "MS",
+   "scene": "A Delta bayou landscape with a cotton field in bloom, a live oak and a slow broad river at the horizon."
+  },
+  {
+   "kind": "state",
+   "key": "missouri",
+   "label": "Missouri",
+   "code": "MO",
+   "scene": "The Mississippi River bluffs near the Ozarks with a bend in the river, a steamboat and forested limestone cliffs."
+  },
+  {
+   "kind": "state",
+   "key": "montana",
+   "label": "Montana",
+   "code": "MT",
+   "scene": "Glacier National Park's jagged peaks above a alpine lake with a pine-covered shore and a grazing bison in the meadow."
+  },
+  {
+   "kind": "state",
+   "key": "nebraska",
+   "label": "Nebraska",
+   "code": "NE",
+   "scene": "Chimney Rock rising from the Great Plains with a Sandhills grass prairie, a windmill and a covered wagon silhouette in the distance."
+  },
+  {
+   "kind": "state",
+   "key": "nevada",
+   "label": "Nevada",
+   "code": "NV",
+   "scene": "Mojave sandstone cliffs near Las Vegas above a Mojave desert floor of Joshua trees and yucca under a big sky."
+  },
+  {
+   "kind": "state",
+   "key": "new-hampshire",
+   "label": "New Hampshire",
+   "code": "NH",
+   "scene": "The granite mountains above a still pond with autumn maples and the granite profile of the Franconia Notch cliff."
+  },
+  {
+   "kind": "state",
+   "key": "new-jersey",
+   "label": "New Jersey",
+   "code": "NJ",
+   "scene": "The Jersey Shore with a long sandy beach, dune fencing, a lighthouse and gentle surf."
+  },
+  {
+   "kind": "state",
+   "key": "new-mexico",
+   "label": "New Mexico",
+   "code": "NM",
+   "scene": "Desert mesa landscape near Taos and Santa Fe with an adobe structure, a chile ristra hanging by the door and the Sangre de Cristo mountains behind."
+  },
+  {
+   "kind": "state",
+   "key": "new-york",
+   "label": "New York",
+   "code": "NY",
+   "scene": "The Adirondack mountains above a still lake with a rowboat and birch trees, with fall foliage along the shore."
+  },
+  {
+   "kind": "state",
+   "key": "north-carolina",
+   "label": "North Carolina",
+   "code": "NC",
+   "scene": "The Appalachian parkway winding through layered misty mountain ridges with flowering rhododendron in the foreground."
+  },
+  {
+   "kind": "state",
+   "key": "north-dakota",
+   "label": "North Dakota",
+   "code": "ND",
+   "scene": "Theodore Roosevelt National Park badlands with striped buttes, a prairie grassland and a bison herd."
+  },
+  {
+   "kind": "state",
+   "key": "ohio",
+   "label": "Ohio",
+   "code": "OH",
+   "scene": "A patchwork of farm fields and a barn with a covered bridge crossing a creek in rolling hills, with a distant lakeshore."
+  },
+  {
+   "kind": "state",
+   "key": "oklahoma",
+   "label": "Oklahoma",
+   "code": "OK",
+   "scene": "The Oklahoma plains at sunset: a sweeping sea of golden wheat and red-dirt road leading toward a distant grain elevator, with a lone windmill and wide layered sky."
+  },
+  {
+   "kind": "state",
+   "key": "oregon",
+   "label": "Oregon",
+   "code": "OR",
+   "scene": "Mount Hood rising over a Douglas fir forest above a mirror-still lake."
+  },
+  {
+   "kind": "state",
+   "key": "pennsylvania",
+   "label": "Pennsylvania",
+   "code": "PA",
+   "scene": "Rolling farmland in Lancaster County with a barn, silo and horse-drawn buggy silhouette under a mountain sunset."
+  },
+  {
+   "kind": "state",
+   "key": "puerto-rico",
+   "label": "Puerto Rico",
+   "code": "PR",
+   "scene": "El Yunque rainforest with palms, tropical flowers and a waterfall above a coastline."
+  },
+  {
+   "kind": "state",
+   "key": "rhode-island",
+   "label": "Rhode Island",
+   "code": "RI",
+   "scene": "Narragansett Bay with a classic sailboat, a lighthouse on a rocky point and a shingled seaside cottage."
+  },
+  {
+   "kind": "state",
+   "key": "south-carolina",
+   "label": "South Carolina",
+   "code": "SC",
+   "scene": "A Lowcountry marsh with a live oak draped in Spanish moss, a rice-field dike and a palmetto tree at the water's edge."
+  },
+  {
+   "kind": "state",
+   "key": "south-dakota",
+   "label": "South Dakota",
+   "code": "SD",
+   "scene": "The Badlands' striped spires and buttes rising over a prairie with a herd of bison."
+  },
+  {
+   "kind": "state",
+   "key": "tennessee",
+   "label": "Tennessee",
+   "code": "TN",
+   "scene": "Great Smoky Mountains with layered ridges fading into mist above a forest of hardwoods and a rushing stream."
+  },
+  {
+   "kind": "state",
+   "key": "texas",
+   "label": "Texas",
+   "code": "TX",
+   "scene": "Hill Country bluebonnets in full bloom with a spreading live oak and a limestone farmhouse in the distance."
+  },
+  {
+   "kind": "state",
+   "key": "utah",
+   "label": "Utah",
+   "code": "UT",
+   "scene": "Delicate Arch standing on a slickrock ridge with the La Sal Mountains behind."
+  },
+  {
+   "kind": "state",
+   "key": "vermont",
+   "label": "Vermont",
+   "code": "VT",
+   "scene": "A village of farmhouses and a steeple among rolling Vermont mountains with a sugar maple in the foreground and a barn."
+  },
+  {
+   "kind": "state",
+   "key": "us-virgin-islands",
+   "label": "U.S. Virgin Islands",
+   "code": "VI",
+   "scene": "A crescent Caribbean beach like Trunk Bay with palms leaning over clear water and a lush island hill behind."
+  },
+  {
+   "kind": "state",
+   "key": "virginia",
+   "label": "Virginia",
+   "code": "VA",
+   "scene": "Shenandoah Valley with the Appalachian ridgeline at sunset, a split-rail fence and rolling farmland."
+  },
+  {
+   "kind": "state",
+   "key": "washington",
+   "label": "Washington",
+   "code": "WA",
+   "scene": "Mount Rainier rising above an evergreen forest and a wildflower meadow, with a still alpine lake reflecting the peak."
+  },
+  {
+   "kind": "state",
+   "key": "west-virginia",
+   "label": "West Virginia",
+   "code": "WV",
+   "scene": "The New River Gorge Bridge arching high over a forested gorge, with autumn hills and a river far below."
+  },
+  {
+   "kind": "state",
+   "key": "wisconsin",
+   "label": "Wisconsin",
+   "code": "WI",
+   "scene": "Rolling dairy farmland with a barn and silo, dairy cows and a north-woods lake beyond."
+  },
+  {
+   "kind": "state",
+   "key": "wyoming",
+   "label": "Wyoming",
+   "code": "WY",
+   "scene": "The Grand Teton range rising behind a river bend with sagebrush, cottonwoods and a grazing elk in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "new-york-ny",
+   "label": "New York, NY",
+   "code": "NY",
+   "wpPageId": 32867,
+   "scene": "Lower Manhattan skyline with One World Trade Center rising behind the Statue of Liberty on its island in the harbor, with a ferry crossing the water."
+  },
+  {
+   "kind": "city",
+   "key": "houston-tx",
+   "label": "Houston, TX",
+   "code": "TX",
+   "wpPageId": 12486,
+   "scene": "Downtown Houston skyline of glass towers rising above the trees and footbridges of Buffalo Bayou Park at dusk."
+  },
+  {
+   "kind": "city",
+   "key": "chicago-il",
+   "label": "Chicago, IL",
+   "code": "IL",
+   "wpPageId": 17248,
+   "scene": "The Chicago skyline with Willis Tower and the John Hancock Center seen across Lake Michigan from the lakefront, with a sailboat on the water."
+  },
+  {
+   "kind": "city",
+   "key": "los-angeles-ca",
+   "label": "Los Angeles, CA",
+   "code": "CA",
+   "wpPageId": 9903,
+   "scene": "Griffith Observatory on its Hollywood Hills ridge with the downtown Los Angeles skyline in the haze below and palm trees in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "philadelphia-pa",
+   "label": "Philadelphia, PA",
+   "code": "PA",
+   "wpPageId": 29698,
+   "scene": "The Philadelphia skyline with City Hall tower and Liberty Place rising behind Boathouse Row and the Schuylkill River."
+  },
+  {
+   "kind": "city",
+   "key": "las-vegas-nv",
+   "label": "Las Vegas, NV",
+   "code": "NV",
+   "wpPageId": 9971,
+   "scene": "The Las Vegas Strip skyline with the Stratosphere Tower, the Eiffel Tower replica and the Sphere, with desert mountains on the horizon."
+  },
+  {
+   "kind": "city",
+   "key": "austin-tx",
+   "label": "Austin, TX",
+   "code": "TX",
+   "wpPageId": 12008,
+   "scene": "The Texas State Capitol dome and downtown skyline above Lady Bird Lake, with a cloud of bats streaming from under the Congress Avenue Bridge at dusk."
+  },
+  {
+   "kind": "city",
+   "key": "dallas-tx",
+   "label": "Dallas, TX",
+   "code": "TX",
+   "wpPageId": 13036,
+   "scene": "The downtown Dallas skyline at dusk with Reunion Tower's lattice-ball top standing beside the glass towers, seen across the open green Trinity River floodplain, with no bridges or arches in view."
+  },
+  {
+   "kind": "city",
+   "key": "san-antonio-tx",
+   "label": "San Antonio, TX",
+   "code": "TX",
+   "wpPageId": 12161,
+   "scene": "The River Walk lined with cypress trees, arched stone bridges and umbrella tables, with the Tower of the Americas rising behind."
+  },
+  {
+   "kind": "city",
+   "key": "phoenix-az",
+   "label": "Phoenix, AZ",
+   "code": "AZ",
+   "wpPageId": 10600,
+   "scene": "The Phoenix downtown skyline with Camelback Mountain rising behind it and saguaro cacti in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "jacksonville-fl",
+   "label": "Jacksonville, FL",
+   "code": "FL",
+   "wpPageId": 25824,
+   "scene": "The Jacksonville skyline along the St. Johns River with the Main Street Bridge and its lift towers, with a riverboat on the water."
+  },
+  {
+   "kind": "city",
+   "key": "fort-worth-tx",
+   "label": "Fort Worth, TX",
+   "code": "TX",
+   "wpPageId": 12760,
+   "scene": "The historic Fort Worth Stockyards with wooden storefronts, a longhorn steer in the dirt street and a hitching rail in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "brooklyn-ny",
+   "label": "Brooklyn, NY",
+   "code": "NY",
+   "wpPageId": 32719,
+   "scene": "The stone towers and cables of the Brooklyn Bridge seen from the Brooklyn waterfront, with the Manhattan skyline across the East River and old warehouse buildings at the water's edge."
+  },
+  {
+   "kind": "city",
+   "key": "conroe-tx",
+   "label": "Conroe, TX",
+   "code": "TX",
+   "wpPageId": 12454,
+   "scene": "A quiet Lake Conroe shoreline with tall East Texas pine trees, a wooden fishing pier and a small sailboat on calm water."
+  },
+  {
+   "kind": "city",
+   "key": "katy-tx",
+   "label": "Katy, TX",
+   "code": "TX",
+   "wpPageId": 12392,
+   "scene": "Flat Texas coastal prairie at the edge of Katy with a rice field, a water tower, a windbreak of live oaks and a wide sky."
+  },
+  {
+   "kind": "city",
+   "key": "charlotte-nc",
+   "label": "Charlotte, NC",
+   "code": "NC",
+   "wpPageId": 27183,
+   "scene": "The Charlotte Uptown skyline with the crown-topped Bank of America Corporate Center rising over Romare Bearden Park and its lawns and trees."
+  },
+  {
+   "kind": "city",
+   "key": "indianapolis-in",
+   "label": "Indianapolis, IN",
+   "code": "IN",
+   "wpPageId": 22017,
+   "scene": "The Soldiers' and Sailors' Monument on Monument Circle with the Indianapolis skyline rising behind and spring trees in bloom."
+  },
+  {
+   "kind": "city",
+   "key": "louisville-ky",
+   "label": "Louisville, KY",
+   "code": "KY",
+   "wpPageId": 23798,
+   "scene": "The Louisville waterfront on the Ohio River with the Big Four Bridge pedestrian span and the skyline behind it."
+  },
+  {
+   "kind": "city",
+   "key": "columbus-oh",
+   "label": "Columbus, OH",
+   "code": "OH",
+   "wpPageId": 23041,
+   "scene": "The Columbus skyline along the Scioto River with the arched Main Street Bridge and the Ohio Statehouse dome among the towers."
+  },
+  {
+   "kind": "city",
+   "key": "celina-tx",
+   "label": "Celina, TX",
+   "code": "TX",
+   "wpPageId": 13106,
+   "scene": "A small North Texas prairie town with a historic brick main street of low storefronts, a tall water tower and a wide open sky over farm fields."
+  },
+  {
+   "kind": "city",
+   "key": "nashville-tn",
+   "label": "Nashville, TN",
+   "code": "TN",
+   "wpPageId": 24747,
+   "scene": "The Nashville skyline with the twin-spired AT&T Building rising above the Cumberland River and the John Seigenthaler Pedestrian Bridge."
+  },
+  {
+   "kind": "city",
+   "key": "san-diego-ca",
+   "label": "San Diego, CA",
+   "code": "CA",
+   "wpPageId": 9780,
+   "scene": "The San Diego skyline seen across the bay with the sweeping Coronado Bridge, sailboats and palm trees along the waterfront."
+  },
+  {
+   "kind": "city",
+   "key": "spring-tx",
+   "label": "Spring, TX",
+   "code": "TX",
+   "wpPageId": 12453,
+   "scene": "Old Town Spring's historic wooden storefronts with covered boardwalks under tall pine trees, with a quiet street and antique lampposts."
+  },
+  {
+   "kind": "city",
+   "key": "baltimore-md",
+   "label": "Baltimore, MD",
+   "code": "MD",
+   "wpPageId": 29236,
+   "scene": "Baltimore's Inner Harbor with a tall ship, the pavilion promenade, the pentagon-shaped World Trade Center and brick rowhouses climbing Federal Hill."
+  },
+  {
+   "kind": "city",
+   "key": "new-braunfels-tx",
+   "label": "New Braunfels, TX",
+   "code": "TX",
+   "wpPageId": 12183,
+   "scene": "The Comal River flowing clear beneath tall bald cypress trees with inner tubes drifting past, and a limestone German-style hall among live oaks on the bank."
+  },
+  {
+   "kind": "city",
+   "key": "orlando-fl",
+   "label": "Orlando, FL",
+   "code": "FL",
+   "wpPageId": 25665,
+   "scene": "The Lake Eola fountain with swan boats on the water and the downtown Orlando skyline rising behind palm trees."
+  },
+  {
+   "kind": "city",
+   "key": "seattle-wa",
+   "label": "Seattle, WA",
+   "code": "WA",
+   "wpPageId": 9,
+   "scene": "The Space Needle and downtown skyline across Elliott Bay, with a ferry in the foreground and Mount Rainier rising behind."
+  },
+  {
+   "kind": "city",
+   "key": "tucson-az",
+   "label": "Tucson, AZ",
+   "code": "AZ",
+   "wpPageId": 10457,
+   "scene": "Sonoran Desert with tall saguaro cacti and prickly pear in the foreground and the Santa Catalina Mountains rising behind the city."
+  },
+  {
+   "kind": "city",
+   "key": "colorado-springs-co",
+   "label": "Colorado Springs, CO",
+   "code": "CO",
+   "wpPageId": 11490,
+   "scene": "Pikes Peak rising above the towering sandstone fins of Garden of the Gods, with scrub oak and pine in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "portland-or",
+   "label": "Portland, OR",
+   "code": "OR",
+   "wpPageId": 8477,
+   "scene": "The Portland skyline along the Willamette River with its bridges and Mount Hood rising in the distance."
+  },
+  {
+   "kind": "city",
+   "key": "tampa-fl",
+   "label": "Tampa, FL",
+   "code": "FL",
+   "wpPageId": 25570,
+   "scene": "The Tampa skyline across the Hillsborough River with the domed minarets of the University of Tampa's Plant Hall and the Riverwalk."
+  },
+  {
+   "kind": "city",
+   "key": "denver-co",
+   "label": "Denver, CO",
+   "code": "CO",
+   "wpPageId": 11670,
+   "scene": "The Denver skyline of glass towers on the plains with the snowy Front Range of the Rocky Mountains rising behind it."
+  },
+  {
+   "kind": "city",
+   "key": "naples-fl",
+   "label": "Naples, FL",
+   "code": "FL",
+   "wpPageId": 25503,
+   "scene": "The Naples Pier extending into the Gulf of Mexico at sunset with royal palms, a wide sandy beach and pelicans perched on the pilings."
+  },
+  {
+   "kind": "city",
+   "key": "miami-fl",
+   "label": "Miami, FL",
+   "code": "FL",
+   "wpPageId": 25625,
+   "scene": "The Miami Brickell skyline rising across Biscayne Bay with palm trees and sailboats in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "ocala-fl",
+   "label": "Ocala, FL",
+   "code": "FL",
+   "wpPageId": 25465,
+   "scene": "Horse country outside Ocala with rolling pastures, a plank fence, a grazing thoroughbred and broad live oaks draped in Spanish moss."
+  },
+  {
+   "kind": "city",
+   "key": "raleigh-nc",
+   "label": "Raleigh, NC",
+   "code": "NC",
+   "wpPageId": 27351,
+   "scene": "The North Carolina State Capitol among old oak trees on its square with the modern Raleigh skyline rising behind."
+  },
+  {
+   "kind": "city",
+   "key": "pittsburgh-pa",
+   "label": "Pittsburgh, PA",
+   "code": "PA",
+   "wpPageId": 31204,
+   "scene": "The Pittsburgh downtown triangle skyline seen from Mount Washington, where three rivers meet beneath a row of bridges."
+  },
+  {
+   "kind": "city",
+   "key": "milwaukee-wi",
+   "label": "Milwaukee, WI",
+   "code": "WI",
+   "wpPageId": 19929,
+   "scene": "The winged Calatrava addition of the Milwaukee Art Museum on the Lake Michigan shore with the downtown skyline behind."
+  },
+  {
+   "kind": "city",
+   "key": "cape-coral-fl",
+   "label": "Cape Coral, FL",
+   "code": "FL",
+   "wpPageId": 25505,
+   "scene": "A network of straight residential canals in Cape Coral with docked boats, palm trees and waterfront homes, and a wide Gulf Coast sky."
+  },
+  {
+   "kind": "city",
+   "key": "memphis-tn",
+   "label": "Memphis, TN",
+   "code": "TN",
+   "wpPageId": 24484,
+   "scene": "The Memphis skyline on the bluff above the Mississippi River with the Hernando de Soto Bridge and the Bass Pro Pyramid beside the water."
+  },
+  {
+   "kind": "city",
+   "key": "omaha-ne",
+   "label": "Omaha, NE",
+   "code": "NE",
+   "wpPageId": 15103,
+   "scene": "The Bob Kerrey Pedestrian Bridge crossing the Missouri River with the Omaha skyline rising behind it."
+  },
+  {
+   "kind": "city",
+   "key": "oklahoma-city-ok",
+   "label": "Oklahoma City, OK",
+   "code": "OK",
+   "wpPageId": 13583,
+   "scene": "The Oklahoma City skyline with the tall Devon Tower and the Skydance Bridge over the Oklahoma River with rowing shells on the water."
+  },
+  {
+   "kind": "city",
+   "key": "kansas-city-mo",
+   "label": "Kansas City, MO",
+   "code": "MO",
+   "wpPageId": 15950,
+   "scene": "The Liberty Memorial tower and the Kansas City skyline above the plains and fountains below, with trees in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "albuquerque-nm",
+   "label": "Albuquerque, NM",
+   "code": "NM",
+   "wpPageId": 10281,
+   "scene": "Hot air balloons rising over the Rio Grande bosque with cottonwood trees and the Sandia Mountains behind."
+  },
+  {
+   "kind": "city",
+   "key": "knoxville-tn",
+   "label": "Knoxville, TN",
+   "code": "TN",
+   "wpPageId": 24535,
+   "scene": "The Knoxville skyline with the Sunsphere tower beside the Tennessee River, with the Great Smoky Mountains as a hazy ridge in the distance."
+  },
+  {
+   "kind": "city",
+   "key": "new-orleans-la",
+   "label": "New Orleans, LA",
+   "code": "LA",
+   "wpPageId": 14612,
+   "scene": "The spires of St. Louis Cathedral over Jackson Square in the French Quarter, with cast-iron balconies, palm trees and a steamboat on the Mississippi behind."
+  },
+  {
+   "kind": "city",
+   "key": "saint-louis-mo",
+   "label": "Saint Louis, MO",
+   "code": "MO",
+   "wpPageId": 16247,
+   "scene": "The Gateway Arch rising over the Mississippi River with the Old Courthouse dome and the downtown skyline beside it."
+  },
+  {
+   "kind": "city",
+   "key": "henderson-nv",
+   "label": "Henderson, NV",
+   "code": "NV",
+   "wpPageId": 9974,
+   "scene": "A Mojave desert foothill landscape on the edge of Henderson with creosote brush, a winding trail and rocky McCullough Hills behind low desert homes."
+  },
+  {
+   "kind": "city",
+   "key": "sacramento-ca",
+   "label": "Sacramento, CA",
+   "code": "CA",
+   "wpPageId": 8852,
+   "scene": "The Tower Bridge spanning the Sacramento River with the California State Capitol dome rising among trees behind it."
+  },
+  {
+   "kind": "city",
+   "key": "mesa-az",
+   "label": "Mesa, AZ",
+   "code": "AZ",
+   "wpPageId": 10572,
+   "scene": "Saguaro cacti in a Sonoran Desert foreground with Superstition Mountain rising behind the flat valley of Mesa."
+  },
+  {
+   "kind": "city",
+   "key": "san-jose-ca",
+   "label": "San Jose, CA",
+   "code": "CA",
+   "wpPageId": 9156,
+   "scene": "The downtown San Jose skyline with a palm-lined Guadalupe River Park and the Santa Clara Valley foothills rising behind."
+  },
+  {
+   "kind": "city",
+   "key": "san-francisco-ca",
+   "label": "San Francisco, CA",
+   "code": "CA",
+   "wpPageId": 9292,
+   "scene": "The Golden Gate Bridge spanning the strait with the San Francisco skyline and fog rolling over the hills, seen from the Marin headlands."
+  },
+  {
+   "kind": "city",
+   "key": "scottsdale-az",
+   "label": "Scottsdale, AZ",
+   "code": "AZ",
+   "wpPageId": 10573,
+   "scene": "The McDowell Mountains rising above a Scottsdale Sonoran Desert landscape with saguaro cacti and a low Southwest adobe-style building."
+  },
+  {
+   "kind": "city",
+   "key": "washington-dc",
+   "label": "Washington, DC",
+   "code": "DC",
+   "wpPageId": 29465,
+   "scene": "The US Capitol dome seen down the National Mall, with the Washington Monument and the Reflecting Pool in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "fort-myers-fl",
+   "label": "Fort Myers, FL",
+   "code": "FL",
+   "wpPageId": 25504,
+   "scene": "A stately avenue of royal palms along the Caloosahatchee River in Fort Myers with a low waterfront skyline and a pier."
+  },
+  {
+   "kind": "city",
+   "key": "baton-rouge-la",
+   "label": "Baton Rouge, LA",
+   "code": "LA",
+   "wpPageId": 14410,
+   "scene": "The Louisiana State Capitol tower rising above the Mississippi River levee with a paddlewheel riverboat and live oaks in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "cincinnati-oh",
+   "label": "Cincinnati, OH",
+   "code": "OH",
+   "wpPageId": 22113,
+   "scene": "The Roebling Suspension Bridge over the Ohio River with the Cincinnati skyline rising on the hills behind."
+  },
+  {
+   "kind": "city",
+   "key": "atlanta-ga",
+   "label": "Atlanta, GA",
+   "code": "GA",
+   "wpPageId": 23876,
+   "scene": "The Atlanta skyline with its glass towers seen across the lawns of Piedmont Park and its lake, with dogwood and oaks in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "sarasota-fl",
+   "label": "Sarasota, FL",
+   "code": "FL",
+   "wpPageId": 25480,
+   "scene": "The Sarasota skyline along Sarasota Bay with the arched John Ringling Causeway Bridge, sailboats and palm trees."
+  },
+  {
+   "kind": "city",
+   "key": "aurora-co",
+   "label": "Aurora, CO",
+   "code": "CO",
+   "wpPageId": 11692,
+   "scene": "Colorado's Front Range seen across the prairie and the Aurora Reservoir shoreline, with cottonwood trees and low suburban rooftops in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "minneapolis-mn",
+   "label": "Minneapolis, MN",
+   "code": "MN",
+   "wpPageId": 19179,
+   "scene": "The Stone Arch Bridge over the Mississippi River at St. Anthony Falls with the Minneapolis skyline and old flour mills behind."
+  },
+  {
+   "kind": "city",
+   "key": "saint-petersburg-fl",
+   "label": "Saint Petersburg, FL",
+   "code": "FL",
+   "wpPageId": 25563,
+   "scene": "The St. Petersburg waterfront with sailboats in the bay, the long Pier and skyline towers, and palm trees along the harbor."
+  },
+  {
+   "kind": "city",
+   "key": "boston-ma",
+   "label": "Boston, MA",
+   "code": "MA",
+   "wpPageId": 34933,
+   "scene": "The Boston skyline with the Zakim Bridge and the Charles River with sailboats, and the domed State House on Beacon Hill among brick rowhouses."
+  },
+  {
+   "kind": "city",
+   "key": "tulsa-ok",
+   "label": "Tulsa, OK",
+   "code": "OK",
+   "wpPageId": 13333,
+   "scene": "The Tulsa Art Deco downtown skyline above the Arkansas River with the Gathering Place footbridges and trees in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "fort-wayne-in",
+   "label": "Fort Wayne, IN",
+   "code": "IN",
+   "wpPageId": 21867,
+   "scene": "The downtown Fort Wayne riverfront where the three rivers meet, with footbridges, brick buildings and mature shade trees."
+  },
+  {
+   "kind": "city",
+   "key": "cleveland-oh",
+   "label": "Cleveland, OH",
+   "code": "OH",
+   "wpPageId": 22696,
+   "scene": "A full-frame wide view of the Cleveland skyline with the tall stepped Terminal Tower at center, seen from across the Cuyahoga River mouth, with Lake Erie on the horizon and a long lake freighter in the water."
+  },
+  {
+   "kind": "city",
+   "key": "port-saint-lucie-fl",
+   "label": "Port Saint Lucie, FL",
+   "code": "FL",
+   "wpPageId": 25421,
+   "scene": "A tidal Indian River Lagoon shoreline near Port St. Lucie with mangroves, a wooden dock, palm trees and a wading egret."
+  },
+  {
+   "kind": "city",
+   "key": "summerville-sc",
+   "label": "Summerville, SC",
+   "code": "SC",
+   "wpPageId": 26665,
+   "scene": "A Lowcountry town scene with tall pines and live oaks draped in Spanish moss over a shady historic main street of low wooden storefronts and a gazebo."
+  },
+  {
+   "kind": "city",
+   "key": "wichita-ks",
+   "label": "Wichita, KS",
+   "code": "KS",
+   "wpPageId": 15406,
+   "scene": "The Keeper of the Plains statue on its rock at the confluence of the Arkansas and Little Arkansas Rivers with the Wichita skyline behind."
+  },
+  {
+   "kind": "city",
+   "key": "bakersfield-ca",
+   "label": "Bakersfield, CA",
+   "code": "CA",
+   "wpPageId": 9461,
+   "scene": "The flat Central Valley at the edge of Bakersfield with oil pumpjacks, a farm field, a row of palms and the Sierra foothills in the distance."
+  },
+  {
+   "kind": "city",
+   "key": "toledo-oh",
+   "label": "Toledo, OH",
+   "code": "OH",
+   "wpPageId": 22904,
+   "scene": "The Toledo skyline on the bank of the Maumee River with a drawbridge, a lake freighter and a stand of trees."
+  },
+  {
+   "kind": "city",
+   "key": "buffalo-ny",
+   "label": "Buffalo, NY",
+   "code": "NY",
+   "wpPageId": 31558,
+   "scene": "The Art Deco tower of Buffalo City Hall above the downtown streets with the Lake Erie waterfront and its grain elevators beyond."
+  },
+  {
+   "kind": "city",
+   "key": "edmond-ok",
+   "label": "Edmond, OK",
+   "code": "OK",
+   "wpPageId": 13594,
+   "scene": "A prairie suburb outside Edmond with low rolling Oklahoma hills, stands of post oak, a pond and a wide dramatic sky."
+  },
+  {
+   "kind": "city",
+   "key": "spokane-wa",
+   "label": "Spokane, WA",
+   "code": "WA",
+   "wpPageId": 6476,
+   "scene": "Spokane Falls cascading through the heart of the city in Riverfront Park with the clock tower and pine trees on the river gorge."
+  },
+  {
+   "kind": "city",
+   "key": "fresno-ca",
+   "label": "Fresno, CA",
+   "code": "CA",
+   "wpPageId": 9336,
+   "scene": "The Fresno Central Valley farmland of orchards and vineyard rows with a palm-lined avenue and the snow-capped Sierra Nevada rising in the distance."
+  },
+  {
+   "kind": "city",
+   "key": "myrtle-beach-sc",
+   "label": "Myrtle Beach, SC",
+   "code": "SC",
+   "wpPageId": 26619,
+   "scene": "The Myrtle Beach oceanfront with a boardwalk, a pier jutting into the Atlantic, a tall Ferris wheel and dune grass."
+  },
+  {
+   "kind": "city",
+   "key": "saint-augustine-fl",
+   "label": "Saint Augustine, FL",
+   "code": "FL",
+   "wpPageId": 25867,
+   "scene": "The coquina-stone Castillo de San Marcos fortress on the waterfront beside Matanzas Bay with the Bridge of Lions and palm trees."
+  },
+  {
+   "kind": "city",
+   "key": "detroit-mi",
+   "label": "Detroit, MI",
+   "code": "MI",
+   "wpPageId": 21319,
+   "scene": "The Detroit skyline with the cylindrical towers of the Renaissance Center across the Detroit River, with a freighter passing."
+  },
+  {
+   "kind": "city",
+   "key": "richmond-va",
+   "label": "Richmond, VA",
+   "code": "VA",
+   "wpPageId": 28710,
+   "scene": "The Richmond skyline above the rapids of the James River with Belle Isle's footbridge and the Virginia State Capitol among trees."
+  },
+  {
+   "kind": "city",
+   "key": "meridian-id",
+   "label": "Meridian, ID",
+   "code": "ID",
+   "wpPageId": 10924,
+   "scene": "A Treasure Valley farm landscape near Meridian with irrigated fields, a barn, a line of poplars and the Boise Foothills and distant mountains behind."
+  },
+  {
+   "kind": "city",
+   "key": "park-city-ut",
+   "label": "Park City, UT",
+   "code": "UT",
+   "wpPageId": 10785,
+   "scene": "The historic Main Street of Park City with old mining-era buildings climbing a hillside beneath ski slopes and aspen-covered mountains."
+  },
+  {
+   "kind": "city",
+   "key": "honolulu-hi",
+   "label": "Honolulu, HI",
+   "code": "HI",
+   "wpPageId": 8585,
+   "scene": "Diamond Head crater rising above Waikiki Beach with palm trees, a surfer's outrigger canoe on the sand and high-rise hotels along the shore."
+  },
+  {
+   "kind": "city",
+   "key": "saint-george-ut",
+   "label": "Saint George, UT",
+   "code": "UT",
+   "wpPageId": 10602,
+   "scene": "St. George's sandstone bluffs and cliffs above a desert town with yucca and cottonwoods, with the dramatic rocky walls of Snow Canyon nearby."
+  },
+  {
+   "kind": "city",
+   "key": "des-moines-ia",
+   "label": "Des Moines, IA",
+   "code": "IA",
+   "wpPageId": 20485,
+   "scene": "The Iowa State Capitol with its dome and four corner domes rising above the Des Moines skyline and the Des Moines River."
+  },
+  {
+   "kind": "city",
+   "key": "huntsville-al",
+   "label": "Huntsville, AL",
+   "code": "AL",
+   "wpPageId": 25177,
+   "scene": "A Saturn V rocket standing upright in the park of the US Space and Rocket Center beneath the Alabama sky, with rolling Tennessee Valley hills behind."
+  },
+  {
+   "kind": "city",
+   "key": "billings-mt",
+   "label": "Billings, MT",
+   "code": "MT",
+   "wpPageId": 17776,
+   "scene": "The sandstone Rimrocks cliffs above the Billings skyline and Yellowstone River valley, with cottonwood trees and big sky."
+  },
+  {
+   "kind": "city",
+   "key": "sioux-falls-sd",
+   "label": "Sioux Falls, SD",
+   "code": "SD",
+   "wpPageId": 18516,
+   "scene": "The quartzite cascades of Falls Park on the Big Sioux River with the stone ruins of the old mill and the observation tower."
+  },
+  {
+   "kind": "city",
+   "key": "little-rock-ar",
+   "label": "Little Rock, AR",
+   "code": "AR",
+   "wpPageId": 13957,
+   "scene": "The Little Rock skyline on the bank of the Arkansas River with the Big Dam pedestrian bridge and the Clinton Presidential Park Bridge."
+  },
+  {
+   "kind": "city",
+   "key": "gulfport-ms",
+   "label": "Gulfport, MS",
+   "code": "MS",
+   "wpPageId": 23981,
+   "scene": "The Gulfport Mississippi Gulf Coast harbor with shrimp boats at the dock, a long beach, live oaks and pelicans on the pilings."
+  },
+  {
+   "kind": "city",
+   "key": "anchorage-ak",
+   "label": "Anchorage, AK",
+   "code": "AK",
+   "wpPageId": 8077,
+   "scene": "The Anchorage skyline on the shore of Cook Inlet with the Chugach Mountains rising behind it and a floatplane on a lake in the foreground."
+  },
+  {
+   "kind": "city",
+   "key": "wilmington-de",
+   "label": "Wilmington, DE",
+   "code": "DE",
+   "wpPageId": 29546,
+   "scene": "The Wilmington Riverfront on the Christina River with a footbridge, historic brick buildings, marsh grass and a few modest downtown towers."
+  },
+  {
+   "kind": "city",
+   "key": "cheyenne-wy",
+   "label": "Cheyenne, WY",
+   "code": "WY",
+   "wpPageId": 11300,
+   "scene": "The Wyoming State Capitol with its dome and sandstone walls on the High Plains, with a wide prairie sky and a vintage steam locomotive."
+  },
+  {
+   "kind": "city",
+   "key": "toms-river-nj",
+   "label": "Toms River, NJ",
+   "code": "NJ",
+   "wpPageId": 32932,
+   "scene": "The tidal Toms River flowing into Barnegat Bay with docks, sailboats, salt marsh and pine barrens trees, with a small shingled boathouse."
+  },
+  {
+   "kind": "city",
+   "key": "fargo-nd",
+   "label": "Fargo, ND",
+   "code": "ND",
+   "wpPageId": 18163,
+   "scene": "The flat river valley at Fargo with tall grain elevators, a flat prairie field, a low downtown and an enormous sky."
+  },
+  {
+   "kind": "city",
+   "key": "stamford-ct",
+   "label": "Stamford, CT",
+   "code": "CT",
+   "wpPageId": 33446,
+   "scene": "The Stamford harbor on Long Island Sound with moored sailboats, a small lighthouse, rocky shoreline and a modest skyline of office towers behind."
+  },
+  {
+   "kind": "city",
+   "key": "manchester-nh",
+   "label": "Manchester, NH",
+   "code": "NH",
+   "wpPageId": 34669,
+   "scene": "The old brick mill buildings of the Amoskeag Millyard beside the Merrimack River with a footbridge and autumn maple trees."
+  },
+  {
+   "kind": "city",
+   "key": "warwick-ri",
+   "label": "Warwick, RI",
+   "code": "RI",
+   "wpPageId": 34721,
+   "scene": "A quiet Narragansett Bay cove at Warwick with a small lighthouse on a rocky point, moored sailboats, salt marsh and shingled seaside cottages."
+  },
+  {
+   "kind": "city",
+   "key": "morgantown-wv",
+   "label": "Morgantown, WV",
+   "code": "WV",
+   "wpPageId": 27691,
+   "scene": "The Monongahela River winding through a forested Appalachian hillside town with brick buildings on the slopes, a rail trail bridge and autumn hills."
+  },
+  {
+   "kind": "city",
+   "key": "portland-me",
+   "label": "Portland, ME",
+   "code": "ME",
+   "wpPageId": 34363,
+   "scene": "The Portland Old Port waterfront on Casco Bay with the Portland Observatory tower on the hill, working lobster boats and a lighthouse on the point."
+  },
+  {
+   "kind": "city",
+   "key": "burlington-vt",
+   "label": "Burlington, VT",
+   "code": "VT",
+   "wpPageId": 33889,
+   "scene": "Burlington's waterfront on Lake Champlain with a church steeple on the hill, sailboats and the Adirondack Mountains rising across the water."
+  }
+ ]
+}

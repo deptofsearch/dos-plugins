@@ -1,0 +1,792 @@
+{
+ "AL": [
+  {
+   "label": "Default",
+   "names": "Gulf Coast teal, magnolia white, red clay, pine green, cotton cream, deep bayou ink",
+   "colors": [
+    "#092930",
+    "#337c6d",
+    "#8a5036",
+    "#9ec4b5",
+    "#efe8ca",
+    "#fffff7"
+   ]
+  }
+ ],
+ "AK": [
+  {
+   "label": "Default",
+   "names": "glacier blue, aurora green, spruce teal, tundra rust, snowfield white, midnight indigo",
+   "colors": [
+    "#0e153b",
+    "#126066",
+    "#a8562e",
+    "#459097",
+    "#84c8da",
+    "#ffffff"
+   ]
+  }
+ ],
+ "AZ": [
+  {
+   "label": "Default",
+   "names": "terra cotta, canyon rust, saguaro green, desert sand, turquoise sky, dusk purple",
+   "colors": [
+    "#193021",
+    "#534054",
+    "#91402c",
+    "#c86942",
+    "#5db3ab",
+    "#d59a5f"
+   ]
+  }
+ ],
+ "AR": [
+  {
+   "label": "Default",
+   "names": "Ozark forest green, bluff limestone gray, river-bottom brown, diamond-mine gold, morning mist cream, deep hollow navy",
+   "colors": [
+    "#07142b",
+    "#2a5934",
+    "#c5aa68",
+    "#a9a598",
+    "#dccfa2",
+    "#f3eed1"
+   ]
+  }
+ ],
+ "CA": [
+  {
+   "label": "Default",
+   "names": "Pacific blue, golden poppy orange, sunlit yellow, sand cream, eucalyptus sage, sunset coral",
+   "colors": [
+    "#316e9a",
+    "#a78955",
+    "#f78e15",
+    "#97ac94",
+    "#f8d066",
+    "#f5e7c0"
+   ]
+  }
+ ],
+ "CO": [
+  {
+   "label": "Default",
+   "names": "alpine spruce, columbine violet, Rocky Mountain slate blue, aspen gold, high-plains tan, night-sky ink",
+   "colors": [
+    "#0f1e34",
+    "#374a5c",
+    "#627d90",
+    "#b98d47",
+    "#d2b98a",
+    "#e4d4b4"
+   ]
+  }
+ ],
+ "CT": [
+  {
+   "label": "Default",
+   "names": "Yankee brick red, tidewater gray-blue, maple amber, stone-wall gray, colonial cream, Long Island Sound navy",
+   "colors": [
+    "#142035",
+    "#7b3b2f",
+    "#517381",
+    "#90a09e",
+    "#c1c1b0",
+    "#f7f0d2"
+   ]
+  }
+ ],
+ "DE": [
+  {
+   "label": "Default",
+   "names": "First State colonial blue, salt-marsh olive, oyster-shell cream, Delaware Bay slate, brick rose, deep tidal ink",
+   "colors": [
+    "#3b738f",
+    "#9c9148",
+    "#6e7f7c",
+    "#8daaa4",
+    "#c7d1bf",
+    "#f3ecd1"
+   ]
+  }
+ ],
+ "DC": [
+  {
+   "label": "Default",
+   "names": "Potomac blue-gray, cherry blossom pink, marble white, Capitol dome cream, park lawn green, dark federal navy",
+   "colors": [
+    "#14223c",
+    "#4f5b65",
+    "#738c98",
+    "#b3c2c5",
+    "#e99fa3",
+    "#f0eee1"
+   ]
+  }
+ ],
+ "FL": [
+  {
+   "label": "Default",
+   "names": "flamingo pink, Gulf turquoise, palm green, sunshine yellow, sugar-sand cream, deep lagoon navy",
+   "colors": [
+    "#07243d",
+    "#107e80",
+    "#387b4f",
+    "#2fa9aa",
+    "#71c9c6",
+    "#edaba5"
+   ]
+  }
+ ],
+ "GA": [
+  {
+   "label": "Default",
+   "names": "peach orange, Georgia red clay, magnolia cream, live-oak green, marsh gold, deep pine ink",
+   "colors": [
+    "#292d25",
+    "#556141",
+    "#833b2d",
+    "#bc9743",
+    "#eec492",
+    "#f6f1d9"
+   ]
+  }
+ ],
+ "HI": [
+  {
+   "label": "Default",
+   "names": "lava black, tropical ocean teal, hibiscus red, taro leaf green, plumeria cream, volcanic charcoal",
+   "colors": [
+    "#010101",
+    "#2b2220",
+    "#476f58",
+    "#13a5a0",
+    "#96805a",
+    "#f4f0d1"
+   ]
+  }
+ ],
+ "ID": [
+  {
+   "label": "Default",
+   "names": "Sawtooth granite gray, potato-field gold, lupine purple, pine green, snowcap cream, basalt ink",
+   "colors": [
+    "#272426",
+    "#787192",
+    "#989993",
+    "#e0b65a",
+    "#b9b2af",
+    "#f5f1d4"
+   ]
+  }
+ ],
+ "IL": [
+  {
+   "label": "Default",
+   "names": "prairie wheat gold, Lake Michigan steel blue, cornfield green, brick red, limestone cream, midwest storm charcoal",
+   "colors": [
+    "#424d51",
+    "#a16d25",
+    "#527688",
+    "#ce9f41",
+    "#8dafb7",
+    "#ccd3c2"
+   ]
+  }
+ ],
+ "IN": [
+  {
+   "label": "Default",
+   "names": "limestone buff, cornfield green, Hoosier barn red, racing checker cream, sycamore gray-green, deep river indigo",
+   "colors": [
+    "#161f46",
+    "#633339",
+    "#577634",
+    "#989d7f",
+    "#e4ca91",
+    "#f9f4d5"
+   ]
+  }
+ ],
+ "IA": [
+  {
+   "label": "Default",
+   "names": "tasselled corn gold, rolling-field green, red barn, prairie sky blue, silo white, rich black soil ink",
+   "colors": [
+    "#252516",
+    "#245632",
+    "#55622d",
+    "#c29b38",
+    "#6eafc5",
+    "#f8f7f2"
+   ]
+  }
+ ],
+ "KS": [
+  {
+   "label": "Default",
+   "names": "sunflower yellow, wheat gold, tallgrass sage, big-sky blue, prairie dust tan, storm-cloud charcoal",
+   "colors": [
+    "#4b555c",
+    "#9e9155",
+    "#69878e",
+    "#c39837",
+    "#fad00c",
+    "#80b1c2"
+   ]
+  }
+ ],
+ "KY": [
+  {
+   "label": "Default",
+   "names": "bluegrass blue-green, bourbon amber, horse-fence white, limestone gray, tobacco-barn brown, midnight hollow ink",
+   "colors": [
+    "#3b4441",
+    "#2a5d67",
+    "#56848c",
+    "#a1946b",
+    "#cbaf7c",
+    "#ebe4c6"
+   ]
+  }
+ ],
+ "LA": [
+  {
+   "label": "Default",
+   "names": "bayou green, cypress gray-brown, Mardi Gras purple, crawfish red, wrought-iron ink, magnolia cream",
+   "colors": [
+    "#0f1a20",
+    "#61316b",
+    "#736a5f",
+    "#739973",
+    "#d2d3b8",
+    "#f7f1d1"
+   ]
+  }
+ ],
+ "ME": [
+  {
+   "label": "Default",
+   "names": "spruce green, North Atlantic navy, lobster red, granite gray, blueberry indigo, lighthouse white",
+   "colors": [
+    "#022f5c",
+    "#3f4a73",
+    "#874552",
+    "#778589",
+    "#b07f7b",
+    "#ffffff"
+   ]
+  }
+ ],
+ "MD": [
+  {
+   "label": "Default",
+   "names": "Chesapeake blue, blue-crab red, black-eyed-Susan gold, oyster gray, tidewater cream, deep bay ink",
+   "colors": [
+    "#271c26",
+    "#7d4c42",
+    "#50788e",
+    "#aa8943",
+    "#bab5a4",
+    "#faf5e0"
+   ]
+  }
+ ],
+ "MA": [
+  {
+   "label": "Default",
+   "names": "cranberry red, Atlantic slate blue, New England clapboard white, autumn maple orange, harbor navy, sail cream",
+   "colors": [
+    "#191c30",
+    "#81202b",
+    "#597688",
+    "#c16f37",
+    "#9b7d63",
+    "#eee9cf"
+   ]
+  }
+ ],
+ "MI": [
+  {
+   "label": "Default",
+   "names": "Great Lakes deep blue, white pine green, cherry-orchard red, dune sand, birch cream, iron-ore charcoal",
+   "colors": [
+    "#1d2226",
+    "#25404f",
+    "#516c78",
+    "#bfa37b",
+    "#cfc8ae",
+    "#ece6ca"
+   ]
+  }
+ ],
+ "MN": [
+  {
+   "label": "Default",
+   "names": "lake blue, north-woods green, iron-range rust, wild-rice gold, loon-black ink, winter frost cream",
+   "colors": [
+    "#01040b",
+    "#17547a",
+    "#854324",
+    "#457586",
+    "#b2a16c",
+    "#f0ecce"
+   ]
+  }
+ ],
+ "MS": [
+  {
+   "label": "Default",
+   "names": "Delta mud brown, magnolia white, cotton-boll cream, kudzu green, river blue-gray, deep blues ink",
+   "colors": [
+    "#04192f",
+    "#081d33",
+    "#5b7e61",
+    "#99aeab",
+    "#e4d8b2",
+    "#fcfae3"
+   ]
+  }
+ ],
+ "MO": [
+  {
+   "label": "Default",
+   "names": "Mississippi mud brown, Ozark green, limestone tan, river-bluff rust, prairie gold, dusk ink",
+   "colors": [
+    "#1a2227",
+    "#4b5d34",
+    "#974f29",
+    "#7d744c",
+    "#bfa877",
+    "#ecc569"
+   ]
+  }
+ ],
+ "MT": [
+  {
+   "label": "Default",
+   "names": "big-sky blue, Rockies granite gray, prairie gold, pine green, snow cream, dark ink",
+   "colors": [
+    "#323938",
+    "#26617a",
+    "#5b6567",
+    "#78959e",
+    "#e0b145",
+    "#c4cbba"
+   ]
+  }
+ ],
+ "NE": [
+  {
+   "label": "Default",
+   "names": "Sandhills grass gold, cornhusk yellow, sod-house brown, Platte River silver-blue, cream haze, dark ink",
+   "colors": [
+    "#231616",
+    "#4d2e18",
+    "#c08b1d",
+    "#e8c648",
+    "#84a4af",
+    "#eee9cb"
+   ]
+  }
+ ],
+ "NV": [
+  {
+   "label": "Default",
+   "names": "Mojave sand, sagebrush gray-green, neon magenta, silver-mine gray, dark night ink, bone cream",
+   "colors": [
+    "#313133",
+    "#633848",
+    "#9c3f66",
+    "#ca943f",
+    "#828e7c",
+    "#f6f3df"
+   ]
+  }
+ ],
+ "NH": [
+  {
+   "label": "Default",
+   "names": "granite gray, White Mountain blue, autumn maple red, white pine green, snow cream, deep notch ink",
+   "colors": [
+    "#2e362f",
+    "#545b44",
+    "#933c29",
+    "#496f89",
+    "#999e98",
+    "#f4f3e0"
+   ]
+  }
+ ],
+ "NJ": [
+  {
+   "label": "Default",
+   "names": "Garden State green, Jersey shore sand, boardwalk red, Atlantic blue, salt-air cream, dark harbor ink",
+   "colors": [
+    "#092022",
+    "#498a9d",
+    "#6fa7b1",
+    "#d6b37a",
+    "#b5cabd",
+    "#f6efcf"
+   ]
+  }
+ ],
+ "NM": [
+  {
+   "label": "Default",
+   "names": "adobe clay, Sangre de Cristo rose, chile red, turquoise, bleached bone cream, deep mesa purple ink",
+   "colors": [
+    "#461c3e",
+    "#56465c",
+    "#55b7b0",
+    "#d27e62",
+    "#84c7bb",
+    "#f2ecd0"
+   ]
+  }
+ ],
+ "NY": [
+  {
+   "label": "Default",
+   "names": "Hudson River blue-gray, Adirondack green, brownstone brown, taxi-cab yellow, mist cream, dark subway ink",
+   "colors": [
+    "#292d2b",
+    "#485647",
+    "#7e5d40",
+    "#5a6c76",
+    "#aab8b3",
+    "#e2dcc1"
+   ]
+  }
+ ],
+ "NC": [
+  {
+   "label": "Default",
+   "names": "Blue Ridge hazy blue, Outer Banks sand, tobacco-leaf gold, Carolina pine green, morning fog cream, deep ridge ink",
+   "colors": [
+    "#503248",
+    "#64714b",
+    "#bc9438",
+    "#6597af",
+    "#a9c3c5",
+    "#e7e7d0"
+   ]
+  }
+ ],
+ "ND": [
+  {
+   "label": "Default",
+   "names": "Badlands clay, sunflower gold, wheat tan, big-sky azure, pale prairie cream, dark grain-elevator ink",
+   "colors": [
+    "#543d30",
+    "#a38060",
+    "#5cafc6",
+    "#fbc432",
+    "#d8b26a",
+    "#f6efc4"
+   ]
+  }
+ ],
+ "OH": [
+  {
+   "label": "Default",
+   "names": "buckeye brown, Lake Erie gray-blue, cardinal red, cornfield green, limestone cream, deep river ink",
+   "colors": [
+    "#04172f",
+    "#804e3c",
+    "#718c4c",
+    "#718c4e",
+    "#b5ba89",
+    "#f7efd0"
+   ]
+  }
+ ],
+ "OK": [
+  {
+   "label": "Default",
+   "names": "red dirt, Dust Bowl tan, prairie sage, Oklahoma sky blue, pale dust cream, dark storm ink",
+   "colors": [
+    "#3d4042",
+    "#a5482f",
+    "#688994",
+    "#e2bb7e",
+    "#a3bfbe",
+    "#edead0"
+   ]
+  }
+ ],
+ "OR": [
+  {
+   "label": "Default",
+   "names": "Douglas fir green, moss green, bark brown, river-stone tan, overcast cream, basalt charcoal",
+   "colors": [
+    "#162b1e",
+    "#483b2b",
+    "#6a7a5e",
+    "#a4a17f",
+    "#beb18f",
+    "#e8e6cd"
+   ]
+  }
+ ],
+ "PA": [
+  {
+   "label": "Default",
+   "names": "Keystone steel gray, Amish barn red, Allegheny forest green, Delaware River blue, coal-seam black, limestone cream",
+   "colors": [
+    "#050607",
+    "#325b42",
+    "#8b2d2e",
+    "#527892",
+    "#838e8f",
+    "#ede1b4"
+   ]
+  }
+ ],
+ "PR": [
+  {
+   "label": "Default",
+   "names": "Caribbean turquoise, coral pink, El Yunque rainforest green, colonial Spanish yellow, sea-foam cream, deep indigo ink",
+   "colors": [
+    "#1c183b",
+    "#1e4f40",
+    "#3ab6b2",
+    "#92b58d",
+    "#b7dec7",
+    "#f1f1d2"
+   ]
+  }
+ ],
+ "RI": [
+  {
+   "label": "Default",
+   "names": "Narragansett Bay blue, Newport mansion limestone, sailcloth white, rosehip red, harbor navy ink, cream",
+   "colors": [
+    "#1a1f38",
+    "#6b5f65",
+    "#5888a4",
+    "#a1b7b5",
+    "#eee2c1",
+    "#f9f3dd"
+   ]
+  }
+ ],
+ "SC": [
+  {
+   "label": "Default",
+   "names": "Lowcountry marsh green, palmetto green, indigo blue, rice-field gold, Carolina moon white, deep tide ink",
+   "colors": [
+    "#021326",
+    "#415d7c",
+    "#51805b",
+    "#738d9d",
+    "#c2cabb",
+    "#fefef2"
+   ]
+  }
+ ],
+ "SD": [
+  {
+   "label": "Default",
+   "names": "Badlands buff, Black Hills pine green, prairie gold, Missouri River blue, bone cream, dark ink",
+   "colors": [
+    "#423024",
+    "#507c90",
+    "#bf8d22",
+    "#d3ae7d",
+    "#a7b2a3",
+    "#f4eece"
+   ]
+  }
+ ],
+ "TN": [
+  {
+   "label": "Default",
+   "names": "Smoky Mountain blue haze, Appalachian green, honky-tonk neon red, whiskey amber, limestone cream, deep hollow ink",
+   "colors": [
+    "#0c1d24",
+    "#504929",
+    "#767854",
+    "#528a9c",
+    "#b8c6b4",
+    "#f2ebcf"
+   ]
+  }
+ ],
+ "TX": [
+  {
+   "label": "Default",
+   "names": "bluebonnet blue, Hill Country limestone, longhorn rust, cactus green, caliche cream, dark mesquite ink",
+   "colors": [
+    "#11161f",
+    "#739361",
+    "#4a89b1",
+    "#9ab7b4",
+    "#cfc7a6",
+    "#f4edcc"
+   ]
+  }
+ ],
+ "UT": [
+  {
+   "label": "Default",
+   "names": "slickrock orange, arch sandstone red, Salt Flat white, juniper green, bone cream, deep shadow ink",
+   "colors": [
+    "#3b1b17",
+    "#7e5737",
+    "#9a9687",
+    "#e48240",
+    "#f8cc95",
+    "#f3f2dd"
+   ]
+  }
+ ],
+ "VT": [
+  {
+   "label": "Default",
+   "names": "Green Mountain green, maple syrup amber, sugar-maple red, barn red, birch cream, dark woodsmoke ink",
+   "colors": [
+    "#272623",
+    "#3a583a",
+    "#994324",
+    "#5d7c51",
+    "#db9632",
+    "#f4f0d3"
+   ]
+  }
+ ],
+ "VI": [
+  {
+   "label": "Default",
+   "names": "Caribbean aquamarine, coral reef pink, bougainvillea magenta, sugar-sand cream, palm frond green, deep sea navy",
+   "colors": [
+    "#0d2047",
+    "#2f8174",
+    "#926a6e",
+    "#979c91",
+    "#6ad7bc",
+    "#fdf8db"
+   ]
+  }
+ ],
+ "VA": [
+  {
+   "label": "Default",
+   "names": "Blue Ridge haze blue, Shenandoah green, colonial brick red, tobacco gold, Virginia pine ink, parchment cream",
+   "colors": [
+    "#0d2f30",
+    "#8b3723",
+    "#628473",
+    "#be8737",
+    "#91a398",
+    "#eec66e"
+   ]
+  }
+ ],
+ "WA": [
+  {
+   "label": "Default",
+   "names": "deep evergreen, fir green, Puget Sound blue, slate gray-blue, misty cream, snowcap white",
+   "colors": [
+    "#082f24",
+    "#436c65",
+    "#57898f",
+    "#889ca5",
+    "#eae8d7",
+    "#fefffe"
+   ]
+  },
+  {
+   "label": "Puget Sound evening",
+   "names": "twilight navy, Sound steel blue, ferry-light amber, mist lavender, fog cream, deep kelp green",
+   "colors": [
+    "#16213a",
+    "#2f4a6d",
+    "#6d86a8",
+    "#b9a8c9",
+    "#efe6d2",
+    "#d9a441"
+   ]
+  },
+  {
+   "label": "Autumn Cascades",
+   "names": "vine maple red, larch gold, Douglas fir green, basalt charcoal, cloud cream, glacier blue",
+   "colors": [
+    "#23262b",
+    "#2f4b37",
+    "#a8432c",
+    "#d99a2b",
+    "#8fb3c7",
+    "#f1e8d4"
+   ]
+  },
+  {
+   "label": "Cherry-blossom spring",
+   "names": "blossom pink, new-leaf green, lake blue, slate roof gray, petal cream, dark cedar ink",
+   "colors": [
+    "#2b2723",
+    "#5b6770",
+    "#3f7ca3",
+    "#7fae5a",
+    "#e9a3b8",
+    "#f7efe6"
+   ]
+  },
+  {
+   "label": "Golden summer",
+   "names": "late-sun gold, dry-grass ochre, Rainier snow white, sky cornflower, madrona rust, deep fir ink",
+   "colors": [
+    "#1d2a24",
+    "#9c4a2e",
+    "#c9983e",
+    "#e8c46a",
+    "#7aa6d8",
+    "#fbf6ea"
+   ]
+  }
+ ],
+ "WV": [
+  {
+   "label": "Default",
+   "names": "mountain laurel green, coal-seam charcoal, New River blue, autumn ridge orange, hill-country brown, pale cream",
+   "colors": [
+    "#0d271e",
+    "#263c33",
+    "#476954",
+    "#d98337",
+    "#96c7d5",
+    "#f3f2d4"
+   ]
+  }
+ ],
+ "WI": [
+  {
+   "label": "Default",
+   "names": "dairy-farm red, cheddar yellow, north-woods green, Great Lakes blue, cream, deep lake ink",
+   "colors": [
+    "#12242e",
+    "#7e2527",
+    "#59584f",
+    "#3a758e",
+    "#f2bc48",
+    "#f4eccb"
+   ]
+  }
+ ],
+ "WY": [
+  {
+   "label": "Default",
+   "names": "high-plains sage, Teton granite gray-blue, geyser steam white, sunrise gold, bison brown, dark ink",
+   "colors": [
+    "#1c1c17",
+    "#544b3a",
+    "#6f7c7d",
+    "#a1b59e",
+    "#efc474",
+    "#eee9d5"
+   ]
+  }
+ ]
+}

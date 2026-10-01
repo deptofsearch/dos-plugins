@@ -5,11 +5,25 @@ one update path for every site we run.
 
 ```
 plugins/
-  dos-toolkit/      The standard toolkit: SEO, AI Search, Images, Utilities
-legacy/             The one-off plugins being folded into dos-toolkit
-tests/              Stubbed-WordPress tests, run on every release
-.github/workflows/  Tag -> lint -> test -> build ZIP -> publish release
+  dos-toolkit/        The standard toolkit: SEO, AI Search, Images, Utilities
+  dos-city-search/    City search box (Real Estate Values Near Me, Open Houses In)
+  dos-market-images/  Illustrated market images (Real Estate Values Near Me)
+shared/               Code every plugin vendors a copy of (the GitHub updater)
+tools/                Scripts that support a plugin and never ship in it
+legacy/               Plugins kept as reference or as shipped
+tests/                Stubbed-WordPress tests, run on every release
+.github/workflows/    Tag -> lint -> test -> build ZIP -> publish release
 ```
+
+| Plugin | Folder | Tag | What it is |
+|---|---|---|---|
+| DoS Toolkit | `plugins/dos-toolkit` | `dos-toolkit-v<version>` | The standard toolkit, as modules that ship disabled. |
+| DoS - City Search | `plugins/dos-city-search` | `dos-city-search-v<version>` | City search box for Real Estate Values Near Me and Open Houses In: lists from city-named URLs or a City taxonomy. |
+| DoS - Market Images | `plugins/dos-market-images` | `dos-market-images-v<version>` | City carousel, state buttons and topic grids for Real Estate Values Near Me. Its generating and uploading scripts are in `tools/market-images/`. |
+| `legacy/` | `legacy/*` | not released | Reference only: the plugins the Toolkit absorbed, and `dos-ohi-city-search`, the Open Houses In city search as shipped. City Search 2.0.0 replaces it. |
+
+Each plugin has its own `CHANGELOG.md` and its own version, and is released on
+its own tag.
 
 ## Tests
 
@@ -50,8 +64,23 @@ put it in `wp-config.php` rather than the settings field, so it stays out of
 database backups:
 
 ```php
-define( 'DOS_TOOLKIT_GITHUB_TOKEN', 'github_pat_...' );
+define( 'DOS_GITHUB_TOKEN', 'github_pat_...' );
 ```
+
+Either constant works. `DOS_GITHUB_TOKEN` applies to every DoS plugin on the
+site, so it is the one to set. `DOS_TOOLKIT_GITHUB_TOKEN`, the name sites
+already have, still works; if both are set `DOS_GITHUB_TOKEN` wins. Plugins
+that keep a token elsewhere can supply it through the `dos_github_updater_token`
+filter. Several DoS plugins on one site share one cached list of the
+repository's releases, so adding plugins does not add API requests.
+
+The City Search and Market Images ZIPs are installed the same way, from the
+asset named for the plugin, and need that first manual upload for the same
+reason.
+
+GitHub's "Latest" badge on the releases page points at whichever plugin was
+released last. That is harmless: the updaters never use `/releases/latest`,
+they list releases and filter by their own tag prefix.
 
 ## Rollout
 
@@ -137,7 +166,7 @@ hosting setting rather than a plugin problem.
 ## Cutting a release
 
 1. Bump `Version:` in the plugin header **and** the matching
-   `DOS_TOOLKIT_VERSION` constant. They must agree or the workflow refuses the
+   `..._VERSION` constant (`DOS_TOOLKIT_VERSION` for the Toolkit). They must agree or the workflow refuses the
    tag.
 2. Add a `CHANGELOG.md` entry saying **why**, not only what.
 3. Commit.
@@ -164,11 +193,15 @@ considers releases carrying its own prefix and its own named asset.
 2. Refuses the tag if the plugin header's version disagrees with it. This is
    the check that stops a release whose sites would never see it, since the
    updater compares the header against the tag.
-3. Lints every PHP file in that plugin.
-4. Runs every `tests/test-*.php`.
-5. Builds a ZIP whose **top-level folder is the plugin slug**, because
+3. Refuses it if the plugin's `..._VERSION` constant (when it has one)
+   disagrees too.
+4. Lints every PHP file in that plugin.
+5. Runs every `tests/test-*.php`.
+6. Builds a ZIP whose **top-level folder is the plugin slug**, because
    WordPress installs whatever folder the archive contains.
-6. Publishes the release with generated notes and the ZIP attached.
+7. Publishes the release with generated notes and the ZIP attached. The notes
+   start at that plugin's previous tag, so they do not list the other
+   plugins' commits.
 
 It authenticates with the automatic `github.token` and needs
 `permissions: contents: write`. There are no repository secrets to configure,
@@ -192,14 +225,20 @@ The tag convention exists for this, but nothing else is automatic.
 
 1. Create `plugins/<slug>/<slug>.php`. The folder name, the main file name and
    the tag prefix must all be the same slug.
-2. Give it its own updater, or copy `class-dos-updater.php` and change `SLUG`
-   and `TAG_PREFIX` to match. Those two constants are the whole of what keeps
-   one plugin's releases from being offered to another.
-3. Set `Update URI` in its header to this repository.
-4. Add tests as `tests/test-<something>.php`. The workflow globs
+2. Copy `shared/class-dos-github-updater.php` into the plugin's `includes/`,
+   require it, and boot an instance with the plugin's slug, basename, version,
+   name and description (see the comment at the top of the class). Boot it on
+   load, not behind `is_admin()`. The slug is the whole of what keeps one
+   plugin's releases from being offered to another.
+   `tests/test-shared-copies.php` fails if any copy differs from `shared/`, so
+   change the shared file first and copy it out to every plugin.
+3. Set `Plugin URI` and `Update URI` in its header to this repository.
+4. Add a `CHANGELOG.md` in the plugin's folder, headed "Versions are the
+   plugin's, tagged `<slug>-v<version>`".
+5. Add tests as `tests/test-<something>.php`. The workflow globs
    `tests/test-*.php`, so a file named anything else is never run and its
    absence is silent.
-5. Tag `<slug>-v0.1.0`. The workflow resolves everything else from the tag.
+6. Tag `<slug>-v0.1.0`. The workflow resolves everything else from the tag.
 
 ## Working in this repository
 
@@ -212,8 +251,9 @@ The tag convention exists for this, but nothing else is automatic.
 
 ## Legacy
 
-`legacy/` holds the six plugins this toolkit replaced. All of them have been
-absorbed; the source is kept as reference for the ports and for anything that
+`legacy/` holds the six plugins this toolkit replaced, and
+`dos-ohi-city-search`, which is the Open Houses In version of City Search kept
+exactly as shipped. The six have been absorbed; the source is kept as reference for the ports and for anything that
 turns out to have been missed. None of it is built, released or installed.
 
 A site still running one of them has it deactivated automatically once the
@@ -230,3 +270,4 @@ out to be missing.
 | `breanm-plugin-downloader` | `utilities` module |
 | `last-updated-column` | `utilities` module |
 | `page-tags-tools` | `utilities` module |
+| `dos-ohi-city-search` | `dos-city-search` 2.0.0 (settings migrate and the old plugin is deactivated on the first admin page load; kept here as shipped, delete it from the site after checking the homepage) |

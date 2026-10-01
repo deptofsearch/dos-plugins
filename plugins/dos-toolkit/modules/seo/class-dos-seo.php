@@ -56,6 +56,11 @@ final class DOS_Module_SEO extends DOS_Module {
 		add_filter( 'pre_get_document_title', array( __CLASS__, 'filter_title' ) );
 		add_filter( 'wp_title', array( __CLASS__, 'filter_wp_title' ) );
 
+		// Core appends " – Site Name" to every title but the front page. A
+		// setting, because whether that suffix earns its characters is a
+		// per-site call.
+		add_filter( 'document_title_parts', array( __CLASS__, 'filter_title_parts' ) );
+
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_box' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ), 10, 2 );
 	}
@@ -95,6 +100,26 @@ final class DOS_Module_SEO extends DOS_Module {
 		$custom = self::custom_title();
 
 		return '' !== $custom ? esc_html( $custom ) : $title;
+	}
+
+	/**
+	 * Drop core's site-name suffix when the site asks for it.
+	 *
+	 * Only the 'site' part goes. The front page never carries one — core
+	 * gives it the site name as its title and the tagline instead — so the
+	 * homepage keeps its name with no special case here. og:title and the
+	 * schema read wp_get_document_title(), so they follow without being told.
+	 * Defaults to on: an update must not change titles on sites that never
+	 * opened this setting.
+	 */
+	public static function filter_title_parts( $parts ) {
+		if ( ! is_array( $parts ) || self::setting( 'title_site_name', 1 ) ) {
+			return $parts;
+		}
+
+		unset( $parts['site'] );
+
+		return $parts;
 	}
 
 	private static function custom_title() {
@@ -1158,6 +1183,7 @@ final class DOS_Module_SEO extends DOS_Module {
 				'seo_fallback_image'   => isset( $_POST['fallback_image'] ) ? absint( $_POST['fallback_image'] ) : 0,
 				'seo_twitter'          => isset( $_POST['twitter'] ) ? sanitize_text_field( wp_unslash( $_POST['twitter'] ) ) : '',
 				'seo_noindex_author'   => empty( $_POST['noindex_author'] ) ? 0 : 1,
+				'seo_title_site_name'  => empty( $_POST['title_site_name'] ) ? 0 : 1,
 				'seo_schema_mode'      => isset( $_POST['schema_mode'] ) && 'minimal' === $_POST['schema_mode'] ? 'minimal' : 'full',
 			)
 		);
@@ -1242,6 +1268,16 @@ final class DOS_Module_SEO extends DOS_Module {
 							<p class="description">
 								<?php esc_html_e( 'Choose Organization only when the theme already outputs WebSite and WebPage schema of its own. View source and search for application/ld+json — more than one block is the sign.', 'dos-toolkit' ); ?>
 							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Page titles', 'dos-toolkit' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="title_site_name" value="1" <?php checked( self::setting( 'title_site_name', 1 ) ); ?> />
+								<?php esc_html_e( 'Add the site name to page titles', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'WordPress ends every title except the homepage\'s with " – Site Name". Untick to drop it. The homepage keeps its own title, and pages with an SEO title are unaffected. If titles still carry the name afterwards, the theme is building them itself.', 'dos-toolkit' ); ?></p>
 						</td>
 					</tr>
 					<tr>

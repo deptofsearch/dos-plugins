@@ -51,6 +51,12 @@ function get_bloginfo( $w ) {
 function wp_get_document_title() {
     $pre = apply_filters( 'pre_get_document_title', '' );
     if ( ! empty( $pre ) ) { return $pre; }
+    // A test that sets title_parts gets core's assembly, so document_title_parts
+    // callbacks take part; everyone else keeps the fixed title.
+    if ( isset( $GLOBALS['state']['title_parts'] ) ) {
+        $parts = apply_filters( 'document_title_parts', $GLOBALS['state']['title_parts'] );
+        return implode( ' &#8211; ', array_filter( $parts ) );
+    }
     return $GLOBALS['state']['title'] ?? 'A Post Title | Acme Heating &amp; Air';
 }
 function get_query_var( $v ) { return $GLOBALS['state'][ $v ] ?? 0; }

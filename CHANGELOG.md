@@ -5,6 +5,33 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-toolkit-v<version>`.
 
+## 0.21.1
+
+A setting to drop the site name from page titles: **SEO → Page titles → Add
+the site name to page titles**.
+
+Core ends every title except the front page's with " – Site Name". On
+realestatevaluesnearme that made city pages read "Kennewick WA – What's My
+Home Worth – Real Estate Values Near Me": the name spends characters a search
+result truncates, on every page, to repeat what the URL already says. Whether
+it earns them is a per-site call, so it is a setting rather than a change.
+
+It defaults to on. An update reaches every site, and titles changing on a site
+whose owner never opened this screen would be exactly the kind of silent
+change the rollout order exists to prevent.
+
+Only core's `site` part is removed, through `document_title_parts`. The front
+page never has one (core gives it the site name as its title, plus the tagline),
+so the homepage keeps its name without a special case. A paginated archive
+keeps its "Page 2". A per-post SEO title still replaces the whole title, as in
+0.21.0. og:title and the schema read `wp_get_document_title()`, so they follow
+the `<title>` without being told.
+
+If the name is still there after unticking, the theme is building the title
+itself, and the fix belongs in the theme's settings, not here.
+
+The test was confirmed to fail with the `unset` removed.
+
 ## 0.21.0
 
 DoS Toolkit can now replace Yoast SEO, All in One SEO and Redirection on a live

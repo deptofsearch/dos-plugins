@@ -10,6 +10,7 @@ plugins/
   dos-market-images/  Illustrated market images (Real Estate Values Near Me)
   dos-outdoor-seating/ Venue pages and city cards (Outdoor Seating Near Me)
   dos-works/          Works post type (departmentofsearch.com)
+  dos-best-lenders/   Lender city pages and profiles (Best Lenders Near Me)
 themes/               Site themes, kept here for source control (not released)
 shared/               Code every plugin vendors a copy of (the GitHub updater)
 tools/                Scripts that support a plugin and never ship in it
@@ -25,6 +26,7 @@ tests/                Stubbed-WordPress tests, run on every release
 | DoS - Market Images | `plugins/dos-market-images` | `dos-market-images-v<version>` | City carousel, state buttons and topic grids for Real Estate Values Near Me. Its generating and uploading scripts are in `tools/market-images/`. |
 | DoS Outdoor Seating | `plugins/dos-outdoor-seating` | `dos-outdoor-seating-v<version>` | Outdoor Seating Near Me: venue post type, `osn/v1` REST upsert, venue pages, city cards that take over TablePress. Plan and REST contract in `docs/outdoor-seating/`. |
 | DoS Works | `plugins/dos-works` | `dos-works-v<version>` | departmentofsearch.com: the Works (portfolio) post type and its meta box. |
+| DoS Best Lenders | `plugins/dos-best-lenders` | `dos-best-lenders-v<version>` | Best Lenders Near Me: `blnm_city` and `blnm_lender` post types, `blnm/v1` REST upserts for n8n, filterable lender cards, city search and state index. |
 | `themes/` | `themes/*` | not released | departmentofsearch.com themes: `dos-department` (block theme) and `dos-magazine-child`. |
 | `legacy/` | `legacy/*` | not released | Reference only: the plugins the Toolkit absorbed, and `dos-ohi-city-search`, the Open Houses In city search as shipped. City Search 2.0.0 replaces it. |
 

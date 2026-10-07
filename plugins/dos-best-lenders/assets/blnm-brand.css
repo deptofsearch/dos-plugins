@@ -1,0 +1,314 @@
+/* DoS Best Lenders brand layer. Tokens come from brand/blnm-tokens.css (generated from tokens.json).
+   Everything below is scoped under body.blnm-brand so it only touches the public site. Light theme only
+   for now; the dark token block is kept for a later toggle (set data-blnm-theme="dark" on <html>). */
+:root {
+  --blnm-paper: #ffffff;
+  --blnm-paper-raised: #ffffff;
+  --blnm-paper-sunk: #eceae2;
+  --blnm-ink: #17201e;
+  --blnm-ink-muted: #4e5955;
+  --blnm-rule: #d3d0c6;
+  --blnm-spruce: #1d5446;
+  --blnm-spruce-tint: #dceae3;
+  --blnm-on-spruce: #ffffff;
+  --blnm-marigold: #e8a317;
+  --blnm-on-marigold: #17201e;
+  --blnm-marigold-deep: #9a5b00;
+  --blnm-star: var(--blnm-marigold-deep);
+  --blnm-focus: var(--blnm-marigold-deep);
+  --blnm-better: #1a5cab;
+  --blnm-better-tint: #e3edf8;
+  --blnm-worse: #a8480c;
+  --blnm-worse-tint: #fbeadd;
+  --blnm-shadow-card: 0 1px 0 rgba(23,32,30,0.04), 0 1px 3px rgba(23,32,30,0.08);
+  --blnm-shadow-pop: 0 6px 24px rgba(23,32,30,0.14);
+  --blnm-space-1: 4px;
+  --blnm-space-2: 8px;
+  --blnm-space-3: 12px;
+  --blnm-space-4: 16px;
+  --blnm-space-6: 24px;
+  --blnm-space-8: 32px;
+  --blnm-radius-s: 2px;
+  --blnm-radius-m: 4px;
+  --blnm-radius-l: 8px;
+  --blnm-font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --blnm-font-text: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --blnm-font-numbers: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+[data-blnm-theme="dark"] {
+  --blnm-paper: #111715;
+  --blnm-paper-raised: #19211f;
+  --blnm-paper-sunk: #232d2a;
+  --blnm-ink: #eceee8;
+  --blnm-ink-muted: #a9b3af;
+  --blnm-rule: #34403c;
+  --blnm-spruce: #7fc6b0;
+  --blnm-spruce-tint: #1d3832;
+  --blnm-on-spruce: #0d1d18;
+  --blnm-marigold: #f0b43a;
+  --blnm-on-marigold: #17201e;
+  --blnm-marigold-deep: #f2b84a;
+  --blnm-better: #93bcf2;
+  --blnm-better-tint: #1a2a3e;
+  --blnm-worse: #f3a672;
+  --blnm-worse-tint: #3a2616;
+  --blnm-shadow-card: 0 1px 0 rgba(0,0,0,0.35);
+  --blnm-shadow-pop: 0 8px 28px rgba(0,0,0,0.55);
+}
+
+/* ---- Site-wide over Themify Magazine ---- */
+/* No !important unless a comment says why: Themify's own rules use id selectors (#headerwrap etc.),
+   so ours use the same ids under body.blnm-brand, which outranks them without it. */
+body.blnm-brand {
+	background: var(--blnm-paper-raised); /* white pages (Ryan, 2026-10-06); cards keep their rule border + shadow */
+	color: var(--blnm-ink);
+	font-family: var(--blnm-font-text);
+	font-size: 16px;
+	line-height: 1.625;
+	-webkit-font-smoothing: antialiased;
+}
+body.blnm-brand #pagewrap,
+body.blnm-brand #body {
+	background: transparent;
+	font-family: var(--blnm-font-text);
+}
+body.blnm-brand h1,
+body.blnm-brand h2,
+body.blnm-brand h3,
+body.blnm-brand h4,
+body.blnm-brand .page-title,
+body.blnm-brand .post-title,
+body.blnm-brand .widgettitle {
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	color: var(--blnm-ink);
+	letter-spacing: 0;
+	text-transform: none;
+}
+body.blnm-brand h1,
+body.blnm-brand .page-title {
+	font-size: 36px;
+	line-height: 42px;
+}
+body.blnm-brand h2 {
+	font-size: 28px;
+	line-height: 34px;
+}
+body.blnm-brand h3 {
+	font-size: 21px;
+	line-height: 28px;
+}
+@media (max-width: 600px) {
+	body.blnm-brand h1,
+	body.blnm-brand .page-title {
+		font-size: 30px;
+		line-height: 36px;
+	}
+}
+body.blnm-brand .page-title a,
+body.blnm-brand .post-title a {
+	color: inherit;
+}
+
+/* Links */
+body.blnm-brand a {
+	color: var(--blnm-spruce);
+	text-underline-offset: 0.18em;
+}
+body.blnm-brand a:hover {
+	color: var(--blnm-spruce);
+	text-decoration-thickness: 2px;
+}
+body.blnm-brand a:focus-visible,
+body.blnm-brand button:focus-visible,
+body.blnm-brand input:focus-visible,
+body.blnm-brand select:focus-visible,
+body.blnm-brand textarea:focus-visible,
+body.blnm-brand summary:focus-visible {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+}
+
+/* Header */
+body.blnm-brand #headerwrap,
+body.blnm-brand #header {
+	background: var(--blnm-paper-raised);
+	border-bottom: 1px solid var(--blnm-rule);
+	box-shadow: none;
+}
+body.blnm-brand #nav-bar {
+	background: var(--blnm-paper-sunk);
+	border-bottom: 1px solid var(--blnm-rule);
+}
+body.blnm-brand #site-logo a,
+body.blnm-brand #site-logo span {
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	color: var(--blnm-ink);
+	text-decoration: none;
+}
+body.blnm-brand #site-logo img.blnm-logo {
+	display: block;
+	width: auto;
+	height: 40px;
+	max-width: 100%;
+}
+body.blnm-brand #site-description,
+body.blnm-brand #site-description span {
+	color: var(--blnm-ink-muted);
+	font-family: var(--blnm-font-text);
+	font-size: 14px;
+}
+
+/* Menus */
+body.blnm-brand #main-nav a,
+body.blnm-brand #mobile-menu a,
+body.blnm-brand .footer-nav-wrap a {
+	font-family: var(--blnm-font-text);
+	font-weight: 600;
+	color: var(--blnm-ink);
+	text-decoration: none;
+}
+body.blnm-brand #main-nav a:hover,
+body.blnm-brand #main-nav .current-menu-item > a,
+body.blnm-brand #main-nav .current_page_item > a,
+body.blnm-brand #mobile-menu a:hover {
+	color: var(--blnm-spruce);
+	background: transparent;
+}
+body.blnm-brand #main-nav .current-menu-item > a,
+body.blnm-brand #main-nav .current_page_item > a {
+	box-shadow: inset 0 -2px 0 var(--blnm-marigold);
+}
+body.blnm-brand #main-nav ul,
+body.blnm-brand #mobile-menu {
+	background: var(--blnm-paper-raised);
+	border-color: var(--blnm-rule);
+}
+body.blnm-brand #menu-icon,
+body.blnm-brand #menu-icon i {
+	color: var(--blnm-ink);
+}
+/* Top bar search and RSS icons: Themify paints them white, which vanishes on the light bar. */
+body.blnm-brand #nav-bar #searchform i,
+body.blnm-brand #nav-bar .social-widget a,
+body.blnm-brand #nav-bar .social-widget i {
+	color: var(--blnm-ink-muted);
+}
+body.blnm-brand #nav-bar #searchform:hover i,
+body.blnm-brand #nav-bar .social-widget a:hover,
+body.blnm-brand #nav-bar .social-widget a:hover i {
+	color: var(--blnm-spruce);
+}
+
+/* Footer */
+body.blnm-brand #footerwrap,
+body.blnm-brand #footer {
+	background: var(--blnm-paper-sunk);
+	color: var(--blnm-ink-muted);
+	border-top: 1px solid var(--blnm-rule);
+}
+body.blnm-brand #footer a {
+	color: var(--blnm-spruce);
+}
+body.blnm-brand #footer .widgettitle,
+body.blnm-brand #footer h2,
+body.blnm-brand #footer h3 {
+	color: var(--blnm-ink);
+}
+
+/* Buttons and form controls (Themify styles bare buttons and inputs with id-level skins) */
+body.blnm-brand button,
+body.blnm-brand input[type="submit"],
+body.blnm-brand input[type="button"],
+body.blnm-brand .button,
+body.blnm-brand .builder_button,
+body.blnm-brand .more-link {
+	font-family: var(--blnm-font-text);
+	font-weight: 600;
+	border-radius: var(--blnm-radius-m);
+	text-transform: none;
+	letter-spacing: 0;
+	box-shadow: none;
+	text-shadow: none;
+}
+body.blnm-brand input[type="submit"],
+body.blnm-brand .button,
+body.blnm-brand .builder_button,
+body.blnm-brand .more-link {
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+	border: 1px solid var(--blnm-spruce);
+}
+body.blnm-brand input[type="submit"]:hover,
+body.blnm-brand .button:hover,
+body.blnm-brand .builder_button:hover,
+body.blnm-brand .more-link:hover {
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+	filter: brightness(1.12);
+}
+body.blnm-brand input[type="text"],
+body.blnm-brand input[type="email"],
+body.blnm-brand input[type="search"],
+body.blnm-brand textarea,
+body.blnm-brand select {
+	font-family: var(--blnm-font-text);
+	background: var(--blnm-paper-raised);
+	color: var(--blnm-ink);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	box-shadow: none;
+}
+body.blnm-brand hr {
+	border: 0;
+	border-top: 1px solid var(--blnm-rule);
+}
+body.blnm-brand blockquote {
+	border-left: 0;
+	border-top: 1px solid var(--blnm-rule);
+	border-bottom: 1px solid var(--blnm-rule);
+	font-family: var(--blnm-font-display);
+}
+body.blnm-brand .page-content img,
+body.blnm-brand .entry-content img {
+	height: auto;
+}
+
+/* Home hero (page content): image above the intro, on paper, no text over the photo */
+body.blnm-brand .blnm-hero-fig {
+	margin: 0 0 var(--blnm-space-6);
+}
+body.blnm-brand .blnm-hero-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 21 / 9;
+	object-fit: cover;
+	border-radius: var(--blnm-radius-l);
+}
+body.blnm-brand .blnm-hero {
+	margin: 0 0 var(--blnm-space-6);
+	font-size: 18px;
+	line-height: 29px;
+	max-width: 44em;
+}
+body.blnm-brand .blnm-hero p {
+	margin: 0;
+}
+
+/* ---- City and lender pages: page layout, not a blog post (see includes/class-layout.php) ----
+   Fallback only: Layout answers Themify's per-post settings so the sidebar and post meta are not printed.
+   If a theme update prints them anyway, these hide them and let the content take the full column. */
+body.blnm-page-layout #sidebar { display: none; }
+body.blnm-page-layout #content { width: 100%; float: none; margin-left: 0; margin-right: 0; }
+body.blnm-page-layout .post-meta,
+body.blnm-page-layout .post-date,
+body.blnm-page-layout .post-date-wrap,
+body.blnm-page-layout .post-author,
+body.blnm-page-layout .post-category,
+body.blnm-page-layout .post-tag,
+body.blnm-page-layout .post-nav,
+body.blnm-page-layout .related-posts,
+body.blnm-page-layout .author-box { display: none; }

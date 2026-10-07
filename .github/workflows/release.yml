@@ -4,11 +4,25 @@ name: Release plugin
 # a release asset. Sites running the plugin pick the update up from there.
 #
 #   git tag dos-toolkit-v0.1.0 && git push origin dos-toolkit-v0.1.0
+#
+# Or, without a terminal: Actions -> Release plugin -> Run workflow, with the
+# plugin's slug and version. That runs the same checks against the head of
+# main and creates the tag itself when it publishes.
 
 on:
   push:
     tags:
       - '*-v*'
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Plugin folder under plugins/, e.g. dos-outdoor-seating'
+        required: true
+        type: string
+      version:
+        description: 'Version to release, matching the plugin header, e.g. 0.6.4'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -26,17 +40,41 @@ jobs:
 
       - name: Resolve plugin and version from the tag
         id: meta
+        env:
+          INPUT_SLUG: ${{ inputs.slug }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          SLUG="${TAG%-v*}"
-          VERSION="${TAG##*-v}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            # A manual run releases what is on main, never another branch.
+            if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+              echo "::error::Run this from main, not ${GITHUB_REF}"
+              exit 1
+            fi
+            SLUG="${INPUT_SLUG}"
+            VERSION="${INPUT_VERSION}"
+            TAG="${SLUG}-v${VERSION}"
+            if ! printf '%s' "$SLUG" | grep -Eq '^[a-z0-9-]+$' || ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+)*$'; then
+              echo "::error::Slug must be lowercase letters, digits and hyphens; version must be numbers and dots"
+              exit 1
+            fi
+            # Never reuse a version: an existing tag means it already shipped.
+            if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+              echo "::error::Tag ${TAG} already exists. Bump the version instead."
+              exit 1
+            fi
+          else
+            TAG="${GITHUB_REF_NAME}"
+            SLUG="${TAG%-v*}"
+            VERSION="${TAG##*-v}"
+          fi
 
           if [ ! -f "plugins/${SLUG}/${SLUG}.php" ]; then
             echo "::error::No plugin at plugins/${SLUG}/${SLUG}.php for tag ${TAG}"
             exit 1
           fi
 
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
@@ -104,18 +142,22 @@ jobs:
           set -euo pipefail
           SLUG="${{ steps.meta.outputs.slug }}"
           VERSION="${{ steps.meta.outputs.version }}"
+          TAG="${{ steps.meta.outputs.tag }}"
 
           # The repository holds several plugins, so GitHub's default notes
           # (everything since the previous release of any kind) would list
           # other plugins' commits. Start from this plugin's previous tag.
-          PREVIOUS=$(git tag -l "${SLUG}-v*" --sort=-v:refname | grep -vxF "${GITHUB_REF_NAME}" | head -n1 || true)
+          PREVIOUS=$(git tag -l "${SLUG}-v*" --sort=-v:refname | grep -vxF "${TAG}" | head -n1 || true)
 
           NOTES_ARGS=()
           if [ -n "$PREVIOUS" ]; then
             NOTES_ARGS=(--notes-start-tag "$PREVIOUS")
           fi
 
-          gh release create "${GITHUB_REF_NAME}" "${SLUG}.zip" \
+          # --target only matters for a manual run, where the tag does not
+          # exist yet: gh creates it on the commit that was just checked.
+          gh release create "${TAG}" "${SLUG}.zip" \
+            --target "${GITHUB_SHA}" \
             --title "${SLUG} ${VERSION}" \
             --generate-notes \
             "${NOTES_ARGS[@]}"

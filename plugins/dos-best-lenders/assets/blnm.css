@@ -1,0 +1,805 @@
+/* DoS Best Lenders components. Reads only --blnm-* tokens (defined in blnm-brand.css); no literal colors here.
+   Everything is scoped under .blnm. Numbers: IBM Plex Mono, tabular. Hairline rules, radii 2/4px (8px for the review block). */
+.blnm {
+	margin: var(--blnm-space-8) 0;
+	box-sizing: border-box;
+	font-family: var(--blnm-font-text);
+	color: var(--blnm-ink);
+	/* Card columns follow the embed's width (themes differ, sidebars eat space), not the viewport. */
+	container-type: inline-size;
+}
+.blnm *,
+.blnm *::before,
+.blnm *::after {
+	box-sizing: border-box;
+}
+.blnm [hidden] {
+	display: none !important; /* themes set display on buttons/lists that would defeat [hidden] */
+}
+
+/* Header */
+.blnm-head {
+	margin: 0 0 var(--blnm-space-4);
+	padding-bottom: var(--blnm-space-3);
+	border-bottom: 1px solid var(--blnm-rule);
+}
+.blnm .blnm-title {
+	margin: 0 0 var(--blnm-space-1);
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 28px;
+	line-height: 34px;
+	color: var(--blnm-ink);
+}
+.blnm .blnm-sub {
+	margin: 0;
+	font-size: 18px; /* body-l: the dek under the theme's H1 */
+	line-height: 29px;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Filters */
+.blnm-filters {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--blnm-space-3);
+	margin: 0 0 var(--blnm-space-6);
+	padding: var(--blnm-space-4);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-sunk);
+}
+.blnm-f {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--blnm-space-1);
+}
+.blnm-f-loan {
+	grid-column: 1 / -1;
+}
+.blnm-f label,
+.blnm-f legend {
+	padding: 0;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--blnm-ink-muted);
+}
+.blnm-f select {
+	width: 100%;
+	max-width: none;
+	height: 44px;
+	margin: 0;
+	padding: 0 var(--blnm-space-3);
+	font-family: var(--blnm-font-text);
+	font-size: 16px;
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-raised);
+	color: var(--blnm-ink);
+}
+.blnm-f-status {
+	grid-column: 1 / -1;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--blnm-space-4);
+}
+.blnm-count {
+	font-size: 14px;
+	color: var(--blnm-ink-muted);
+}
+.blnm-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--blnm-space-2);
+}
+
+/* LoanTypeChip (filter) and Button (secondary) */
+.blnm .blnm-chip,
+.blnm .blnm-reset,
+.blnm .blnm-more {
+	font-family: var(--blnm-font-text);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+	cursor: pointer;
+	margin: 0;
+	padding: 0 var(--blnm-space-3);
+	min-height: 40px;
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-s);
+	background: var(--blnm-paper-raised);
+	color: var(--blnm-ink);
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
+}
+/* Themes fill bare button states (Themify: solid blue that sticks after a tap on phones). Pin them. */
+.blnm .blnm-chip:hover,
+.blnm .blnm-chip:focus,
+.blnm .blnm-reset:hover,
+.blnm .blnm-reset:focus,
+.blnm .blnm-more:hover,
+.blnm .blnm-more:focus {
+	background: var(--blnm-paper-raised);
+	color: var(--blnm-ink);
+	border-color: var(--blnm-spruce);
+}
+.blnm .blnm-chip[aria-pressed="true"],
+.blnm .blnm-chip[aria-pressed="true"]:hover,
+.blnm .blnm-chip[aria-pressed="true"]:focus {
+	background: var(--blnm-spruce);
+	border-color: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+}
+.blnm .blnm-reset {
+	border-radius: var(--blnm-radius-m);
+	min-height: 36px;
+}
+.blnm-chip:focus-visible,
+.blnm-reset:focus-visible,
+.blnm-more:focus-visible,
+.blnm-f select:focus-visible,
+.blnm-link:focus-visible,
+.blnm-says summary:focus-visible {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+}
+
+/* Cards: 1 column on phones, 2 from 640px, 3 from 960px (of the embed's own width). */
+.blnm-grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--blnm-space-4);
+	grid-template-columns: minmax(0, 1fr);
+}
+@container (min-width: 640px) {
+	.blnm-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.blnm-filters {
+		grid-template-columns: 2fr 1fr 1fr 1fr;
+		align-items: end;
+	}
+	.blnm-f-loan {
+		grid-column: 1;
+	}
+	.blnm-f-status {
+		grid-column: 1 / -1;
+	}
+	/* Four selects (rating added): loan chips get their own row above them */
+	.blnm-filters-rated {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.blnm-filters-rated .blnm-f-loan {
+		grid-column: 1 / -1;
+	}
+}
+@container (min-width: 960px) {
+	.blnm-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+/* LenderCard */
+.blnm-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--blnm-space-3);
+	margin: 0;
+	padding: var(--blnm-space-4);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-sunk); /* same shade as the filter panel (Ryan, 2026-10-06); chips and blocks inside sit on paper-raised */
+	box-shadow: var(--blnm-shadow-card);
+	color: var(--blnm-ink);
+	overflow-wrap: break-word;
+	list-style: none;
+}
+@container (min-width: 480px) {
+	.blnm-card {
+		padding: var(--blnm-space-6);
+	}
+}
+.blnm-card::before {
+	content: none;
+	display: none;
+}
+.blnm-card-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--blnm-space-3);
+}
+.blnm-card-id {
+	min-width: 0;
+}
+.blnm .blnm-name {
+	margin: 0 0 var(--blnm-space-2);
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 21px;
+	line-height: 28px;
+	color: var(--blnm-ink);
+}
+/* Lender-type badge (a chip, 2px radius): the strong score band's spruce, so the card's two identifiers match */
+.blnm-badge {
+	display: inline-block;
+	padding: 2px var(--blnm-space-2);
+	border: 1px solid var(--blnm-spruce);
+	border-radius: var(--blnm-radius-s);
+	font-size: 12px;
+	line-height: 17px;
+	font-weight: 600;
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+}
+
+/* ScoreBadge: bands are told apart by fill weight, not hue. */
+.blnm-score {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 76px;
+	padding: var(--blnm-space-2) 0;
+	border: 1px solid transparent;
+	border-radius: var(--blnm-radius-m);
+	text-align: center;
+	line-height: 1;
+}
+.blnm-score-num {
+	font-family: var(--blnm-font-numbers);
+	font-variant-numeric: tabular-nums;
+	font-size: 30px;
+	line-height: 32px;
+	font-weight: 600;
+}
+.blnm-score-label {
+	margin-top: var(--blnm-space-1);
+	font-size: 10px;
+	line-height: 12px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+.blnm-score-strong {
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+}
+.blnm-score-solid {
+	/* Same dark spruce as strong (Ryan, 2026-10-06): 60-100 all read as a recommended score; fair and unscored stay light */
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+}
+.blnm-score-fair {
+	background: var(--blnm-paper-raised); /* the card itself is paper-sunk */
+	border-color: var(--blnm-rule);
+	color: var(--blnm-ink);
+}
+.blnm-score-na {
+	background: transparent;
+	border-color: var(--blnm-ink-muted);
+	color: var(--blnm-ink-muted);
+}
+
+/* Stat row */
+.blnm-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--blnm-space-2);
+	margin: 0;
+	padding: var(--blnm-space-3) 0;
+	border-top: 1px solid var(--blnm-rule);
+	border-bottom: 1px solid var(--blnm-rule);
+}
+.blnm-stats dt {
+	margin: 0;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--blnm-ink-muted);
+}
+.blnm-stats dd {
+	margin: var(--blnm-space-1) 0 0;
+	font-family: var(--blnm-font-numbers);
+	font-variant-numeric: tabular-nums;
+	font-size: 18px;
+	line-height: 24px;
+	font-weight: 500;
+	color: var(--blnm-ink);
+}
+@container (max-width: 559px) {
+	/* Phones: stack the stat row 2 + 1 */
+	.blnm-stats {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.blnm-stats > div:nth-child(3) {
+		grid-column: 1 / -1;
+	}
+}
+
+.blnm .blnm-delta-row {
+	margin: calc(-1 * var(--blnm-space-1)) 0 0;
+}
+/* RateDelta: blue = better (lower than the local median), orange = worse. Arrow plus words, never color alone. */
+.blnm-delta {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--blnm-space-1);
+	padding: 1px var(--blnm-space-2);
+	border-radius: var(--blnm-radius-s);
+	font-family: var(--blnm-font-numbers);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	line-height: 18px;
+	font-weight: 500;
+	color: var(--blnm-ink-muted);
+}
+.blnm-delta-icon {
+	flex: 0 0 auto;
+}
+.blnm-delta-good {
+	background: var(--blnm-better-tint);
+	color: var(--blnm-better);
+}
+.blnm-delta-bad {
+	background: var(--blnm-worse-tint);
+	color: var(--blnm-worse);
+}
+
+/* LoanTypeChip (static) */
+.blnm-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--blnm-space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.blnm-tags li {
+	margin: 0;
+	padding: 2px var(--blnm-space-2);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-s);
+	background: var(--blnm-paper-raised); /* the card itself is paper-sunk */
+	font-size: 12px;
+	line-height: 17px;
+	font-weight: 600;
+	color: var(--blnm-ink);
+	list-style: none;
+}
+.blnm-tags li::before {
+	content: none;
+	display: none;
+}
+
+/* Google rating line: marigold-deep star glyph only, the number stays ink. */
+.blnm .blnm-rating {
+	margin: 0;
+	font-family: var(--blnm-font-numbers);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	line-height: 18px;
+}
+.blnm .blnm-rating-link {
+	font-weight: 500;
+}
+.blnm a.blnm-rating-link {
+	color: var(--blnm-ink);
+	text-decoration-color: var(--blnm-rule);
+}
+.blnm .blnm-star {
+	color: var(--blnm-star);
+	vertical-align: -2px;
+}
+.blnm .blnm-asof {
+	margin-left: var(--blnm-space-2);
+	font-family: var(--blnm-font-text);
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-branch {
+	margin: 0;
+	font-size: 14px;
+	line-height: 21px;
+	color: var(--blnm-ink-muted);
+}
+/* Builder tag: the one marigold fill allowed per card */
+.blnm .blnm-builder-wrap {
+	margin: 0;
+}
+.blnm .blnm-builder {
+	display: inline-block;
+	padding: 2px var(--blnm-space-2);
+	border-radius: var(--blnm-radius-s);
+	background: var(--blnm-marigold);
+	color: var(--blnm-on-marigold);
+	font-size: 12px;
+	line-height: 17px;
+	font-weight: 600;
+	cursor: help;
+}
+
+/* Review block (radius-l, recessed) */
+.blnm .blnm-says {
+	margin: 0;
+	padding: var(--blnm-space-3) var(--blnm-space-4);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-l);
+	background: var(--blnm-paper-raised); /* the card itself is paper-sunk */
+	font-size: 14px;
+	line-height: 21px;
+}
+.blnm .blnm-says summary {
+	cursor: pointer;
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-says-text {
+	margin: var(--blnm-space-2) 0 0;
+}
+/* Paraphrased client experiences ("One client said ..."): our writing, so no quotation marks */
+.blnm .blnm-highlights {
+	margin: var(--blnm-space-2) 0 0;
+	padding: 0;
+	list-style: none;
+}
+.blnm .blnm-highlights li {
+	margin: 0 0 var(--blnm-space-2);
+	padding-left: var(--blnm-space-3);
+	border-left: 2px solid var(--blnm-rule);
+	color: var(--blnm-ink);
+	list-style: none;
+}
+.blnm .blnm-highlights li::before {
+	content: none;
+}
+.blnm .blnm-pros,
+.blnm .blnm-cons {
+	margin: var(--blnm-space-2) 0 0;
+	padding: 0;
+	list-style: none;
+}
+.blnm .blnm-pros li,
+.blnm .blnm-cons li {
+	margin: var(--blnm-space-1) 0;
+	padding-left: var(--blnm-space-4);
+	position: relative;
+	list-style: none;
+}
+.blnm .blnm-pros li::before,
+.blnm .blnm-cons li::before {
+	position: absolute;
+	left: 2px;
+	font-family: var(--blnm-font-numbers);
+	font-weight: 600;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-pros li::before {
+	content: "+";
+}
+.blnm .blnm-cons li::before {
+	content: "\2212";
+}
+.blnm .blnm-lender-summary {
+	margin: var(--blnm-space-3) 0;
+	max-width: 44em;
+	font-size: 18px;
+	line-height: 29px;
+}
+
+/* Links row */
+.blnm .blnm-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--blnm-space-2) var(--blnm-space-4);
+	margin: auto 0 0;
+	padding-top: var(--blnm-space-1);
+	font-size: 14px;
+	line-height: 21px;
+}
+.blnm-link {
+	color: var(--blnm-spruce);
+	font-weight: 600;
+}
+.blnm-empty {
+	margin: var(--blnm-space-4) 0;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-more {
+	display: block;
+	margin: var(--blnm-space-6) auto 0;
+	padding: 0 var(--blnm-space-6);
+}
+.blnm .blnm-disclosure,
+.blnm-updated {
+	margin: var(--blnm-space-6) 0 0;
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--blnm-ink-muted);
+}
+
+/* Lender profile table */
+.blnm-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+	line-height: 21px;
+	font-variant-numeric: tabular-nums;
+}
+.blnm-table th,
+.blnm-table td {
+	padding: var(--blnm-space-2) var(--blnm-space-3);
+	border: 0;
+	border-bottom: 1px solid var(--blnm-rule);
+	text-align: left;
+	background: transparent;
+}
+.blnm-table th {
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--blnm-ink-muted);
+}
+.blnm-table td:not(:first-child) {
+	font-family: var(--blnm-font-numbers);
+}
+
+/* State index */
+.blnm-city-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+	gap: var(--blnm-space-2) var(--blnm-space-6);
+	margin: 0 0 var(--blnm-space-4);
+	padding: 0;
+	list-style: none;
+}
+.blnm-city-list li {
+	margin: 0;
+	list-style: none;
+}
+.blnm-city-list li::before {
+	content: none;
+	display: none;
+}
+.blnm .blnm-state-name {
+	margin: var(--blnm-space-6) 0 var(--blnm-space-2);
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+}
+
+/* CitySearch */
+.blnm-search {
+	margin: var(--blnm-space-6) 0;
+	padding: var(--blnm-space-6);
+	background: var(--blnm-paper-sunk);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+}
+.blnm-search .blnm-search-heading {
+	margin: 0 0 var(--blnm-space-3);
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 21px;
+	line-height: 28px;
+	color: var(--blnm-ink);
+}
+.blnm-search-form {
+	display: flex;
+	gap: var(--blnm-space-2);
+	margin: 0;
+	align-items: stretch;
+}
+.blnm-search-wrap {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.blnm-search input[type="text"] {
+	display: block;
+	width: 100%;
+	max-width: none;
+	height: 48px;
+	margin: 0;
+	padding: 10px 14px;
+	font-family: var(--blnm-font-text);
+	font-size: 16px;
+	line-height: 1.2;
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-raised);
+	color: var(--blnm-ink);
+	box-shadow: var(--blnm-shadow-card);
+}
+.blnm-search input[type="text"]:focus {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+	border-color: var(--blnm-spruce);
+}
+/* Button (primary) */
+.blnm-search .blnm-search-btn {
+	flex: 0 0 auto;
+	height: 48px;
+	margin: 0;
+	padding: 0 var(--blnm-space-6);
+	border: 1px solid var(--blnm-spruce);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+	font-family: var(--blnm-font-text);
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: none;
+	text-transform: none;
+	letter-spacing: normal;
+}
+.blnm-search .blnm-search-btn:hover,
+.blnm-search .blnm-search-btn:focus {
+	background: var(--blnm-spruce);
+	color: var(--blnm-on-spruce);
+	filter: brightness(1.12);
+}
+.blnm-search .blnm-search-btn:focus-visible {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+}
+.blnm-search .blnm-search-list {
+	position: absolute;
+	z-index: 50;
+	left: 0;
+	right: 0;
+	top: calc(100% + var(--blnm-space-1));
+	margin: 0;
+	padding: var(--blnm-space-1) 0;
+	list-style: none;
+	background: var(--blnm-paper-raised);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	box-shadow: var(--blnm-shadow-pop);
+	max-height: min(320px, 50vh);
+	overflow-y: auto;
+	text-align: left;
+}
+.blnm-search .blnm-search-list li {
+	margin: 0;
+	padding: 11px 14px;
+	list-style: none;
+	cursor: pointer;
+	color: var(--blnm-ink);
+	line-height: 1.3;
+	background: none;
+}
+.blnm-search .blnm-search-list li::before {
+	content: none;
+	display: none;
+}
+.blnm-search .blnm-search-list li[aria-selected="true"],
+.blnm-search .blnm-search-list li:hover {
+	background: var(--blnm-spruce-tint);
+}
+.blnm-search .blnm-search-list mark {
+	background: none;
+	color: inherit;
+	font-weight: 700;
+	padding: 0;
+}
+.blnm-search-msg {
+	margin: var(--blnm-space-2) 0 0;
+	font-size: 14px;
+	color: var(--blnm-ink-muted);
+}
+.blnm-search-msg:empty {
+	display: none;
+}
+.blnm-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+@media (max-width: 640px) {
+	.blnm-search {
+		padding: var(--blnm-space-4);
+		margin: var(--blnm-space-4) 0;
+	}
+	.blnm-search .blnm-search-btn {
+		padding: 0 var(--blnm-space-4);
+	}
+}
+.blnm .blnm-score-label abbr {
+	text-decoration: none; /* the title attribute carries the full name; no dotted underline on the badge */
+	cursor: help;
+}
+
+/* City with no qualifying lender: plain explanation, then the nearest towns that have some */
+.blnm .blnm-none {
+	margin: 0 0 var(--blnm-space-6);
+	padding: var(--blnm-space-6);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-sunk);
+}
+.blnm .blnm-none-title {
+	margin: 0 0 var(--blnm-space-3);
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 24px;
+	line-height: 30px;
+	color: var(--blnm-ink);
+}
+.blnm .blnm-none p {
+	margin: 0 0 var(--blnm-space-3);
+	color: var(--blnm-ink);
+}
+.blnm .blnm-nearby {
+	display: grid;
+	gap: var(--blnm-space-3);
+	margin: var(--blnm-space-4) 0;
+	padding: 0;
+	list-style: none;
+}
+.blnm .blnm-nearby-item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--blnm-space-1);
+	margin: 0;
+	padding: var(--blnm-space-4);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-raised);
+	list-style: none;
+}
+.blnm .blnm-nearby-item::before {
+	content: none;
+}
+.blnm .blnm-nearby-link {
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 19px;
+	line-height: 26px;
+	color: var(--blnm-spruce);
+}
+.blnm .blnm-nearby-meta,
+.blnm .blnm-nearby-lenders {
+	font-size: 14px;
+	line-height: 21px;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-none-foot {
+	margin: 0;
+	font-size: 13px;
+	color: var(--blnm-ink-muted);
+}

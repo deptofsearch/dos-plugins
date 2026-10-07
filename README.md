@@ -31,10 +31,9 @@ tests/                Stubbed-WordPress tests, run on every release
 Each plugin has its own `CHANGELOG.md` and its own version, and is released on
 its own tag.
 
-DoS Outdoor Seating and DoS Works were moved here from the project repo on
-2026-10-07, as they were. Neither vendors the GitHub updater yet, so their
-sites keep taking manual ZIP uploads until it is added; their change history
-is in `readme.txt` (Outdoor Seating) rather than a `CHANGELOG.md`.
+DoS Outdoor Seating and DoS Works moved here from the project repo on
+2026-10-07. Outdoor Seating's history up to 0.6.3 is in its `readme.txt`;
+`CHANGELOG.md` carries it from 0.6.4.
 
 ## Tests
 
@@ -85,9 +84,9 @@ that keep a token elsewhere can supply it through the `dos_github_updater_token`
 filter. Several DoS plugins on one site share one cached list of the
 repository's releases, so adding plugins does not add API requests.
 
-The City Search and Market Images ZIPs are installed the same way, from the
-asset named for the plugin, and need that first manual upload for the same
-reason.
+The City Search, Market Images, Outdoor Seating and Works ZIPs are installed
+the same way, from the asset named for the plugin, and need that first manual
+upload for the same reason.
 
 GitHub's "Latest" badge on the releases page points at whichever plugin was
 released last. That is harmless: the updaters never use `/releases/latest`,

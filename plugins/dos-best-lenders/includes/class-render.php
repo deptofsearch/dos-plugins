@@ -74,7 +74,8 @@ final class Render {
 	/**
 	 * "What reviewers mention": 2-3 paraphrased client experiences ("One client said ..."), then our own summary
 	 * of the overall pattern, then pros/cons. All of it is our writing; no review text is quoted.
-	 * Collapsible; blnm.js closes it on narrow screens.
+	 * Collapsible and closed when the page loads, on every screen; the summary line opens it. The text is in
+	 * the HTML either way, so crawlers and screen readers still get it.
 	 */
 	public static function review_block( array $l ) {
 		$sum  = (string) ( $l['review_summary'] ?? '' );
@@ -86,7 +87,7 @@ final class Render {
 		}
 		ob_start();
 		?>
-<details class="blnm-says" open>
+<details class="blnm-says">
 <summary><?php esc_html_e( 'What reviewers mention', 'dos-best-lenders' ); ?></summary>
 <?php if ( $hl ) : ?>
 <ul class="blnm-highlights">

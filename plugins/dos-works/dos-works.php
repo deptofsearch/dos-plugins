@@ -1,21 +1,35 @@
 <?php
 /**
  * Plugin Name: DoS Works
- * Plugin URI:  https://departmentofsearch.com
+ * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: Registers the Works (dos_work) post type, its case-file meta fields and a simple meta box for the Department of Search portfolio.
- * Version:     0.1.0
+ * Version:     0.1.1
  * Requires at least: 6.6
  * Requires PHP: 8.3
  * Author:      Department of Search
  * License:     GPL-2.0-or-later
  * Text Domain: dos-works
+ * Update URI:  https://github.com/deptofsearch/dos-plugins
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_WORKS_VERSION', '0.1.0' );
+define( 'DOS_WORKS_VERSION', '0.1.1' );
+
+// Not behind is_admin(): WP-Cron and the REST API run the update check too.
+require_once __DIR__ . '/includes/class-dos-github-updater.php';
+
+( new DOS_GitHub_Updater(
+	array(
+		'slug'        => 'dos-works',
+		'basename'    => plugin_basename( __FILE__ ),
+		'version'     => DOS_WORKS_VERSION,
+		'name'        => 'DoS Works',
+		'description' => 'The Works (dos_work) post type, its case-file meta fields and meta box for the Department of Search portfolio.',
+	)
+) )->boot();
 
 /**
  * Post type. has_archive is false: a PAGE with the slug `works` hosts the archive.

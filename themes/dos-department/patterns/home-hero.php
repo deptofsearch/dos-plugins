@@ -1,0 +1,30 @@
+<?php
+/**
+ * Title: Home hero and seals
+ * Slug: dos-department/home-hero
+ * Categories: dos-department
+ * Inserter: no
+ */
+?>
+<!-- wp:html -->
+<header class="dos-wrap dos-grid-2" style="gap: 48px; align-items: center; padding-top: 96px; padding-bottom: 96px;">
+<div style="display: flex; flex-direction: column; gap: 24px;">
+<span class="dos-kicker">Field work for the automated age</span>
+<h1 class="dos-h1" style="font-size: 112px;">Search,<br><span class="dos-accent">automated.</span></h1>
+<p style="margin: 0; font-size: 21px; line-height: 32px; color: var(--ink-muted); max-width: 520px;">The Department of Search searches for answers, skills, and workflows to augment and automate — then documents how they work.</p>
+<p style="margin: 0; font-size: 17px; line-height: 28px; color: var(--ink-muted); max-width: 520px;">I'm Ryan Rose. This is the portfolio, the blog and the resume, in one office.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap;">
+<a class="dos-btn dos-btn--primary" href="/works/">View the works</a>
+<a class="dos-btn dos-btn--ghost" href="/personnel-file/">Personnel file</a>
+</div>
+</div>
+<svg viewBox="0 0 560 520" style="width: 100%; height: auto; display: block;" aria-hidden="true"><rect x="0" y="0" width="150" height="400" style="fill: var(--charcoal);"></rect><path d="M260 245 H300 V155 H340 M300 245 V335 H340 M420 155 H450 V245 H470 M420 335 H450 V245" style="fill: none; stroke: var(--graphite); stroke-width: 10;"></path><rect x="170" y="200" width="90" height="90" style="fill: var(--navy);"></rect><circle cx="208" cy="238" r="20" style="fill: none; stroke: var(--on-navy); stroke-width: 8;"></circle><rect x="220" y="250" width="9" height="24" style="fill: var(--on-navy);" transform="rotate(-45 224 262)"></rect><rect x="340" y="115" width="80" height="80" style="fill: var(--graphite);"></rect><rect x="340" y="295" width="80" height="80" style="fill: var(--graphite);"></rect><path d="M398.0 155.0 L397.6 158.9 L403.2 161.2 L400.8 167.0 L395.2 164.7 L392.7 167.7 L389.7 170.2 L392.0 175.8 L386.2 178.2 L383.9 172.6 L380.0 173.0 L376.1 172.6 L373.8 178.2 L368.0 175.8 L370.3 170.2 L367.3 167.7 L364.8 164.7 L359.2 167.0 L356.8 161.2 L362.4 158.9 L362.0 155.0 L362.4 151.1 L356.8 148.8 L359.2 143.0 L364.8 145.3 L367.3 142.3 L370.3 139.8 L368.0 134.2 L373.8 131.8 L376.1 137.4 L380.0 137.0 L383.9 137.4 L386.2 131.8 L392.0 134.2 L389.7 139.8 L392.7 142.3 L395.2 145.3 L400.8 143.0 L403.2 148.8 L397.6 151.1Z" style="fill: var(--on-charcoal);"></path><circle cx="380" cy="155" r="8" style="fill: var(--graphite);"></circle><path d="M398.0 335.0 L397.6 338.9 L403.2 341.2 L400.8 347.0 L395.2 344.7 L392.7 347.7 L389.7 350.2 L392.0 355.8 L386.2 358.2 L383.9 352.6 L380.0 353.0 L376.1 352.6 L373.8 358.2 L368.0 355.8 L370.3 350.2 L367.3 347.7 L364.8 344.7 L359.2 347.0 L356.8 341.2 L362.4 338.9 L362.0 335.0 L362.4 331.1 L356.8 328.8 L359.2 323.0 L364.8 325.3 L367.3 322.3 L370.3 319.8 L368.0 314.2 L373.8 311.8 L376.1 317.4 L380.0 317.0 L383.9 317.4 L386.2 311.8 L392.0 314.2 L389.7 319.8 L392.7 322.3 L395.2 325.3 L400.8 323.0 L403.2 328.8 L397.6 331.1Z" style="fill: var(--on-charcoal);"></path><circle cx="380" cy="335" r="8" style="fill: var(--graphite);"></circle><rect x="470" y="200" width="90" height="90" style="fill: var(--vermilion);"></rect><path d="M492 246 L509 263 L540 228" style="fill: none; stroke: var(--on-vermilion); stroke-width: 10;"></path><rect x="170" y="440" width="390" height="6" style="fill: var(--graphite);"></rect><rect x="170" y="460" width="390" height="6" style="fill: var(--graphite);"></rect><text x="24" y="40" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 2px; fill: var(--on-charcoal);">DIV. 00</text></svg>
+</header>
+
+<section class="dos-wrap" style="display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; padding-bottom: 96px;">
+<svg class="dos-seal" viewBox="0 0 128 128" role="img" aria-label="Workflows built"><defs><path id="s1" d="M64 64 m-48 0 a48 48 0 1 1 96 0 a48 48 0 1 1 -96 0"></path></defs><circle class="disc" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="40"></circle><text class="arc"><textPath href="#s1" startOffset="2%">Workflows built · Dept. of Search ·</textPath></text><text class="big" x="64" y="72">[00]</text><text class="small" x="64" y="86">N8N</text></svg>
+<svg class="dos-seal" viewBox="0 0 128 128" role="img" aria-label="Sites managed"><defs><path id="s2" d="M64 64 m-48 0 a48 48 0 1 1 96 0 a48 48 0 1 1 -96 0"></path></defs><circle class="disc" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="40"></circle><text class="arc"><textPath href="#s2" startOffset="2%">Sites managed · Web division ·</textPath></text><text class="big" x="64" y="72">[00]</text><text class="small" x="64" y="86">WORDPRESS</text></svg>
+<svg class="dos-seal" viewBox="0 0 128 128" role="img" aria-label="Pages indexed"><defs><path id="s3" d="M64 64 m-48 0 a48 48 0 1 1 96 0 a48 48 0 1 1 -96 0"></path></defs><circle class="disc" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="40"></circle><text class="arc"><textPath href="#s3" startOffset="2%">Pages indexed · Search division ·</textPath></text><text class="big" x="64" y="72">[00]</text><text class="small" x="64" y="86">SEARCH</text></svg>
+<svg class="dos-seal" viewBox="0 0 128 128" role="img" aria-label="Years in sales"><defs><path id="s4" d="M64 64 m-48 0 a48 48 0 1 1 96 0 a48 48 0 1 1 -96 0"></path></defs><circle class="disc" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="62"></circle><circle class="ring" cx="64" cy="64" r="40"></circle><text class="arc"><textPath href="#s4" startOffset="2%">Years in sales · Field office ·</textPath></text><text class="big" x="64" y="72">[00]</text><text class="small" x="64" y="86">YEARS</text></svg>
+</section>
+<!-- /wp:html -->

@@ -197,14 +197,7 @@
     });
   }
 
-  /* Reviewer summaries start open (no-JS default) and collapse on phones. */
-  function initSays() {
-    if (!window.matchMedia || !window.matchMedia('(max-width: 640px)').matches) return;
-    Array.prototype.forEach.call(document.querySelectorAll('.blnm-says'), function (d) { d.removeAttribute('open'); });
-  }
-
   function boot() {
-    initSays();
     Array.prototype.forEach.call(document.querySelectorAll('[data-blnm-grid]'), initGrid);
     Array.prototype.forEach.call(document.querySelectorAll('.blnm-search'), initSearch);
   }

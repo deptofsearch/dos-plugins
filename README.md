@@ -86,7 +86,7 @@ that keep a token elsewhere can supply it through the `dos_github_updater_token`
 filter. Several DoS plugins on one site share one cached list of the
 repository's releases, so adding plugins does not add API requests.
 
-The City Search, Market Images, Outdoor Seating and Works ZIPs are installed
+The City Search, Market Images, Outdoor Seating, Works and Best Lenders ZIPs are installed
 the same way, from the asset named for the plugin, and need that first manual
 upload for the same reason.
 

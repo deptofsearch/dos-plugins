@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.8
+Stable tag: 0.4.9
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,10 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.4.9 =
+* "What reviewers mention" starts closed on every screen; clicking it opens the summary, highlights and pros. It used to start open on desktop and close only on phones. The text is still in the page HTML. Version bump so the changed blnm.js loads past caches.
+* Updates itself from GitHub releases (shared DoS updater, `Plugin URI` and `Update URI` headers, tag `dos-best-lenders-v<version>`). 0.4.8 has no updater, so 0.4.9 is installed by hand once.
 
 = 0.4.8 =
 * Defers meta description and Open Graph/Twitter tags to the DoS Toolkit SEO module when it is active (same as for Yoast, Rank Math, AIOSEO, SEOPress).

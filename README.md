@@ -8,6 +8,9 @@ plugins/
   dos-toolkit/        The standard toolkit: SEO, AI Search, Images, Utilities
   dos-city-search/    City search box (Real Estate Values Near Me, Open Houses In)
   dos-market-images/  Illustrated market images (Real Estate Values Near Me)
+  dos-outdoor-seating/ Venue pages and city cards (Outdoor Seating Near Me)
+  dos-works/          Works post type (departmentofsearch.com)
+themes/               Site themes, kept here for source control (not released)
 shared/               Code every plugin vendors a copy of (the GitHub updater)
 tools/                Scripts that support a plugin and never ship in it
 legacy/               Plugins kept as reference or as shipped
@@ -20,10 +23,18 @@ tests/                Stubbed-WordPress tests, run on every release
 | DoS Toolkit | `plugins/dos-toolkit` | `dos-toolkit-v<version>` | The standard toolkit, as modules that ship disabled. |
 | DoS - City Search | `plugins/dos-city-search` | `dos-city-search-v<version>` | City search box for Real Estate Values Near Me and Open Houses In: lists from city-named URLs or a City taxonomy. |
 | DoS - Market Images | `plugins/dos-market-images` | `dos-market-images-v<version>` | City carousel, state buttons and topic grids for Real Estate Values Near Me. Its generating and uploading scripts are in `tools/market-images/`. |
+| DoS Outdoor Seating | `plugins/dos-outdoor-seating` | `dos-outdoor-seating-v<version>` | Outdoor Seating Near Me: venue post type, `osn/v1` REST upsert, venue pages, city cards that take over TablePress. Plan and REST contract in `docs/outdoor-seating/`. |
+| DoS Works | `plugins/dos-works` | `dos-works-v<version>` | departmentofsearch.com: the Works (portfolio) post type and its meta box. |
+| `themes/` | `themes/*` | not released | departmentofsearch.com themes: `dos-department` (block theme) and `dos-magazine-child`. |
 | `legacy/` | `legacy/*` | not released | Reference only: the plugins the Toolkit absorbed, and `dos-ohi-city-search`, the Open Houses In city search as shipped. City Search 2.0.0 replaces it. |
 
 Each plugin has its own `CHANGELOG.md` and its own version, and is released on
 its own tag.
+
+DoS Outdoor Seating and DoS Works were moved here from the project repo on
+2026-10-07, as they were. Neither vendors the GitHub updater yet, so their
+sites keep taking manual ZIP uploads until it is added; their change history
+is in `readme.txt` (Outdoor Seating) rather than a `CHANGELOG.md`.
 
 ## Tests
 

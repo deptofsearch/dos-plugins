@@ -1,0 +1,346 @@
+/* DoS Department — site styles. Loads after bundle.css (design-system components).
+   Tokens come from theme.json (--wp--preset--color--*) so the Paper style variation flips everything. */
+
+/* ---------- Tokens: map design-system names onto the theme.json palette ---------- */
+:root {
+	--paper: var(--wp--preset--color--paper);
+	--paper-raised: var(--wp--preset--color--paper-raised);
+	--black: var(--wp--preset--color--black);
+	--charcoal: var(--wp--preset--color--charcoal);
+	--on-charcoal: var(--wp--preset--color--on-charcoal);
+	--graphite: var(--wp--preset--color--graphite);
+	--ink: var(--wp--preset--color--ink);
+	--ink-muted: var(--wp--preset--color--ink-muted);
+	--rule: var(--wp--preset--color--rule);
+	--navy: var(--wp--preset--color--navy);
+	--on-navy: var(--wp--preset--color--on-navy);
+	--navy-ink: var(--wp--preset--color--navy-ink);
+	--navy-deep: var(--wp--preset--color--navy-deep);
+	--vermilion: var(--wp--preset--color--vermilion);
+	--on-vermilion: var(--wp--preset--color--on-vermilion);
+	--orange: var(--wp--preset--color--orange);
+	--amber: var(--wp--preset--color--amber);
+	--signal: var(--wp--preset--color--signal);
+	--space-1: 4px; --space-2: 8px; --space-4: 16px; --space-6: 24px; --space-10: 40px; --space-16: 64px;
+	--radius-none: 0px; --radius-sm: 2px; --radius-pill: 999px;
+	--font-display: var(--wp--preset--font-family--display);
+	--font-sans: var(--wp--preset--font-family--sans);
+	--font-mono: var(--wp--preset--font-family--mono);
+}
+
+/* Night is the default: show the reversed logo. The Paper variation flips this (styles/paper.json). */
+.dos-logo--light { display: none; }
+.dos-logo--dark { display: inline-block; }
+
+/* ---------- Page helpers (from pages/assets/dos-site.css) ---------- */
+body { margin: 0; background: var(--paper); color: var(--ink); }
+body.dos { font-family: var(--font-sans); font-size: 17px; line-height: 28px; }
+.wp-site-blocks { padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
+.wp-site-blocks > main { flex: 1 0 auto; }
+.wp-site-blocks > footer { margin-top: auto; }
+.wp-site-blocks > * { margin-block-start: 0; margin-block-end: 0; }
+.dos-main { display: block; }
+.dos-wrap { width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: var(--space-6); padding-right: var(--space-6); box-sizing: border-box; }
+.dos-section { padding-top: 96px; padding-bottom: 96px; }
+.dos-band { background: var(--charcoal); color: var(--on-charcoal); }
+.dos-band .dos-h2, .dos-band .dos-h3 { color: var(--on-charcoal); }
+.dos-band .dos-kicker { color: #A3A7AE; }
+.dos-band p { color: #C9CBCF; }
+.dos-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); }
+.dos-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.dos-link { color: var(--navy-ink); font-family: var(--font-mono); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.dos-link:hover { color: var(--ink); }
+.dos-icon { width: 20px; height: 20px; flex: none; }
+.dos-lead { margin: 0; font-size: 21px; line-height: 32px; color: var(--ink-muted); max-width: 640px; }
+.dos-empty { color: var(--ink-muted); padding: var(--space-10) 0; }
+@media (max-width: 900px) {
+	.dos-h1 { font-size: 64px !important; }
+	.dos-grid-3, .dos-grid-2 { grid-template-columns: minmax(0, 1fr); }
+	.dos-section { padding-top: 64px; padding-bottom: 64px; }
+}
+@media (max-width: 640px) { .dos-lead { font-size: 19px; line-height: 30px; } }
+
+/* design-system pages use `a{color:inherit}`; keep component links neutral, content links stay navy-ink */
+.dos-nav a, .dos-card, .dos-post, .dos-footer a { text-decoration: none; }
+.dos-footer a { color: inherit; }
+.dos-footer a.dos-kicker { color: #A3A7AE; }
+.dos-footer a.dos-kicker:hover { color: var(--on-charcoal); }
+
+/* Extra button/tag flavours */
+.dos-btn--dark { background: var(--navy); color: var(--on-navy); }
+.dos-btn--dark:hover { background: var(--navy-deep); }
+.dos-btn { text-decoration: none; }
+.dos-btn--primary, .dos-btn--primary:hover { color: var(--on-navy); }
+.dos-btn--accent, .dos-btn--accent:hover { color: var(--on-vermilion); }
+.dos-btn--accent:hover { filter: brightness(1.08); }
+.dos-band .dos-btn--ghost, .dos-footer .dos-btn--ghost { color: var(--on-charcoal); border-color: #5A606A; }
+.dos-band .dos-btn--ghost:hover { border-color: var(--on-charcoal); }
+.dos-tag { text-decoration: none; }
+a.dos-tag:hover { color: var(--ink); }
+a.dos-tag--solid:hover { color: var(--on-charcoal); }
+.dos-tag-row { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 8px; }
+
+/* ---------- Accessibility ---------- */
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible, .wp-element-button:focus-visible {
+	outline: 3px solid var(--orange); outline-offset: 2px;
+}
+.dos-skip { position: absolute; left: -9999px; top: 8px; z-index: 1000; padding: 10px 16px; background: var(--vermilion); color: var(--on-vermilion); font-family: var(--font-mono); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; }
+.dos-skip:focus { left: 8px; }
+
+/* ---------- Header / nav ---------- */
+.dos-site-header, .wp-block-template-part { margin: 0; }
+.dos-nav { position: relative; }
+.dos-nav__brand span { white-space: nowrap; }
+.dos-nav__menu { display: none; }
+.dos-nav__menu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 0 14px; border: 2px solid var(--graphite); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+.dos-nav__menu summary::-webkit-details-marker { display: none; }
+.dos-nav__menu[open] summary { border-color: var(--ink); }
+.dos-nav__menu-icon { width: 14px; height: 10px; background: linear-gradient(var(--ink) 0 0) top / 100% 2px no-repeat, linear-gradient(var(--ink) 0 0) center / 100% 2px no-repeat, linear-gradient(var(--ink) 0 0) bottom / 100% 2px no-repeat; }
+.dos-nav__menu ul { position: absolute; left: 0; right: 0; top: 100%; z-index: 50; margin: 0; padding: var(--space-4) var(--space-6) var(--space-6); list-style: none; display: grid; gap: 4px; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.dos-nav__menu li a:not(.dos-btn) { display: block; padding: 12px 0; border-bottom: 1px solid var(--rule); font-family: var(--font-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; color: var(--ink-muted); }
+.dos-nav__menu li a[aria-current] { color: var(--ink); box-shadow: inset 3px 0 0 var(--vermilion); padding-left: 12px; }
+@media (max-width: 720px) {
+	.dos-nav { padding-left: var(--space-4); padding-right: var(--space-4); gap: var(--space-4); }
+	.dos-nav__menu { display: block; }
+	.dos-nav__brand { font-size: 18px; gap: 8px; min-width: 0; }
+	.dos-nav__brand img { width: 28px; height: 28px; }
+	.dos-nav__menu ul { padding-left: var(--space-4); padding-right: var(--space-4); }
+}
+
+/* Section header row with a link on the right (home) */
+.dos-section-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.dos-home-section { border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 48px; }
+.dos-home-section--tight { gap: 32px; }
+.dos-home-section.dos-section { box-sizing: border-box; }
+
+/* Page heads (Works / Dispatches / archive / search / generic) */
+.dos-page-head { padding-top: 96px; padding-bottom: 48px; display: flex; flex-direction: column; gap: 24px; }
+.dos-page-head > * { margin: 0; }
+.dos-page-head .dos-tag-row { padding-top: 8px; }
+.dos-page-head .dos-h1 { font-size: 96px; }
+@media (max-width: 640px) { .dos-page-head { padding-top: 56px; padding-bottom: 32px; } .dos-page-head .dos-h1 { font-size: 60px; } }
+.dos-works-grid { padding-bottom: 96px; }
+.dos-featured-section { padding-bottom: 64px; }
+.dos-list-section { padding-bottom: 96px; }
+.dos-feature-card { gap: 0; }
+.dos-feature-poster { aspect-ratio: auto; min-height: 320px; }
+.dos-feature-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dos-feature-card__body { padding: 40px; align-content: center; gap: 16px; }
+.dos-feature-card__body .dos-h2 { font-size: 44px; }
+.dos-feature-card__body .dos-card__text { font-size: 17px; line-height: 28px; }
+@media (max-width: 900px) { .dos-feature-card__body { padding: 24px; } .dos-feature-card__body .dos-h2 { font-size: 36px; } .dos-feature-poster { min-height: 220px; } }
+.dos-work__poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.dos-card__title { overflow-wrap: anywhere; }
+
+/* Pagination */
+.dos-pagination { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; border-top: 1px solid var(--rule); padding-top: 32px; margin-top: 8px; }
+.dos-pagination .page-numbers { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; padding: 0 14px; border: 2px solid var(--graphite); font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; color: var(--ink); }
+.dos-pagination a.page-numbers:hover { border-color: var(--ink); }
+.dos-pagination .current { background: var(--navy); border-color: var(--navy); color: var(--on-navy); }
+
+/* Case-file band on the Works page */
+.dos-case-band { gap: 64px; align-items: start; }
+.dos-case-band__lead { display: flex; flex-direction: column; gap: 16px; }
+.dos-case-band__lead > * { margin: 0; }
+.dos-case-band__text { font-size: 18px; line-height: 30px; }
+.dos-case-band__tags { display: flex; gap: 10px; flex-wrap: wrap; }
+.dos-case-band__tags .dos-tag:not(.dos-tag--navy) { color: #C9CBCF; }
+.dos-case-band__rows { display: grid; gap: 0; }
+.dos-case-row { padding: 24px 0; border-top: 1px solid rgba(236,230,218,0.14); display: grid; grid-template-columns: 120px 1fr; gap: 24px; }
+.dos-case-row p { margin: 0; font-size: 16px; line-height: 26px; }
+.dos-case-row--cta { display: block; }
+@media (max-width: 900px) { .dos-case-band { gap: 32px; } }
+@media (max-width: 560px) { .dos-case-row { grid-template-columns: 1fr; gap: 8px; } }
+
+/* Mobile paddings for hero (inline styles come from the design; keep them from overflowing) */
+@media (max-width: 900px) {
+	.dos-wrap.dos-grid-2 { gap: 32px !important; padding-top: 56px !important; padding-bottom: 56px !important; }
+	.dos-wrap.dos-grid-2 .dos-h1 { font-size: 64px !important; }
+}
+@media (max-width: 640px) {
+	.dos-wrap.dos-grid-2 .dos-h1 { font-size: 56px !important; }
+	.dos-footer { padding: var(--space-10) var(--space-4); }
+	.dos-footer img { max-width: 100%; height: auto !important; max-height: 80px; }
+}
+.dos-footer > div { margin: 0; }
+
+/* ---------- Prose (single posts, generic pages, case-file body) ---------- */
+.dos-prose { max-width: 808px; margin: 0 auto; padding: 0 var(--space-6); box-sizing: border-box; font-size: 18px; line-height: 30px; color: var(--ink); }
+.dos-prose > * { margin-top: 0; margin-bottom: 24px; }
+.dos-prose > h2 { margin-top: 56px; font-size: 40px; }
+.dos-prose > h3 { margin-top: 40px; font-size: 28px; }
+.dos-prose > h4, .dos-prose > h5, .dos-prose > h6 { margin-top: 32px; }
+.dos-prose p, .dos-prose li { color: var(--ink); }
+.dos-prose ul, .dos-prose ol { padding-left: 24px; }
+.dos-prose li { margin-bottom: 8px; }
+.dos-prose img, .dos-prose video, .dos-prose iframe { max-width: 100%; height: auto; border-radius: 0; box-shadow: none; }
+.dos-prose figure { margin-left: 0; margin-right: 0; }
+.dos-prose figcaption { margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.dos-prose blockquote { margin-left: 0; margin-right: 0; padding-left: 24px; border-left: 4px solid var(--navy-ink); font-size: 21px; line-height: 32px; }
+.dos-prose pre { overflow-x: auto; font-family: var(--font-mono); font-size: 14px; line-height: 22px; background: var(--paper-raised); border: 1px solid var(--rule); padding: 16px; }
+.dos-prose code { font-family: var(--font-mono); font-size: .88em; background: var(--paper-raised); padding: 2px 6px; }
+.dos-prose pre code { background: none; padding: 0; }
+.dos-prose hr { border: 0; border-top: 1px solid var(--rule); margin: 48px 0; }
+.dos-prose table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.dos-prose th, .dos-prose td { border: 1px solid var(--rule); padding: 10px 12px; text-align: left; }
+.dos-prose th { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+.dos-prose .alignwide, .dos-prose .alignfull { max-width: none; }
+.dos-page-head--prose.dos-wrap { max-width: 808px; }
+.dos-page-article { padding-bottom: 96px; }
+@media (max-width: 640px) { .dos-prose { font-size: 17px; line-height: 28px; padding: 0 var(--space-4); } .dos-prose > h2 { font-size: 32px; margin-top: 40px; } }
+
+/* Landing pages keep their own hero; widen the column and drop the template title */
+.dos-is-landing .dos-page-head { display: none; }
+.dos-is-landing .dos-entry-content { max-width: none; padding: 0; font-size: 17px; line-height: 28px; }
+.dos-is-landing .dos-page-article { padding-bottom: 0; }
+
+/* ---------- Single Dispatch ---------- */
+.dos-single { padding-top: 72px; padding-bottom: 0; }
+.dos-single__head { max-width: 808px; margin: 0 auto; padding: 0 var(--space-6) 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
+.dos-single__head > * { margin: 0; }
+.dos-single__title { font-size: 72px; line-height: .96; }
+.dos-single__head .dos-lead { font-size: 21px; max-width: none; }
+.dos-single__head .wp-block-post-excerpt__excerpt { margin: 0; }
+.dos-entry-kicker a { color: inherit; text-decoration: none; }
+.dos-entry-kicker a:hover { color: var(--ink); }
+.dos-single__image { max-width: 1200px; margin: 0 auto 56px; padding: 0 var(--space-6); box-sizing: border-box; }
+.dos-single__image img { width: 100%; border-radius: 0; display: block; }
+.dos-single__body { padding-bottom: 8px; }
+.dos-single__foot { max-width: 808px; margin: 0 auto; padding: 24px var(--space-6) 96px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+.dos-single__foot > * { margin: 0; }
+.dos-entry-tags { padding-top: 0; }
+.dos-postnav { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+.dos-postnav__cell { display: grid; gap: 8px; align-content: start; padding: 24px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); text-decoration: none; color: var(--ink); }
+.dos-postnav__cell--empty { display: block; }
+.dos-postnav__cell.next { text-align: right; }
+a.dos-postnav__cell:hover { background: var(--paper-raised); }
+a.dos-postnav__cell:hover .dos-postnav__title { color: var(--navy-ink); }
+.dos-postnav__title { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.05; text-transform: uppercase; }
+@media (max-width: 900px) { .dos-single__title { font-size: 52px; } }
+@media (max-width: 640px) {
+	.dos-single { padding-top: 40px; }
+	.dos-single__head, .dos-single__foot { padding-left: var(--space-4); padding-right: var(--space-4); }
+	.dos-single__title { font-size: 40px; }
+	.dos-single__image { padding: 0 var(--space-4); margin-bottom: 32px; }
+	.dos-postnav { grid-template-columns: 1fr; }
+	.dos-postnav__cell.next { text-align: left; }
+}
+
+/* ---------- Single Work (case file) ---------- */
+.dos-case-head { padding-top: 64px; padding-bottom: 56px; display: flex; flex-direction: column; gap: 32px; }
+.dos-case-head > * { margin: 0; }
+.dos-case-head__back { align-self: flex-start; }
+.dos-case-head__grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 64px; align-items: start; }
+.dos-case-head__main { display: flex; flex-direction: column; gap: 20px; }
+.dos-case-head__main > * { margin: 0; }
+.dos-case-head__title { font-size: 88px; }
+.dos-stamp { border: 1px solid var(--rule); background: var(--paper-raised); }
+.dos-stamp__no { display: flex; justify-content: space-between; align-items: baseline; padding: 20px; background: var(--charcoal); color: var(--on-charcoal); }
+.dos-stamp__no .dos-kicker { color: #A3A7AE; }
+.dos-stamp__no strong { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; letter-spacing: .02em; }
+.dos-stamp__facts { margin: 0; }
+.dos-stamp__facts > div { padding: 16px 20px; border-top: 1px solid var(--rule); }
+.dos-stamp__facts > div:first-child { border-top: 0; }
+.dos-stamp__facts dt { margin: 0; }
+.dos-stamp__facts dd { margin: 4px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 22px; }
+.dos-case-head__image img { width: 100%; display: block; border-radius: 0; }
+.dos-case__body { padding-top: 24px; }
+.dos-case__body > h2 { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule); font-family: var(--font-mono); font-weight: 500; font-size: 13px; line-height: 16px; letter-spacing: .12em; color: var(--navy-ink); }
+.dos-case__body > h2 + * { margin-top: 0; }
+.dos-case__foot { max-width: 808px; margin: 0 auto; padding: 48px var(--space-6) 96px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; align-items: flex-start; }
+.dos-case__foot > * { margin: 0; }
+.dos-result { width: 100%; box-sizing: border-box; padding: 32px; background: var(--charcoal); color: var(--on-charcoal); border-left: 6px solid var(--navy); }
+.dos-result .dos-kicker { color: #A3A7AE; }
+.dos-result p { margin: 8px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1.1; text-transform: uppercase; color: var(--on-charcoal); }
+@media (max-width: 900px) { .dos-case-head__grid { grid-template-columns: 1fr; gap: 32px; } .dos-case-head__title { font-size: 56px; } }
+@media (max-width: 640px) { .dos-case-head { padding-top: 40px; } .dos-case-head__title { font-size: 44px; } .dos-case__foot { padding-left: var(--space-4); padding-right: var(--space-4); } .dos-result p { font-size: 26px; } }
+
+/* ---------- Contact ---------- */
+.dos-contact-head { padding-top: 96px; padding-bottom: 96px; gap: 64px; align-items: center; }
+.dos-contact-head__copy { display: flex; flex-direction: column; gap: 20px; }
+.dos-contact-head__copy > * { margin: 0; }
+.dos-contact-head__small { font-size: 17px; line-height: 28px; color: var(--ink-muted); max-width: 520px; }
+.dos-contact-head__actions { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 8px; }
+.dos-sheet { border: 1px solid var(--rule); background: var(--paper-raised); }
+.dos-sheet__row { display: grid; gap: 4px; padding: 20px 24px; border-top: 1px solid var(--rule); }
+.dos-sheet__row:first-child { border-top: 0; }
+.dos-sheet__value { font-family: var(--font-mono); font-size: 15px; line-height: 22px; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+a.dos-sheet__value { color: var(--navy-ink); }
+a.dos-sheet__value:hover { color: var(--ink); text-decoration: underline; }
+.dos-sheet__value--status { display: flex; align-items: center; gap: 8px; }
+.dos-sheet__dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--signal); }
+@media (max-width: 900px) { .dos-contact-head { padding-top: 56px; padding-bottom: 56px; gap: 32px; } }
+
+/* ---------- 404 / search ---------- */
+.dos-404 { padding-top: 120px; padding-bottom: 48px; display: flex; flex-direction: column; gap: 24px; }
+.dos-404 > * { margin: 0; }
+.dos-404 .dos-h1 { font-size: 96px; }
+.dos-404__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.dos-404__search { padding-bottom: 120px; }
+@media (max-width: 640px) { .dos-404 { padding-top: 64px; } .dos-404 .dos-h1 { font-size: 56px; } }
+.dos-searchform { max-width: 560px; }
+.dos-searchform .wp-block-search__inside-wrapper { gap: 12px; flex-wrap: wrap; }
+.dos-searchform input[type="search"] { height: 44px; padding: 0 14px; border: 1px solid var(--graphite); border-radius: 2px; background: var(--paper-raised); color: var(--ink); font-family: var(--font-sans); font-size: 15px; min-width: 0; }
+.dos-searchform .wp-block-search__button { height: 44px; margin: 0; padding: 0 24px; border: 2px solid transparent; border-radius: 0; background: var(--navy); color: var(--on-navy); font-family: var(--font-mono); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.dos-searchform .wp-block-search__button:hover { background: var(--navy-deep); }
+
+/* ---------- Landing pages (.dos-landing in raw post content: SEO + AI Insights) ----------
+   Restyled in the Department look. Scoped under .dos-landing so .dos-card / .dos-grid / .dos-section-head
+   don't fight the design-system components of the same name. */
+.dos-landing { max-width: 1080px; margin: 0 auto; padding: 56px var(--space-6) 0; box-sizing: border-box; color: var(--ink); }
+.dos-landing p:empty { display: none; }
+.dos-landing section { margin: 0 0 96px; padding: 0; }
+.dos-landing p { margin: 0; color: var(--ink-muted); }
+.dos-landing .dos-hero { text-align: center; padding-top: 24px; }
+.dos-landing .dos-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 24px; font-family: var(--font-mono); font-weight: 500; font-size: 12px; line-height: 16px; letter-spacing: .12em; text-transform: uppercase; color: var(--navy-ink); }
+.dos-landing .dos-eyebrow::before { content: ""; width: 10px; height: 10px; background: var(--navy-ink); }
+.dos-landing .dos-hero h1 { max-width: 15ch; margin: 0 auto 24px; font-size: clamp(48px, 8vw, 92px); line-height: .94; }
+.dos-landing .dos-lede { max-width: 62ch; margin: 0 auto 32px; font-size: 21px; line-height: 32px; color: var(--ink-muted); }
+.dos-landing .dos-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0 0 56px; }
+.dos-landing .dos-actions p { display: contents; }
+.dos-landing .dos-hero-media img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 0; box-shadow: none; }
+.dos-landing .dos-section-head { display: grid; gap: var(--space-2); max-width: 760px; margin: 0 0 40px; }
+.dos-landing .dos-section-head h2 { margin: 0; font-size: clamp(34px, 5vw, 56px); line-height: 1; }
+.dos-landing .dos-section-head p { margin: 8px 0 0; font-size: 19px; line-height: 30px; color: var(--ink-muted); }
+.dos-landing .dos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.dos-landing .dos-card { display: block; padding: var(--space-6); background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 0; box-shadow: none; }
+.dos-landing .dos-card h3 { margin: 0 0 var(--space-2); font-size: 28px; line-height: 1.05; }
+.dos-landing .dos-card p { font-size: 16px; line-height: 26px; }
+.dos-landing .dos-card-mark { display: block; position: relative; width: 28px; height: 28px; margin: 0 0 20px; background: var(--navy); }
+.dos-landing .dos-card-mark::after { content: ""; position: absolute; inset: 9px; background: var(--on-navy); }
+.dos-landing .dos-steps { counter-reset: dos-step; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+.dos-landing .dos-steps li { counter-increment: dos-step; margin: 0; padding: var(--space-6); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: transparent; }
+.dos-landing .dos-steps li::before { content: counter(dos-step, decimal-leading-zero); display: block; margin: 0 0 16px; font-family: var(--font-mono); font-weight: 500; font-size: 12px; letter-spacing: .12em; color: var(--navy-ink); }
+.dos-landing .dos-steps h3 { margin: 0 0 var(--space-2); font-size: 24px; line-height: 1.05; }
+.dos-landing .dos-steps p { font-size: 15px; line-height: 24px; }
+.dos-landing .dos-faq details { border-top: 1px solid var(--rule); padding: 20px 0; }
+.dos-landing .dos-faq details:last-of-type { border-bottom: 1px solid var(--rule); }
+.dos-landing .dos-faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); font-family: var(--font-sans); font-weight: 600; font-size: 18px; line-height: 26px; color: var(--ink); }
+.dos-landing .dos-faq summary::-webkit-details-marker { display: none; }
+.dos-landing .dos-faq summary::after { content: "+"; flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--graphite); font-family: var(--font-mono); font-size: 16px; color: var(--navy-ink); }
+.dos-landing .dos-faq details[open] summary::after { content: "\2212"; }
+.dos-landing .dos-faq details p { margin: 12px 0 0; max-width: 70ch; font-size: 16px; line-height: 26px; }
+.dos-landing .dos-cta { margin-bottom: 0; padding: 72px var(--space-6); background: var(--charcoal); color: var(--on-charcoal); text-align: center; }
+.dos-landing .dos-cta h2 { margin: 0 0 var(--space-4); color: var(--on-charcoal); font-size: clamp(32px, 5vw, 56px); }
+.dos-landing .dos-cta p { max-width: 56ch; margin: 0 auto 32px; color: #C9CBCF; font-size: 19px; line-height: 30px; }
+.dos-landing .dos-cta .dos-actions { margin: 0; }
+.dos-landing .dos-cta .dos-btn--dark { background: var(--vermilion); color: var(--on-vermilion); }
+.dos-landing .dos-cta .dos-btn--ghost { color: var(--on-charcoal); border-color: #5A606A; }
+.dos-landing .dos-cta .dos-btn--ghost:hover { border-color: var(--on-charcoal); }
+.dos-landing .dos-btn { text-decoration: none; }
+.dos-landing .dos-btn--dark { color: var(--on-navy); }
+.dos-landing .dos-btn--ghost { color: var(--ink); }
+.dos-landing .dos-cta .dos-btn--dark { color: var(--on-vermilion); }
+@media (max-width: 900px) { .dos-landing .dos-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+	.dos-landing { padding: 32px var(--space-4) 0; }
+	.dos-landing section { margin-bottom: 64px; }
+	.dos-landing .dos-grid, .dos-landing .dos-steps { grid-template-columns: 1fr; }
+	.dos-landing .dos-lede { font-size: 19px; line-height: 30px; }
+	.dos-landing .dos-cta { padding: 48px var(--space-4); }
+}
+
+/* Global heading styles (theme.json) are uppercase display; components that use plain sans headings reset them */
+.dos-feature__title { font-family: var(--font-sans); text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 16px; line-height: 22px; }
+
+.dos-entry__role, .dos-card__title, .dos-post__title { letter-spacing: 0; }

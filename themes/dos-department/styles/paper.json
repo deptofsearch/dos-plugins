@@ -1,0 +1,104 @@
+{
+ "$schema": "https://schemas.wp.org/trunk/theme.json",
+ "version": 3,
+ "title": "Paper",
+ "settings": {
+  "color": {
+   "palette": [
+    {
+     "slug": "paper",
+     "name": "Paper",
+     "color": "#F2E8D5"
+    },
+    {
+     "slug": "paper-raised",
+     "name": "Paper Raised",
+     "color": "#FAF4E8"
+    },
+    {
+     "slug": "black",
+     "name": "Black",
+     "color": "#0B0C0E"
+    },
+    {
+     "slug": "charcoal",
+     "name": "Charcoal",
+     "color": "#24272C"
+    },
+    {
+     "slug": "on-charcoal",
+     "name": "On Charcoal",
+     "color": "#ECE6DA"
+    },
+    {
+     "slug": "graphite",
+     "name": "Graphite",
+     "color": "#5A606A"
+    },
+    {
+     "slug": "ink",
+     "name": "Ink",
+     "color": "#111316"
+    },
+    {
+     "slug": "ink-muted",
+     "name": "Ink Muted",
+     "color": "#4A4F57"
+    },
+    {
+     "slug": "rule",
+     "name": "Rule",
+     "color": "rgba(17,19,22,0.16)"
+    },
+    {
+     "slug": "navy",
+     "name": "Navy",
+     "color": "#1E3A5F"
+    },
+    {
+     "slug": "on-navy",
+     "name": "On Navy",
+     "color": "#F2E8D5"
+    },
+    {
+     "slug": "navy-ink",
+     "name": "Navy Ink",
+     "color": "#1E3A5F"
+    },
+    {
+     "slug": "navy-deep",
+     "name": "Navy Deep",
+     "color": "#14233A"
+    },
+    {
+     "slug": "vermilion",
+     "name": "Vermilion",
+     "color": "#B23A22"
+    },
+    {
+     "slug": "on-vermilion",
+     "name": "On Vermilion",
+     "color": "#F2E8D5"
+    },
+    {
+     "slug": "orange",
+     "name": "Orange",
+     "color": "#B9531A"
+    },
+    {
+     "slug": "amber",
+     "name": "Amber",
+     "color": "#E8973A"
+    },
+    {
+     "slug": "signal",
+     "name": "Signal",
+     "color": "#1A6E65"
+    }
+   ]
+  }
+ },
+ "styles": {
+  "css": ".dos-logo--dark{display:none!important}.dos-logo--light{display:inline-block!important}"
+ }
+}

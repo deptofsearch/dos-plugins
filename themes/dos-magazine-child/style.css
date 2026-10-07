@@ -1,0 +1,372 @@
+/*
+Theme Name: DoS Magazine Child
+Description: Department of Search child theme for Themify Magazine. Warm off-white, sculpted greys, one burnt-orange accent (after Dribbble shot 27746361).
+Template: magazine
+Version: 0.1.0
+Author: Department of Search
+Text Domain: dos-magazine-child
+*/
+
+:root {
+	--dos-bg: #f7f6f3;
+	--dos-surface: #ffffff;
+	--dos-ink: #141414;
+	--dos-muted: #5e5c58;
+	--dos-line: #e6e3dd;
+	--dos-soft: #efede8;
+	--dos-accent: #c8471f;
+	--dos-accent-soft: #f6e4dc;
+	--dos-radius: 18px;
+	--dos-radius-sm: 12px;
+	--dos-shadow: 0 1px 2px rgba(17, 17, 17, .06), 0 14px 32px -10px rgba(17, 17, 17, .22);
+	--dos-shadow-sm: 0 1px 2px rgba(17, 17, 17, .06), 0 6px 16px -6px rgba(17, 17, 17, .22);
+	--dos-head: "Inter Tight", "Inter", Helvetica, Arial, sans-serif;
+	--dos-body: "Inter", Helvetica, Arial, sans-serif;
+}
+
+/* ---------- Base ---------- */
+body {
+	background: var(--dos-bg);
+	color: var(--dos-ink);
+	font-family: var(--dos-body);
+	font-size: 16px;
+	line-height: 1.65;
+	-webkit-font-smoothing: antialiased;
+}
+#headerwrap,
+#footerwrap {
+	background: var(--dos-bg);
+}
+h1, h2, h3, h4, h5, h6,
+.post-title,
+.page-title {
+	font-family: var(--dos-head);
+	color: var(--dos-ink);
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	line-height: 1.15;
+	text-transform: none;
+}
+h1 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); }
+h3 { font-size: 1.25rem; letter-spacing: -0.01em; }
+p { color: var(--dos-muted); }
+a { color: var(--dos-ink); }
+a:hover { color: var(--dos-accent); }
+::selection { background: var(--dos-accent-soft); }
+
+/* ---------- Header ---------- */
+#header,
+#site-logo,
+#site-logo a,
+#main-nav,
+#main-nav a,
+.sidemenu {
+	font-family: var(--dos-head);
+	text-transform: none;
+	letter-spacing: -0.01em;
+}
+#site-logo a {
+	font-weight: 700;
+	color: var(--dos-ink);
+}
+#main-nav a {
+	font-weight: 500;
+	color: var(--dos-ink);
+}
+#main-nav a:hover,
+#main-nav .current_page_item > a,
+#main-nav .current-menu-item > a {
+	color: var(--dos-accent);
+}
+#mobile-menu {
+	background: var(--dos-ink);
+}
+#mobile-menu a {
+	color: #fff;
+}
+#mobile-menu a:hover {
+	color: var(--dos-accent-soft);
+}
+
+/* ---------- Images: rounded corners + soft drop shadow ---------- */
+img {
+	border-radius: var(--dos-radius);
+	box-shadow: var(--dos-shadow);
+}
+.post-image,
+.post-image a {
+	border-radius: var(--dos-radius);
+}
+.related-posts .post-image img,
+.widget img {
+	border-radius: var(--dos-radius-sm);
+	box-shadow: var(--dos-shadow-sm);
+}
+.related-posts {
+	padding: 6px;
+}
+#wpadminbar img,
+#site-logo img,
+.custom-logo,
+img.avatar,
+img.wp-smiley,
+img.emoji,
+img[src$=".svg"] {
+	border-radius: 0;
+	box-shadow: none;
+}
+img.avatar {
+	border-radius: 50%;
+}
+
+/* ---------- Back to top / footer ---------- */
+.back-top a {
+	background: var(--dos-ink);
+	border-radius: 999px;
+	font-family: var(--dos-head);
+	text-transform: none;
+	letter-spacing: 0;
+}
+.back-top a:hover {
+	background: var(--dos-accent);
+}
+
+/* ---------- Landing pages (.dos-landing inside page content) ---------- */
+article:has(.dos-landing) > .post-image {
+	display: none; /* featured image stays for social/SEO; the hero shows it in place */
+}
+.dos-landing {
+	max-width: 1080px;
+	margin: 0 auto;
+}
+.dos-landing p:empty {
+	display: none;
+}
+.dos-landing section {
+	margin: 0 0 88px;
+}
+.dos-hero {
+	text-align: center;
+	padding-top: 24px;
+}
+.dos-eyebrow {
+	display: inline-block;
+	margin: 0 0 18px;
+	padding: 6px 14px;
+	border: 1px solid var(--dos-line);
+	border-radius: 999px;
+	background: var(--dos-surface);
+	color: var(--dos-ink);
+	font-family: var(--dos-head);
+	font-size: .82rem;
+	font-weight: 600;
+}
+.dos-eyebrow::before {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin: 0 8px 1px 0;
+	border-radius: 50%;
+	background: var(--dos-accent);
+}
+.dos-hero h1 {
+	max-width: 16ch;
+	margin: 0 auto 18px;
+}
+.dos-lede {
+	max-width: 60ch;
+	margin: 0 auto 28px;
+	font-size: 1.12rem;
+}
+.dos-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+	margin: 0 0 44px;
+}
+.dos-actions p {
+	display: contents;
+}
+.dos-btn {
+	display: inline-block;
+	padding: 12px 22px;
+	border: 1px solid var(--dos-ink);
+	border-radius: 999px;
+	font-family: var(--dos-head);
+	font-weight: 600;
+	font-size: .95rem;
+	line-height: 1.2;
+	text-decoration: none;
+	transition: background .15s, color .15s, border-color .15s;
+}
+.dos-btn--dark {
+	background: var(--dos-ink);
+	color: #fff;
+}
+.dos-btn--dark:hover {
+	background: var(--dos-accent);
+	border-color: var(--dos-accent);
+	color: #fff;
+}
+.dos-btn--ghost {
+	background: transparent;
+	color: var(--dos-ink);
+}
+.dos-btn--ghost:hover {
+	background: var(--dos-surface);
+	color: var(--dos-ink);
+}
+.dos-hero-media img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.dos-section-head {
+	max-width: 62ch;
+	margin: 0 0 32px;
+}
+.dos-section-head h2 {
+	margin: 0 0 10px;
+}
+.dos-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+.dos-card {
+	padding: 26px;
+	border: 1px solid var(--dos-line);
+	border-radius: var(--dos-radius);
+	background: var(--dos-surface);
+}
+.dos-card h3 {
+	margin: 0 0 8px;
+}
+.dos-card p {
+	margin: 0;
+}
+.dos-card-mark {
+	display: block;
+	width: 34px;
+	height: 34px;
+	margin: 0 0 18px;
+	border-radius: 10px;
+	background: var(--dos-soft);
+	position: relative;
+}
+.dos-card-mark::after {
+	content: "";
+	position: absolute;
+	inset: 11px;
+	border-radius: 50%;
+	background: var(--dos-accent);
+}
+.dos-steps {
+	counter-reset: dos-step;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.dos-steps li {
+	counter-increment: dos-step;
+	padding: 22px;
+	border-radius: var(--dos-radius);
+	background: var(--dos-soft);
+}
+.dos-steps li::before {
+	content: counter(dos-step, decimal-leading-zero);
+	display: block;
+	margin: 0 0 14px;
+	color: var(--dos-accent);
+	font-family: var(--dos-head);
+	font-weight: 700;
+}
+.dos-steps h3 {
+	margin: 0 0 6px;
+	font-size: 1.05rem;
+}
+.dos-steps p {
+	margin: 0;
+	font-size: .95rem;
+}
+.dos-faq details {
+	border-bottom: 1px solid var(--dos-line);
+	padding: 18px 0;
+}
+.dos-faq summary {
+	cursor: pointer;
+	list-style: none;
+	font-family: var(--dos-head);
+	font-weight: 600;
+	font-size: 1.08rem;
+	color: var(--dos-ink);
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+}
+.dos-faq summary::-webkit-details-marker {
+	display: none;
+}
+.dos-faq summary::after {
+	content: "+";
+	color: var(--dos-accent);
+	font-weight: 600;
+}
+.dos-faq details[open] summary::after {
+	content: "\2212";
+}
+.dos-faq details p {
+	margin: 12px 0 0;
+	max-width: 70ch;
+}
+.dos-cta {
+	padding: 48px 36px;
+	border-radius: 24px;
+	background: var(--dos-ink);
+	text-align: center;
+}
+.dos-cta h2 {
+	color: #fff;
+	margin: 0 0 12px;
+}
+.dos-cta p {
+	color: #c9c6c0;
+	max-width: 56ch;
+	margin: 0 auto 26px;
+}
+.dos-cta .dos-actions {
+	margin: 0;
+}
+.dos-cta .dos-btn--dark {
+	background: var(--dos-accent);
+	border-color: var(--dos-accent);
+}
+.dos-cta .dos-btn--dark:hover {
+	background: #fff;
+	border-color: #fff;
+	color: var(--dos-ink);
+}
+.dos-cta .dos-btn--ghost {
+	border-color: #5a5854;
+	color: #fff;
+}
+.dos-cta .dos-btn--ghost:hover {
+	background: #2a2926;
+	color: #fff;
+}
+
+@media (max-width: 900px) {
+	.dos-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+	.dos-grid,
+	.dos-steps { grid-template-columns: 1fr; }
+	.dos-landing section { margin-bottom: 64px; }
+	.dos-cta { padding: 36px 22px; }
+}

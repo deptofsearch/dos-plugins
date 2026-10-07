@@ -34,6 +34,14 @@ final class Seo {
 		'ID' => array( 'Boise', 'Coeur d\'Alene', 'Idaho Falls' ),
 		'AZ' => array( 'Phoenix', 'Tucson', 'Scottsdale' ),
 		'NV' => array( 'Las Vegas', 'Reno', 'Henderson' ),
+		'NM' => array( 'Albuquerque', 'Santa Fe', 'Las Cruces' ),
+		'CO' => array( 'Denver', 'Boulder', 'Colorado Springs' ),
+		'UT' => array( 'Salt Lake City', 'Provo', 'Park City' ),
+		'TX' => array( 'Austin', 'Dallas', 'Houston' ),
+		'IL' => array( 'Chicago', 'Naperville', 'Springfield' ),
+		'FL' => array( 'Miami', 'Orlando', 'Tampa' ),
+		'NY' => array( 'New York', 'Buffalo', 'Albany' ),
+		'GA' => array( 'Atlanta', 'Savannah', 'Athens' ),
 	); // DoS Toolkit truncates meta descriptions at 155.
 	const MAX_ITEMS = 200;
 
@@ -91,7 +99,7 @@ final class Seo {
 	}
 
 	public static function sitemap_taxonomies( $taxonomies ) {
-		foreach ( array( Data_Model::CITY, Data_Model::AMENITY, Data_Model::CATEGORY, Data_Model::HOOD ) as $tax ) {
+		foreach ( array( Data_Model::CITY, Data_Model::AMENITY, Data_Model::CATEGORY, Data_Model::HOOD, Data_Model::LANDMARK ) as $tax ) {
 			unset( $taxonomies[ $tax ] );
 		}
 		return $taxonomies;
@@ -325,6 +333,8 @@ final class Seo {
 			$out['description'] = self::trim_words( wp_strip_all_tags( Home::intro() ) );
 		} elseif ( 'state' === $kind ) {
 			$out = self::state_text( $post );
+		} elseif ( 'city' === $kind && Landmarks::active_for_page( $post ) ) {
+			$out = self::landmark_text( Landmarks::active_for_page( $post ) );
 		} elseif ( 'city' === $kind ) {
 			$out = self::city_text( Page_Title::filter_from_content( $post->post_content ) );
 		}
@@ -338,6 +348,14 @@ final class Seo {
 			return array( 'title' => '', 'description' => '' );
 		}
 		$links = State_Cities::parse_links( $post->post_content, $code );
+		if ( ! $links ) { // A state page built around [osn_state_cities]: count the cities that have a landing page.
+			foreach ( City_Index::get( $code ) as $c ) {
+				$k = State_Cities::local_key( $c['u'] );
+				if ( null !== $k ) {
+					$links[] = array( 'name' => Util::city_label( $c['n'] ), 'key' => $k, 'url' => $c['u'] );
+				}
+			}
+		}
 		$data  = State_Cities::data( $code );
 		$rank  = array();
 		foreach ( $links as $i => $l ) {
@@ -357,8 +375,10 @@ final class Seo {
 		}
 		// Fewer than three cities have venues: pad with the state's best-known cities, then the parsed links.
 		$major = (array) apply_filters( 'osn_state_major_cities', self::MAJOR_CITIES );
+		$link_names = array_map( 'strtolower', wp_list_pluck( $links, 'name' ) );
 		foreach ( $major[ $code ] ?? array() as $name ) {
-			if ( count( $top ) < 3 && ! in_array( $name, $top, true ) ) {
+			// Only name a fallback city the state page actually lists, so a description never promises a city we don't have.
+			if ( count( $top ) < 3 && ! in_array( $name, $top, true ) && in_array( strtolower( $name ), $link_names, true ) ) {
 				$top[] = $name;
 			}
 		}
@@ -375,7 +395,7 @@ final class Seo {
 			}
 		}
 		$n    = count( $links );
-		$lead = 'Find restaurants, bars, and cafés with patios and outdoor seating in ' . ( $n ? $n . ' ' . $state . ' cities' : $state );
+		$lead = 'Find restaurants, bars, and cafés with patios and outdoor seating in ' . ( $n ? $n . ' ' . $state . ( 1 === $n ? ' city' : ' cities' ) : $state );
 		if ( $top ) {
 			$last  = array_pop( $top );
 			$lead .= ', including ' . ( $top ? implode( ', ', $top ) . ( count( $top ) > 1 ? ',' : '' ) . ' and ' : '' ) . $last;
@@ -432,6 +452,28 @@ final class Seo {
 			}
 		);
 		return array_slice( array_column( $out, 1 ), 0, 3 );
+	}
+
+	/** Title and description for a landmark landing page. Title stem is the H1 (osn_h1 or the default). */
+	private static function landmark_text( $spot ) {
+		$city = Landmarks::city_term( $spot );
+		if ( ! $city ) {
+			return array( 'title' => '', 'description' => '' );
+		}
+		$label = Util::city_label( $city->name );
+		$h1    = Landmarks::custom_h1( $spot );
+		$stem  = '' !== $h1 ? $h1 : sprintf( '%s: Outdoor Seating in %s', $spot->name, $label );
+		$ids   = Util::sorted_ids( $city->term_id );
+		update_meta_cache( 'post', $ids );
+		update_object_term_cache( $ids, Data_Model::POST_TYPE );
+		$data  = Landmarks::city_data( $city, $ids );
+		$row   = $data['landmarks'][ $spot->term_id ] ?? null;
+		$host  = $row && $row['casinos'] ? ', including spots inside casinos and resorts' : '';
+		$desc  = sprintf( 'Restaurants and bars with patios and outdoor seating: %1$s, %2$s%3$s. See hours and ratings, and filter for happy hour, dogs, and brunch.', $spot->name, $label, $host );
+		return array(
+			'title'       => $stem . ' | Patios & Restaurants',
+			'description' => $desc,
+		);
 	}
 
 	private static function city_text( $filter ) {
@@ -497,7 +539,7 @@ final class Seo {
 <h2><?php esc_html_e( 'SEO titles and descriptions', 'dos-outdoor-seating' ); ?></h2>
 <div id="osn-seo-seed">
 <p><?php echo $on ? esc_html__( 'DoS Toolkit SEO module: active.', 'dos-outdoor-seating' ) : esc_html__( 'DoS Toolkit SEO module: not active. The values are still saved and start working when it is.', 'dos-outdoor-seating' ); ?></p>
-<p class="description" style="max-width:720px"><?php esc_html_e( 'Writes the Toolkit title and meta description for the homepage, the six state pages and every city page. Only empty values, or values this button wrote earlier and nobody has edited since, are written. Hand-edited values are never overwritten.', 'dos-outdoor-seating' ); ?></p>
+<p class="description" style="max-width:720px"><?php esc_html_e( 'Writes the Toolkit title and meta description for the homepage, the state pages and every city page. Only empty values, or values this button wrote earlier and nobody has edited since, are written. Hand-edited values are never overwritten.', 'dos-outdoor-seating' ); ?></p>
 <p>
 <select data-osn-seo-scope>
 	<option value="all"><?php esc_html_e( 'All pages', 'dos-outdoor-seating' ); ?></option>

@@ -83,6 +83,7 @@ final class City_Index {
 	public static function flush() {
 		delete_transient( self::TRANSIENT );
 		State_Cities::flush();
+		Home::flush(); // The homepage tile counts and city search read the city index.
 	}
 
 	/** @return array[] Each { n: "City, ST", u: landing page URL, s: "ST" }, sorted by name; optionally one state only. */

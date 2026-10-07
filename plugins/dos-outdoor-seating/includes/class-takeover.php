@@ -45,14 +45,47 @@ final class Takeover {
 			return $return;
 		}
 		$out = self::resolve( $attr );
+		if ( null === $out && self::is_tableless_city( $attr ) ) {
+			// Cities on states launched without a TablePress table: no venues yet, so say so instead of TablePress's "table not found".
+			return '<p class="osn osn-empty-note">' . esc_html__( 'No patios listed here yet.', 'dos-outdoor-seating' ) . '</p>';
+		}
 		return null !== $out ? $out : $return;
+	}
+
+	/** True when [table id=N filter="City, ST"] names an enabled city and TablePress has no table N (e.g. id=0). */
+	private static function is_tableless_city( $atts ) {
+		$atts   = is_array( $atts ) ? $atts : array();
+		$filter = isset( $atts['filter'] ) ? trim( (string) $atts['filter'] ) : '';
+		$p      = Util::parse_city( $filter );
+		if ( ! $p || ! States::has( $p[1] ) ) {
+			return false;
+		}
+		$enabled = self::enabled();
+		if ( true !== $enabled && ! in_array( sanitize_title( $filter ), $enabled, true ) ) {
+			return false;
+		}
+		// Only a missing or zero table ID: every [table id=N] page with a real ID keeps its exact current behaviour.
+		$id = isset( $atts['id'] ) ? trim( (string) $atts['id'] ) : '';
+		return ( '' === $id || '0' === $id ) && ! self::table_exists( $id );
+	}
+
+	/** Does TablePress know this table ID? (Reads its own option; false when TablePress is not installed.) */
+	private static function table_exists( $id ) {
+		$opt = get_option( 'tablepress_tables' );
+		if ( is_string( $opt ) ) { // TablePress stores this option as a JSON string.
+			$opt = json_decode( $opt, true );
+		}
+		$id = (string) $id;
+		return is_array( $opt ) && isset( $opt['table_post'] ) && is_array( $opt['table_post'] ) && '' !== $id && isset( $opt['table_post'][ $id ] );
 	}
 
 	/** Cards for a city filter, else the hood view for a linked neighborhood page, else null. */
 	private static function resolve( $atts ) {
 		$term = self::match_city( $atts );
 		if ( $term ) {
-			return Cards::render( $term->name );
+			// A page linked to a landmark zone of this city renders that landmark's cards (checked before the city view).
+			$spot = self::match_landmark( $term );
+			return $spot ? Cards::render( $term->name, 0, true, true, null, $spot ) : Cards::render( $term->name );
 		}
 		$hood = self::match_hood( $atts );
 		if ( $hood ) {
@@ -89,6 +122,13 @@ final class Takeover {
 			}
 		}
 		return null;
+	}
+
+	/** The landmark term of this page when the page is linked to an active landmark of the matched (enabled) city. */
+	private static function match_landmark( $city_term ) {
+		$spot = Landmarks::active_for_page( get_post() );
+		$lc   = $spot ? Landmarks::city_term( $spot ) : null;
+		return ( $lc && $lc->term_id === $city_term->term_id ) ? $spot : null;
 	}
 
 	/** Only when TablePress is gone: [table filter="City, ST"] renders cards for a matching city, else nothing. */

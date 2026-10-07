@@ -29,6 +29,7 @@ final class Home {
 	const OPT_SEO    = 'osn_home_seo_html';
 	const OPT_CAR    = 'osn_home_carousel';
 	const OPT_IMAGES = 'osn_home_state_images';
+	const OPT_DRAFT  = 'osn_home_draft';
 	const TRANSIENT  = 'osn_home_data_v2';
 	const MAX_SLIDES = 24;
 
@@ -56,6 +57,14 @@ final class Home {
 		add_action( 'trashed_post', array( __CLASS__, 'flush' ) );
 		add_action( 'update_option_page_on_front', array( __CLASS__, 'flush' ) );
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+		add_action( 'template_redirect', array( __CLASS__, 'nocache_preview' ), 1 );
+	}
+
+	/** Admin previews (?osn_home_preview / ?osn_home_draft) must never be stored by a page cache. */
+	public static function nocache_preview() {
+		if ( self::active() && ( isset( $_GET['osn_home_preview'] ) || isset( $_GET['osn_home_draft'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			nocache_headers();
+		}
 	}
 
 	/* ---------------------------------------------------------------- state of the request */
@@ -68,8 +77,9 @@ final class Home {
 		if ( get_option( self::OPT_ON ) ) {
 			return true;
 		}
-		// Preview for admins: /?osn_home_preview=1 shows the takeover while the setting is off.
-		return isset( $_GET['osn_home_preview'] ) && current_user_can( 'manage_options' ); // phpcs:ignore WordPress.Security.NonceVerification
+		// Preview for admins: /?osn_home_preview=1 shows the takeover while the setting is off; osn_home_draft=1 also
+		// applies the stored draft (intro, SEO copy, state images, unpublished state tiles) without saving it live.
+		return ( isset( $_GET['osn_home_preview'] ) || isset( $_GET['osn_home_draft'] ) ) && current_user_can( 'manage_options' ); // phpcs:ignore WordPress.Security.NonceVerification
 	}
 
 	public static function preview_url() {
@@ -123,7 +133,20 @@ final class Home {
 
 	/* ---------------------------------------------------------------- options */
 
+	/** The stored home draft when this request is an admin draft preview (?osn_home_draft=1), else array(). */
+	public static function draft() {
+		if ( ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ! isset( $_GET['osn_home_draft'] ) || ! current_user_can( 'manage_options' ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return array(); // Never in REST responses (GET /home returns the live config).
+		}
+		$d = get_option( self::OPT_DRAFT, array() );
+		return is_array( $d ) ? $d : array();
+	}
+
 	public static function intro() {
+		$d = self::draft();
+		if ( ! empty( $d['intro'] ) ) {
+			return (string) $d['intro'];
+		}
 		$v = trim( (string) get_option( self::OPT_INTRO, '' ) );
 		return '' !== $v ? $v : self::DEFAULT_INTRO;
 	}
@@ -140,6 +163,10 @@ final class Home {
 	}
 
 	public static function seo_html() {
+		$d = self::draft();
+		if ( ! empty( $d['seo_html'] ) ) {
+			return wp_kses_post( (string) $d['seo_html'] );
+		}
 		$v = trim( (string) get_option( self::OPT_SEO, '' ) );
 		return wp_kses_post( '' !== $v ? $v : self::DEFAULT_SEO );
 	}
@@ -257,6 +284,15 @@ final class Home {
 				$pages[ $code ] = (int) $page->ID;
 			}
 			$rows = ( $page && 'publish' === $page->post_status ) ? State_Cities::parse_links( $page->post_content, $code ) : array();
+			if ( ! $rows && $page && 'publish' === $page->post_status ) {
+				// A state page built around [osn_state_cities] (no HTML table): its cities are the ones with a landing page.
+				foreach ( City_Index::get( $code ) as $c ) {
+					$key = State_Cities::local_key( $c['u'] );
+					if ( null !== $key ) {
+						$rows[] = array( 'name' => Util::city_label( $c['n'] ), 'key' => $key, 'url' => $c['u'] );
+					}
+				}
+			}
 			$counts[ $code ] = count( $rows );
 			foreach ( $rows as $r ) {
 				$cities[ $r['key'] ] = array(
@@ -296,7 +332,7 @@ final class Home {
 		return $data;
 	}
 
-	/** All cities across the six states, for the home search and GET /osn/v1/cities?scope=all. */
+	/** All cities on the state pages (and every city with a landing page), for the home search and GET /osn/v1/cities?scope=all. */
 	public static function all_cities( $state = '' ) {
 		$list  = self::data()['cities'];
 		$state = strtoupper( (string) $state );
@@ -467,11 +503,22 @@ final class Home {
 	}
 
 	private static function states_html( array $data ) {
+		$draft = self::draft();
 		$saved = self::clean_state_images( get_option( self::OPT_IMAGES, array() ) );
-		$li    = '';
+		if ( ! empty( $draft['state_images'] ) ) {
+			$saved = self::clean_state_images( $draft['state_images'] ) + $saved;
+		}
+		$li = '';
 		foreach ( States::names() as $code => $name ) {
 			$pid = (int) ( $data['pages'][ $code ] ?? 0 ); // Published state page ID, cached in data() so this loop runs no queries.
 			$n   = (int) ( $data['counts'][ $code ] ?? 0 );
+			if ( $draft && ! $pid ) { // Draft preview: a state page that exists but is not published yet still gets its tile.
+				$dp = State_Cities::page_for( $code );
+				if ( $dp ) {
+					$pid = (int) $dp->ID;
+					$n   = $n ?: count( City_Index::get( $code ) );
+				}
+			}
 			if ( ! $pid && $n < 1 ) {
 				continue; // Only states with a published page (or parsed city links) get a tile.
 			}
@@ -506,6 +553,17 @@ final class Home {
 	public static function register_routes() {
 		register_rest_route(
 			Rest::NAMESPACE_V1,
+			'/home/draft',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'rest_draft' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+		register_rest_route(
+			Rest::NAMESPACE_V1,
 			'/home',
 			array(
 				array(
@@ -532,6 +590,28 @@ final class Home {
 				),
 			)
 		);
+	}
+
+	/** POST /osn/v1/home/draft: store (or, with clear:true, delete) the draft shown at /?osn_home_draft=1. Nothing goes live. */
+	public static function rest_draft( \WP_REST_Request $request ) {
+		$p = $request->get_json_params();
+		$p = is_array( $p ) && $p ? $p : $request->get_params();
+		if ( ! empty( $p['clear'] ) ) {
+			delete_option( self::OPT_DRAFT );
+			return rest_ensure_response( array( 'cleared' => true ) );
+		}
+		$d = array();
+		if ( ! empty( $p['intro'] ) ) {
+			$d['intro'] = sanitize_textarea_field( (string) $p['intro'] );
+		}
+		if ( ! empty( $p['seo_html'] ) ) {
+			$d['seo_html'] = wp_kses_post( (string) $p['seo_html'] );
+		}
+		if ( ! empty( $p['state_images'] ) ) {
+			$d['state_images'] = self::clean_state_images( $p['state_images'] );
+		}
+		update_option( self::OPT_DRAFT, $d, false );
+		return rest_ensure_response( array( 'draft' => $d, 'preview_url' => add_query_arg( 'osn_home_draft', '1', home_url( '/' ) ) ) );
 	}
 
 	private static function config() {

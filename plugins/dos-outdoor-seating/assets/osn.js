@@ -14,7 +14,10 @@
     var hBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-hood]'));
     var hRow = root.querySelector('[data-osn-hoods]');
     if (hRow && hRow.parentNode) hRow.parentNode.hidden = true;
-    var area = { district: '', hood: '' };
+    var area = { district: '', hood: '', spot: '', casino: '' };
+    var sBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-spot]'));
+    var cBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-casino]'));
+    var cRow = root.querySelector('[data-osn-casinos]');
     if (!cards.length) return;
     // Filters stay hidden until now so crawlers and no-JS visitors just see every card.
     if (filters) filters.hidden = false;
@@ -32,12 +35,14 @@
         }
         if (ok && area.district) ok = card.getAttribute('data-district') === area.district;
         if (ok && area.hood) ok = card.getAttribute('data-hood') === area.hood;
+        if (ok && area.spot) ok = card.getAttribute('data-spot') === area.spot;
+        if (ok && area.casino) ok = card.getAttribute('data-casino') === area.casino;
         card.hidden = !ok;
         if (ok) shown++;
       });
       if (count) count.textContent = shown + (shown === 1 ? ' place' : ' places');
       if (empty) empty.hidden = shown !== 0;
-      if (clear) clear.hidden = !on.length && !term && !area.district && !area.hood;
+      if (clear) clear.hidden = !on.length && !term && !area.district && !area.hood && !area.spot && !area.casino;
     }
 
     // Mobile: chips past the 6th sit behind a "More filters (N)" toggle (CSS shows it at <= 640px only).
@@ -70,8 +75,10 @@
     function writeUrl() {
       if (!window.history || !history.replaceState || !window.URLSearchParams) return;
       var p = new URLSearchParams(window.location.search);
-      p.delete('district'); p.delete('hood');
+      p.delete('district'); p.delete('hood'); p.delete('spot'); p.delete('casino');
       if (area.hood) p.set('hood', area.hood); else if (area.district) p.set('district', area.district);
+      if (area.spot) p.set('spot', area.spot);
+      if (area.casino) p.set('casino', area.casino);
       var qs = p.toString();
       history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
     }
@@ -108,6 +115,44 @@
       }
     }
 
+    // Landmark / casino chips. ?spot=short-slug and ?casino=slug; casino chips belong to one landmark (data-spot).
+    // On a landmark landing view there are no landmark chips (the grid is already one landmark), so casino chips stay visible.
+    function setSpot(spot, casino, persist) {
+      area.spot = spot; area.casino = casino;
+      sBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-osn-spot') === spot ? 'true' : 'false'); });
+      var any = false;
+      cBtns.forEach(function (b) {
+        var vis = !sBtns.length || (!!spot && b.getAttribute('data-spot') === spot);
+        b.hidden = !vis;
+        if (vis) any = true;
+        b.setAttribute('aria-pressed', vis && b.getAttribute('data-osn-casino') === casino ? 'true' : 'false');
+      });
+      if (cRow && sBtns.length) { cRow.hidden = !any; if (cRow.parentNode) cRow.parentNode.hidden = !any; }
+      update();
+      if (persist) writeUrl();
+    }
+    if (sBtns.length || cBtns.length) {
+      sBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setSpot(b.getAttribute('data-osn-spot'), '', true); });
+      });
+      cBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var c = b.getAttribute('data-osn-casino');
+          setSpot(sBtns.length ? b.getAttribute('data-spot') : '', area.casino === c ? '' : c, true);
+        });
+      });
+      if (window.URLSearchParams) {
+        var sp2 = new URLSearchParams(window.location.search), wantS = sp2.get('spot') || '', wantC = sp2.get('casino') || '';
+        var cb = wantC ? cBtns.filter(function (b) {
+          return b.getAttribute('data-osn-casino') === wantC && (!wantS || !sBtns.length || b.getAttribute('data-spot') === wantS);
+        })[0] : null;
+        if (sBtns.length && cb) setSpot(cb.getAttribute('data-spot'), wantC, false);
+        else if (!sBtns.length && cb) setSpot('', wantC, false);
+        else if (wantS && sBtns.some(function (b) { return b.getAttribute('data-osn-spot') === wantS; })) setSpot(wantS, '', false);
+        else setSpot('', '', false);
+      } else setSpot('', '', false);
+    }
+
     if (q) q.addEventListener('input', update);
     chips.forEach(function (c) {
       c.addEventListener('click', function () {
@@ -119,6 +164,7 @@
     if (clear) clear.addEventListener('click', function () {
       chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
       if (dBtns.length) setArea('', '', true);
+      if (sBtns.length || cBtns.length) setSpot('', '', true);
       if (q) q.value = '';
       update();
       syncMore();

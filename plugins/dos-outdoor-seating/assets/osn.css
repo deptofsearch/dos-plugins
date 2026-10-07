@@ -339,7 +339,7 @@ body.osn-home-on .osn-home__intro, body.osn-home-on .osn-home__seo, body.osn-hom
 /* Neighborhoods: two separate filter sections (Neighborhoods panel, Filter by), card label, browse section, venue header pill. */
 .osn-filter-section { margin: 0; }
 .osn-filter-label { margin: 0 0 8px; font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--osn-muted); }
-.osn-filter-section--area { padding: 12px 14px 14px; background: var(--osn-soft); border: 1px solid var(--osn-line); border-radius: var(--osn-radius); }
+.osn-filter-section--area, .osn-filter-section--spot { padding: 12px 14px 14px; background: var(--osn-soft); border: 1px solid var(--osn-line); border-radius: var(--osn-radius); }
 .osn-filter-section--amenity { padding-top: 12px; border-top: 1px solid var(--osn-line); }
 .osn-filters { gap: 14px; }
 .osn-area-sub { margin: 10px 0 0 10px; padding: 2px 0 2px 12px; border-left: 3px solid var(--osn-accent); }
@@ -350,14 +350,18 @@ body.osn-home-on .osn-home__intro, body.osn-home-on .osn-home__seo, body.osn-hom
 .osn button.osn-chip--filter[aria-pressed="true"], .osn button.osn-chip--filter[aria-pressed="true"]:hover,
 .osn button.osn-chip--filter[aria-pressed="true"]:focus, .osn button.osn-chip--filter[aria-pressed="true"]:active { background: var(--osn-accent) !important; color: #fff !important; border-color: var(--osn-accent) !important; }
 .osn button.osn-chip--more, .osn button.osn-chip--clear { color: var(--osn-ink); box-shadow: none; }
-.osn-filters__chips--districts .osn-chip, .osn-filters__chips--hoods .osn-chip { flex: none; white-space: nowrap; }
+.osn-filters__chips--districts .osn-chip, .osn-filters__chips--hoods .osn-chip, .osn-filters__chips--spots .osn-chip, .osn-filters__chips--casinos .osn-chip { flex: none; white-space: nowrap; }
+.osn-filter-section--spot + .osn-filter-section--area { margin-top: 0; }
+.osn-spot-sub .osn-chip { font-size: .8rem; padding: 3px 10px; }
+.osn-spot-sub--fixed { margin: 0; padding: 0; border: 0; }
 @media (max-width: 640px) {
-	.osn-filters__chips--districts, .osn-filters__chips--hoods, .osn-filters__chips[data-osn-amenity-chips]:not(.is-open) {
+	.osn-filters__chips--districts, .osn-filters__chips--hoods, .osn-filters__chips--spots, .osn-filters__chips--casinos, .osn-filters__chips[data-osn-amenity-chips]:not(.is-open) {
 		flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; padding-bottom: 6px;
 	}
 	.osn-filters__chips[data-osn-amenity-chips] .osn-chip { flex: none; white-space: nowrap; }
 }
 .osn-card__hood { font-weight: 600; letter-spacing: .01em; }
+.osn-card__casino { font-weight: 600; color: var(--osn-accent); }
 .osn-card__hood a { color: inherit; text-decoration: none; }
 .osn-card__hood a:hover { color: var(--osn-accent); text-decoration: underline; }
 .osn-hoods { margin: 2em 0 1em; }

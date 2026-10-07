@@ -66,6 +66,26 @@ final class Rest {
 
 		register_rest_route(
 			self::NAMESPACE_V1,
+			'/cities/register',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'register_cities' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => array(
+					'cities'  => array(
+						'description' => 'Array of "City, ST" strings or { city, landing_slug?, landing_page_id? } objects. The landing page defaults to the page whose slug is the city slug (denver-co).',
+						'type'        => 'array',
+						'required'    => true,
+					),
+					'dry_run' => array( 'type' => 'boolean', 'default' => false ),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE_V1,
 			'/cities',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -77,7 +97,7 @@ final class Rest {
 						'type'        => 'string',
 					),
 					'scope' => array(
-						'description' => '"all" lists every city linked from the six state pages (about 1,180), not only cities with a landing page record.',
+						'description' => '"all" lists every city linked from the state pages, not only cities with a landing page record.',
 						'type'        => 'string',
 					),
 				),
@@ -128,6 +148,53 @@ final class Rest {
 				'results' => $results,
 			)
 		);
+	}
+
+	/**
+	 * POST /osn/v1/cities/register: create each osn_city term (before it has venues) and link its landing page, so
+	 * a new city shows on its state page, in the city search and on the homepage. Idempotent.
+	 */
+	public static function register_cities( \WP_REST_Request $request ) {
+		$dry  = (bool) $request->get_param( 'dry_run' );
+		$rows = array();
+		$ids  = array();
+		foreach ( (array) $request->get_param( 'cities' ) as $raw ) {
+			$city  = is_array( $raw ) ? (string) ( $raw['city'] ?? '' ) : (string) $raw;
+			$city  = trim( sanitize_text_field( $city ) );
+			$parts = Util::parse_city( $city );
+			if ( ! $parts || ! States::has( $parts[1] ) ) {
+				$rows[] = array( 'city' => $city, 'action' => 'error', 'message' => 'Expected "City, ST" with a known state code.' );
+				continue;
+			}
+			$slug = is_array( $raw ) && ! empty( $raw['landing_slug'] ) ? sanitize_title( (string) $raw['landing_slug'] ) : sanitize_title( $city );
+			$pid  = is_array( $raw ) && ! empty( $raw['landing_page_id'] ) ? (int) $raw['landing_page_id'] : 0;
+			$page = $pid ? get_post( $pid ) : get_page_by_path( $slug, OBJECT, 'page' );
+			$term = Util::find_city( $city );
+			$row  = array(
+				'city'      => $city,
+				'action'    => $term ? 'exists' : 'created',
+				'page_id'   => $page ? (int) $page->ID : 0,
+				'page_status' => $page ? $page->post_status : null,
+				'message'   => $page ? '' : 'landing page not found yet (/' . $slug . '/); create it, then run this again',
+			);
+			if ( ! $dry ) {
+				$warnings = array();
+				$t        = Repository::ensure_city( $city, $parts[1], $pid, $pid ? '' : $slug, $warnings );
+				if ( $t ) {
+					$ids[] = $t->term_id;
+				}
+				if ( $warnings ) {
+					$row['warnings'] = $warnings;
+				}
+			}
+			$rows[] = $row;
+		}
+		if ( $ids ) {
+			Repository::purge_cities( $ids );
+			City_Index::flush();
+			Home::flush();
+		}
+		return rest_ensure_response( array( 'dry_run' => $dry, 'cities' => $rows ) );
 	}
 
 	public static function cities( \WP_REST_Request $request ) {

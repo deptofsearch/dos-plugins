@@ -189,7 +189,12 @@ hosting setting rather than a plugin problem.
    git push origin dos-toolkit-v0.1.0
    ```
 
-Pushing the tag is what publishes. Pushing to `main` alone releases nothing,
+   Or, without a terminal: **Actions → Release plugin → Run workflow**, on
+   `main`, with the plugin's slug (`dos-toolkit`) and version (`0.1.0`). It
+   runs the same checks against the head of `main` and creates the tag when it
+   publishes. It refuses a version whose tag already exists.
+
+Pushing the tag (or running the workflow) is what publishes. Pushing to `main` alone releases nothing,
 which is why documentation-only changes need no version bump.
 
 Tags are `<slug>-v<version>`. The prefix is what lets several plugins live in
@@ -198,7 +203,8 @@ considers releases carrying its own prefix and its own named asset.
 
 ### What the workflow does
 
-`.github/workflows/release.yml`, triggered by any tag matching `*-v*`:
+`.github/workflows/release.yml`, triggered by any tag matching `*-v*`, or run
+by hand from the Actions tab (from `main` only):
 
 1. Reads the slug and version out of the tag, and fails if
    `plugins/<slug>/<slug>.php` does not exist.

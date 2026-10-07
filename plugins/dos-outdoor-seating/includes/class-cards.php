@@ -32,8 +32,9 @@ final class Cards {
 	/**
 	 * @param string        $city    "City, ST" (empty for all venues).
 	 * @param \WP_Term|null $hood    Neighborhood (or district) term: render that area's cards only (hood view).
+	 * @param \WP_Term|null $spot    Landmark term: render that landmark's cards only (landmark landing view).
 	 */
-	public static function render( $city, $limit = 0, $filters = true, $search = true, $hood = null ) {
+	public static function render( $city, $limit = 0, $filters = true, $search = true, $hood = null, $spot = null ) {
 		static $n = 0;
 		++$n;
 		$term = '' !== trim( (string) $city ) ? Util::find_city( $city ) : null;
@@ -62,7 +63,26 @@ final class Cards {
 				return '<p class="osn osn-empty-note">' . esc_html__( 'No patios listed here yet.', 'dos-outdoor-seating' ) . '</p>';
 			}
 		}
-		$hood_ui = ! $hood && $tree && $tree['districts'];
+		$hood_ui = ! $hood && ! $spot && $tree && $tree['districts'];
+
+		// Landmarks: the city view gets a landmark chip row (+ casino row); the landing view keeps one landmark's cards.
+		$lm = ( $term && taxonomy_exists( Landmarks::TAX ) ) ? Landmarks::city_data( $term, $ids ) : null;
+		if ( $spot && $lm ) {
+			$ids = array_values(
+				array_filter(
+					$ids,
+					function ( $id ) use ( $lm, $spot ) {
+						return ( $lm['by_venue'][ $id ] ?? 0 ) === $spot->term_id;
+					}
+				)
+			);
+			if ( ! $ids ) {
+				return '<p class="osn osn-empty-note">' . esc_html__( 'No patios listed here yet.', 'dos-outdoor-seating' ) . '</p>';
+			}
+		}
+		$spot_ui   = ! $hood && ! $spot && $lm && $lm['landmarks'];
+		$spot_html = $spot && $lm ? Landmarks::chips_html( $lm, count( $ids ), $spot ) : ( $spot_ui ? Landmarks::chips_html( $lm, count( $ids ) ) : '' );
+		$casino_ui = $spot && '' !== $spot_html;
 		self::prime_thumbs( $ids );
 		Assets::enqueue();
 
@@ -100,12 +120,16 @@ final class Cards {
 			$area  = $hname . ', ' . $label; // "Judkins, Seattle".
 			$label = $hname;
 		}
+		if ( $spot ) { // Landmark landing view: the page's landmark name ("On the Strip"), like the hood view.
+			$label = $spot->name;
+			$area  = $spot->name . ', ' . Util::city_label( $term->name );
+		}
 		$list  = array();
 
 		ob_start();
 		?>
 <div class="osn osn-venues" id="<?php echo esc_attr( $uid ); ?>" data-osn-grid>
-<?php if ( $search || $hood_ui || ( $filters && $counts ) ) : ?>
+<?php if ( $search || $hood_ui || $spot_ui || $casino_ui || ( $filters && $counts ) ) : ?>
 <div class="osn-filters" data-osn-filters hidden>
 <?php if ( $search ) : ?>
 <div class="osn-filters__search">
@@ -114,6 +138,9 @@ final class Cards {
 </div>
 <?php endif; ?>
 <?php
+if ( '' !== $spot_html ) {
+	echo $spot_html; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Landmarks.
+}
 if ( $hood_ui ) {
 	echo Hoods::chips_html( $tree, count( $ids ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Hoods.
 }
@@ -173,6 +200,11 @@ foreach ( $ids as $pos => $id ) {
 </ul>
 <p class="osn-empty" data-osn-empty hidden><?php esc_html_e( 'No places match those filters. Try clearing a filter or a different search.', 'dos-outdoor-seating' ); ?></p>
 <?php
+if ( $spot_ui ) {
+	echo Landmarks::browse_html( $lm, Util::city_url( $term ), Hoods::results_anchor( $n ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Landmarks.
+} elseif ( $spot && $lm ) {
+	echo Landmarks::nearby_html( $lm, $spot, $term, Util::city_label( $term->name ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Landmarks.
+}
 if ( $hood_ui ) {
 	echo Hoods::browse_html( $tree, Hoods::results_anchor( $n ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Hoods.
 } elseif ( $hood && $tree ) {
@@ -182,7 +214,7 @@ echo Util::json_ld( // phpcs:ignore WordPress.Security.EscapeOutput
 	array(
 		'@context'        => 'https://schema.org',
 		'@type'           => 'ItemList',
-		'name'            => $label ? sprintf( 'Restaurants with outdoor seating in %s', $hood ? $area : $term->name ) : 'Restaurants with outdoor seating',
+		'name'            => $label ? sprintf( 'Restaurants with outdoor seating in %s', ( $hood || $spot ) ? $area : $term->name ) : 'Restaurants with outdoor seating',
 		'numberOfItems'   => count( $list ),
 		'itemListElement' => $list,
 	)
@@ -290,10 +322,12 @@ echo Util::json_ld( // phpcs:ignore WordPress.Security.EscapeOutput
 		$hood_u  = $hood_t ? Hoods::page_url( $hood_t ) : '';
 		$search  = Util::lower( $title . ' ' . ( $cat ? $cat->name : '' ) . ' ' . $street );
 		$closed  = 'temporarily_closed' === Util::meta( $id, 'business_status' );
+		$spot_t  = Landmarks::venue_term( $id );
+		$casino  = Landmarks::venue_casino( $id );
 
 		ob_start();
 		?>
-<li class="osn-card" data-osn-card data-name="<?php echo esc_attr( $search ); ?>" data-amenities="<?php echo esc_attr( implode( ' ', $slugs ) ); ?>"<?php echo $info['district'] ? ' data-district="' . esc_attr( Hoods::short( $info['district'] ) ) . '"' : ''; ?><?php echo $info['hood'] ? ' data-hood="' . esc_attr( Hoods::short( $info['hood'] ) ) . '"' : ''; ?>>
+<li class="osn-card" data-osn-card data-name="<?php echo esc_attr( $search ); ?>" data-amenities="<?php echo esc_attr( implode( ' ', $slugs ) ); ?>"<?php echo $info['district'] ? ' data-district="' . esc_attr( Hoods::short( $info['district'] ) ) . '"' : ''; ?><?php echo $info['hood'] ? ' data-hood="' . esc_attr( Hoods::short( $info['hood'] ) ) . '"' : ''; ?><?php echo $spot_t ? ' data-spot="' . esc_attr( Landmarks::short( $spot_t ) ) . '"' : ''; ?><?php echo '' !== $casino['name'] ? ' data-casino="' . esc_attr( $casino['slug'] ) . '"' : ''; ?>>
 <?php if ( '' !== $thumb_html ) : ?>
 <a class="osn-card__media" href="<?php echo esc_url( get_permalink( $id ) ); ?>" tabindex="-1" aria-hidden="true">
 <?php echo $thumb_html; // phpcs:ignore WordPress.Security.EscapeOutput -- core image markup or escaped above. ?>
@@ -307,6 +341,7 @@ echo Util::json_ld( // phpcs:ignore WordPress.Security.EscapeOutput
 <h3 class="osn-card__title"><a href="<?php echo esc_url( get_permalink( $id ) ); ?>"><?php echo esc_html( $title ); ?></a></h3>
 <p class="osn-card__meta">
 <?php if ( $show_hood && $hood_t ) : ?><span class="osn-card__hood"><?php echo $hood_u ? '<a href="' . esc_url( $hood_u ) . '">' . esc_html( $hood_t->name ) . '</a>' : esc_html( $hood_t->name ); ?></span><?php endif; ?>
+<?php if ( '' !== $casino['name'] ) : ?><span class="osn-card__casino"><?php echo esc_html( sprintf( /* translators: %s: casino or host venue name */ __( 'At %s', 'dos-outdoor-seating' ), $casino['name'] ) ); ?></span><?php endif; ?>
 <?php if ( $cat ) : ?><span class="osn-card__cat"><?php echo esc_html( $cat->name ); ?></span><?php endif; ?>
 <?php if ( $count > 0 && $rating > 0 ) : ?><span class="osn-card__rating"><span aria-hidden="true">&#9733;</span> <?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <span class="osn-card__count">(<?php echo esc_html( number_format_i18n( $count ) ); ?>)</span></span><?php endif; ?>
 <?php if ( '' !== $price ) : ?><span class="osn-card__price" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: $ signs */ __( 'Price %s', 'dos-outdoor-seating' ), $price ) ); ?>"><?php echo esc_html( $price ); ?></span><?php endif; ?>

@@ -863,6 +863,11 @@ foreach ( $slugs as $s ) :
 					$errors[] = array( 'page_id' => $pid, 'error' => 'unknown hood_slug ' . sanitize_title( (string) $row['hood_slug'] ) );
 					continue;
 				}
+				if ( Landmarks::term_for_page( $pid ) ) {
+					++$counts['error'];
+					$errors[] = array( 'page_id' => $pid, 'error' => 'page is already linked to a landmark' );
+					continue;
+				}
 			}
 			if ( $has_hood ) {
 				$current = self::term_for_page( $pid );

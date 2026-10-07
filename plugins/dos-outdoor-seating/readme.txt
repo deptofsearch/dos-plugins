@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.0
+Stable tag: 0.6.3
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -33,6 +33,25 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.3 =
+* Landmark zones: new flat taxonomy `osn_landmark` (per-city terms, slugs prefixed with the city slug) with term meta osn_city, osn_order, osn_page_id, and venue post meta `_osn_casino` / `_osn_casino_slug`. Generic for any city; labels come from the term data.
+* New admin REST routes (`manage_options`, `dry_run` where they write): POST /osn/v1/landmarks/import, POST /osn/v1/landmarks/assign (`replace: true` also clears venues of the city that are not listed), POST /osn/v1/landmarks/pages, GET /osn/v1/landmarks?city=.
+* City cards: "Landmarks" chip row (term order, with counts), a casino chip row for the active landmark, "At <casino>" label on cards, "Browse by landmark" list. Client-side filtering (?spot=short-slug, ?casino=slug) ANDs with the neighborhood, amenity and search filters; the server HTML is identical for every query string. Cities without landmark terms render exactly as before.
+* Landmark landing pages: a page linked to a landmark term (osn_page_id) renders the city's venues limited to that landmark, a casino chip row, "More landmarks" and a link back to the city. Optional term meta `osn_h1` (import field `h1`) sets the H1 and the SEO title stem; the default H1 is "Landmark: Outdoor Seating in City". A landmark with no visible venues falls back to the plain city grid and H1. The SEO seed gives landmark pages their own title and description.
+* City names in the landmark routes are matched to the canonical city term (case/spacing variants work). `landmarks/import` `page_id` and `landmarks/pages` refuse pages that are not pages, are hood pages, or belong to another landmark; `hoods/pages` refuses landmark pages.
+
+= 0.6.2 =
+* Takeover: the tableless-city rule now reads TablePress's JSON `tablepress_tables` option correctly and only applies to a missing or `id=0` table, so every `[table id=N]` page keeps its exact current behaviour.
+* Homepage preview/draft responses send no-cache headers; the draft is never returned in REST responses. City index changes also clear the homepage cache.
+* SEO state descriptions say "1 Colorado city" and only name fallback cities the state page lists. Tools > Outdoor Seating skips state stats for states without a page. `cities/register` returns landing-page warnings.
+
+= 0.6.1 =
+* New states without a TablePress table: `[table id=0 filter="Denver, CO" /]` city pages work when the city is enabled for the takeover; with no venues yet the page says so instead of TablePress's "table not found".
+* New POST /osn/v1/cities/register (`manage_options`, `dry_run`): creates the city terms and links their landing pages before any venue exists, so a new city shows on its state page, the city search and the homepage.
+* State pages built around `[osn_state_cities state="CO"]` (no HTML city table) now count their cities from the city index on the homepage tiles and in SEO descriptions.
+* Homepage draft preview: POST /osn/v1/home/draft stores intro, SEO copy and state images; /?osn_home_draft=1 (admin) renders them, including tiles for state pages that are still drafts, without changing the live homepage.
+* SEO fallback city lists for NM, CO, UT, TX, IL, FL, NY and GA.
 
 = 0.6.0 =
 * All 50 states + DC: single state table drives state names, page slugs, timezones, state takeover and SEO seeding.

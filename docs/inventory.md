@@ -14,7 +14,7 @@ authenticated pass (`GET /wp-json/wp/v2/plugins`) before decisions are final.
 | DoS Market Images | 1.5.2 | `~/Claude/realestatevaluesnearme/dos-market-images` (local only) | realestatevaluesnearme.com |
 | DoS Open Houses In Core | 0.6.0 | `deptofsearch/openhousesin-plugins` + `~/Claude/openhousesin/plugin` | Open Houses In market sites |
 | DoS Open Houses In City Search | 1.0.0 | `~/Claude/openhousesin/plugin` (local only) | Open Houses In market sites |
-| DoS Outdoor Seating | 0.6.0 | `plugins/dos-outdoor-seating` (this repo, moved 2026-10-07) | outdoorseatingnearme.com |
+| DoS Outdoor Seating | 0.6.3 | `plugins/dos-outdoor-seating` (this repo, moved 2026-10-07) | outdoorseatingnearme.com |
 | DoS Works | 0.1.0 | `plugins/dos-works` (this repo, moved 2026-10-07) | departmentofsearch.com |
 | DoS Department, DoS Magazine Child (themes) | 0.1.1, 0.1.0 | `themes/` (this repo, moved 2026-10-07) | departmentofsearch.com |
 | Legacy (BREANM ×2, Media Usage Manager, Page Tags, Last Updated, SAAB Toolkit) | — | `legacy/` (this repo) | unknown until authenticated pass |

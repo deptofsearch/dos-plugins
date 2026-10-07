@@ -299,10 +299,10 @@ final class Admin {
 <tbody>
 		<?php foreach ( States::names() as $code => $name ) : ?>
 			<?php
-			$st = State_Cities::admin_stats( $code );
-			if ( ! $st['page'] && ! in_array( $code, $state_on, true ) ) {
-				continue; // Only states that have a page (or are switched on).
+			if ( ! State_Cities::page_for( $code ) && ! in_array( $code, $state_on, true ) ) {
+				continue; // Only states that have a page (or are switched on); skip the stats work for the rest.
 			}
+			$st = State_Cities::admin_stats( $code );
 			?>
 <tr>
 <td><?php echo esc_html( $name ); ?></td>

@@ -35,6 +35,14 @@ final class Page_Title {
 			return '';
 		}
 		$filter = self::filter_from_content( $content );
+		if ( '' !== $filter ) {
+			// A landmark landing page ("On the Strip, Las Vegas"), whatever city filter its shortcode carries.
+			$spot = Landmarks::active_for_page( $post );
+			$scty = $spot ? Landmarks::city_term( $spot ) : null;
+			if ( $spot && $scty ) {
+				return Landmarks::h1( $spot, $scty ); // Full H1 text; see prepend().
+			}
+		}
 		if ( '' !== $filter && ! Util::find_city( $filter ) ) {
 			// A neighborhood page: "Ballard, Seattle", whatever the legacy filter says.
 			$hood = Hoods::match_page( $post, $filter );
@@ -99,6 +107,9 @@ final class Page_Title {
 			}
 			$done[ $post->ID ] = true;
 			return '<h1 class="osn-page-title">' . esc_html( $text ) . "</h1>\n" . $content;
+		}
+		if ( Landmarks::active_for_page( $post ) ) { // city_for() already returned the whole landmark H1.
+			return '<h1 class="osn-page-title">' . esc_html( apply_filters( 'osn_landmark_page_h1_text', $city, $post ) ) . "</h1>\n" . $content;
 		}
 		/* translators: %s: "City, ST" */
 		$text = apply_filters( 'osn_city_page_h1_text', sprintf( __( 'Outdoor Seating in %s', 'dos-outdoor-seating' ), $city ), $city );

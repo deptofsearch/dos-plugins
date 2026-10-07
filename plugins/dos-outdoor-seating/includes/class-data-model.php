@@ -16,6 +16,7 @@ final class Data_Model {
 	const AMENITY   = 'osn_amenity';
 	const CATEGORY  = 'osn_category';
 	const HOOD      = 'osn_hood';
+	const LANDMARK  = 'osn_landmark';
 
 	/** slug => display name. Seeded on activation. */
 	const AMENITIES = array(
@@ -66,7 +67,7 @@ final class Data_Model {
 				'menu_icon'    => 'dashicons-store',
 				'rewrite'      => array( 'slug' => 'restaurants', 'with_front' => false ),
 				'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
-				'taxonomies'   => array( self::CITY, self::AMENITY, self::CATEGORY, self::HOOD ),
+				'taxonomies'   => array( self::CITY, self::AMENITY, self::CATEGORY, self::HOOD, self::LANDMARK ),
 			)
 		);
 
@@ -120,6 +121,46 @@ final class Data_Model {
 		register_term_meta( self::HOOD, 'osn_city', array( 'type' => 'string', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'sanitize_text_field' ) );
 		register_term_meta( self::HOOD, 'osn_page_id', array( 'type' => 'integer', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'absint' ) );
 		register_term_meta( self::HOOD, 'osn_redirect', array( 'type' => 'string', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'esc_url_raw' ) );
+
+		// Landmark zones (see Landmarks): flat, per-city "areas that are not neighborhoods" (a Strip, a casino district, a boardwalk).
+		register_taxonomy(
+			self::LANDMARK,
+			self::POST_TYPE,
+			array(
+				'labels'             => array(
+					'name'          => __( 'Landmark Zones', 'dos-outdoor-seating' ),
+					'singular_name' => __( 'Landmark Zone', 'dos-outdoor-seating' ),
+				),
+				'hierarchical'       => false,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'show_ui'            => true,
+				'show_in_rest'       => false,
+				'show_admin_column'  => true,
+				'show_in_nav_menus'  => false,
+			)
+		);
+		register_term_meta( self::LANDMARK, 'osn_city', array( 'type' => 'string', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_term_meta( self::LANDMARK, 'osn_order', array( 'type' => 'integer', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'absint' ) );
+		register_term_meta( self::LANDMARK, 'osn_h1', array( 'type' => 'string', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_term_meta( self::LANDMARK, 'osn_page_id', array( 'type' => 'integer', 'single' => true, 'show_in_rest' => false, 'sanitize_callback' => 'absint' ) );
+		foreach ( array( Landmarks::CASINO_KEY, Landmarks::CASINO_SLUG_KEY ) as $key ) {
+			register_post_meta(
+				self::POST_TYPE,
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => false,
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => function ( $allowed, $meta_key, $post_id ) {
+						return current_user_can( 'edit_post', $post_id );
+					},
+				)
+			);
+		}
 
 		register_term_meta(
 			self::CITY,

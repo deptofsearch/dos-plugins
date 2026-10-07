@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       DoS Outdoor Seating
- * Description:       Restaurant venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, featured venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in takeover of TablePress city tables, city neighborhoods, and SEO titles/descriptions for DoS Toolkit for outdoorseatingnearme.com.
- * Version:           0.6.0
+ * Description:       Restaurant venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, featured venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in takeover of TablePress city tables, city neighborhoods, landmark zones with casino browse, and SEO titles/descriptions for DoS Toolkit for outdoorseatingnearme.com.
+ * Version:           0.6.3
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Department of Search
@@ -16,7 +16,7 @@ namespace OSN;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION     = '0.6.0';
+const VERSION     = '0.6.3';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/includes/class-fields.php';
@@ -29,6 +29,7 @@ require_once __DIR__ . '/includes/class-repository.php';
 require_once __DIR__ . '/includes/class-city-index.php';
 require_once __DIR__ . '/includes/class-venue-image.php';
 require_once __DIR__ . '/includes/class-hoods.php';
+require_once __DIR__ . '/includes/class-landmarks.php';
 require_once __DIR__ . '/includes/class-rest.php';
 require_once __DIR__ . '/includes/class-cards.php';
 require_once __DIR__ . '/includes/class-venue-page.php';
@@ -46,6 +47,7 @@ Assets::hooks();
 City_Index::hooks();
 Rest::hooks();
 Hoods::hooks();
+Landmarks::hooks();
 Cards::hooks();
 Venue_Page::hooks();
 Takeover::hooks();

@@ -31,6 +31,7 @@ The same review fields plus `summary` are accepted by `POST /lenders/upsert` (st
 
 = 0.4.9 =
 * "What reviewers mention" starts closed on every screen; clicking it opens the summary, highlights and pros. It used to start open on desktop and close only on phones. The text is still in the page HTML. Version bump so the changed blnm.js loads past caches.
+* Updates itself from GitHub releases (shared DoS updater, `Plugin URI` and `Update URI` headers, tag `dos-best-lenders-v<version>`). 0.4.8 has no updater, so 0.4.9 is installed by hand once.
 
 = 0.4.8 =
 * Defers meta description and Open Graph/Twitter tags to the DoS Toolkit SEO module when it is active (same as for Yoast, Rank Math, AIOSEO, SEOPress).

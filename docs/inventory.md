@@ -16,7 +16,7 @@ authenticated pass (`GET /wp-json/wp/v2/plugins`) before decisions are final.
 | DoS Open Houses In City Search | 1.0.0 | `~/Claude/openhousesin/plugin` (local only) | Open Houses In market sites |
 | DoS Outdoor Seating | 0.6.3 | `plugins/dos-outdoor-seating` (this repo, moved 2026-10-07) | outdoorseatingnearme.com |
 | DoS Works | 0.1.0 | `plugins/dos-works` (this repo, moved 2026-10-07) | departmentofsearch.com |
-| DoS Best Lenders | 0.4.8 | `plugins/dos-best-lenders` (this repo, added 2026-10-07; no updater yet) | bestlendersnearme.com |
+| DoS Best Lenders | 0.4.9 | `plugins/dos-best-lenders` (this repo, added 2026-10-07; updater from 0.4.9) | bestlendersnearme.com |
 | DoS Department, DoS Magazine Child (themes) | 0.1.1, 0.1.0 | `themes/` (this repo, moved 2026-10-07) | departmentofsearch.com |
 | Legacy (BREANM ×2, Media Usage Manager, Page Tags, Last Updated, SAAB Toolkit) | — | `legacy/` (this repo) | unknown until authenticated pass |
 

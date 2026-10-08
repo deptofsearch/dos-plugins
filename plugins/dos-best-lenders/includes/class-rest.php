@@ -87,6 +87,53 @@ final class Rest {
 		return $list;
 	}
 
+	/** Launch order of the states (1 = first). Filterable with `blnm_rollout_order`. */
+	const ROLLOUT = array(
+		'WA', 'OR', 'CA', 'NV', 'ID', 'AZ', 'UT', 'MT', 'WY', 'CO', 'NM', 'ND', 'SD', 'NE', 'KS', 'OK', 'TX', 'MN', 'IA',
+		'MO', 'AR', 'LA', 'WI', 'IL', 'MS', 'MI', 'IN', 'KY', 'TN', 'AL', 'OH', 'GA', 'FL', 'WV', 'SC', 'NC', 'VA', 'DC',
+		'MD', 'DE', 'PA', 'NJ', 'NY', 'CT', 'RI', 'MA', 'VT', 'NH', 'ME', 'AK', 'HI',
+	);
+
+	/** The rollout order after the filter: valid unique codes only, with any state the filter left out appended A to Z. */
+	public static function rollout_order() {
+		$list = function_exists( 'apply_filters' ) ? apply_filters( 'blnm_rollout_order', self::ROLLOUT ) : self::ROLLOUT;
+		$out  = array();
+		foreach ( (array) $list as $code ) {
+			$code = strtoupper( (string) $code );
+			if ( isset( self::STATE_NAMES[ $code ] ) && ! in_array( $code, $out, true ) ) {
+				$out[] = $code;
+			}
+		}
+		foreach ( array_keys( self::STATE_NAMES ) as $code ) {
+			if ( ! in_array( $code, $out, true ) ) {
+				$out[] = $code;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Cards for the homepage carousel: every state, live ones first (rollout order, with their page URL and city
+	 * count), then the rest in rollout order with no URL. [ { c, name, n, u, live } ]
+	 *
+	 * @param array $live Rest::states() rows.
+	 */
+	public static function carousel_cards( array $live ) {
+		$by = array();
+		foreach ( $live as $s ) {
+			$by[ $s['c'] ] = $s;
+		}
+		$on = $off = array();
+		foreach ( self::rollout_order() as $code ) {
+			if ( isset( $by[ $code ] ) ) {
+				$on[] = array( 'c' => $code, 'name' => self::STATE_NAMES[ $code ], 'n' => (int) $by[ $code ]['n'], 'u' => $by[ $code ]['u'], 'live' => true );
+			} else {
+				$off[] = array( 'c' => $code, 'name' => self::STATE_NAMES[ $code ], 'n' => 0, 'u' => '', 'live' => false );
+			}
+		}
+		return array_merge( $on, $off );
+	}
+
 	/** Pages changing (new state page published, slug edited, trashed) can change the state list. */
 	public static function flush_states() {
 		delete_transient( self::STATES_TRANS );

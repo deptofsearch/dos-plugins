@@ -27,6 +27,7 @@ final class Layout {
 		'hide_post_meta'   => 'yes',
 		'hide_meta_all'    => 'yes',
 		'hide_post_image'  => 'yes',
+		'hide_image'       => 'yes',
 		'post_navigation'  => 'no',
 		'hide_post_nav'    => 'yes',
 	);
@@ -62,7 +63,7 @@ final class Layout {
 			return $value;
 		}
 		// State hub pages: the hub prints its own hero figure, so Themify must not print the featured image too.
-		if ( 'hide_post_image' === $meta_key && self::is_hub_page( $object_id ) ) {
+		if ( ( 'hide_post_image' === $meta_key || 'hide_image' === $meta_key ) && self::is_hub_page( $object_id ) ) {
 			return $single ? 'yes' : array( 'yes' );
 		}
 		if ( ! self::is_ours( $object_id ) ) {
@@ -73,6 +74,10 @@ final class Layout {
 	}
 
 	public static function body_class( $classes ) {
+		// State hub pages: the class lets blnm.css hide Themify's own featured-image figure (the hub prints its hero).
+		if ( self::enabled() && is_page() && self::is_hub_page( (int) get_queried_object_id() ) ) {
+			$classes[] = 'blnm-hub-page';
+		}
 		if ( ! self::enabled() || ! is_singular( array( Data_Model::CITY, Data_Model::LENDER ) ) ) {
 			return $classes;
 		}

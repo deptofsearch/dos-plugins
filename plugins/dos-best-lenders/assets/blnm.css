@@ -968,3 +968,150 @@
 	line-height: 20px;
 	color: var(--blnm-ink-muted);
 }
+
+/* State hub pages print their own hero (.blnm-hero-fig inside the shortcode); hide Themify's featured-image figure. */
+.blnm-hub-page .page-content > figure.post-image,
+.blnm-hub-page article > figure.post-image { display: none; }
+
+/* Homepage state carousel: a scroll-snap list; blnm.js adds the buttons. Cards are about 220px wide, 70vw on phones. */
+.blnm-carousel {
+	position: relative;
+	margin: 0 0 var(--blnm-space-6);
+}
+.blnm-carousel-nav {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--blnm-space-2);
+	margin: 0 0 var(--blnm-space-3);
+}
+.blnm-carousel-nav:not(:has(button:not([hidden]))) {
+	display: none;
+}
+.blnm .blnm-carousel-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper-sunk);
+	color: var(--blnm-ink);
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+}
+.blnm .blnm-carousel-btn[hidden] {
+	display: none;
+}
+.blnm .blnm-carousel-btn:hover:not(:disabled) {
+	color: var(--blnm-spruce);
+	border-color: var(--blnm-spruce);
+}
+.blnm .blnm-carousel-btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.blnm .blnm-carousel-btn:focus-visible,
+.blnm .blnm-carousel-track:focus-visible {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+}
+.blnm .blnm-carousel-track {
+	display: flex;
+	gap: var(--blnm-space-4);
+	margin: 0;
+	padding: 0 0 var(--blnm-space-3);
+	list-style: none;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scroll-behavior: smooth;
+	scroll-padding-inline: 0;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior-x: contain;
+}
+@media (prefers-reduced-motion: reduce) {
+	.blnm .blnm-carousel-track {
+		scroll-behavior: auto;
+	}
+}
+.blnm .blnm-sc {
+	flex: 0 0 70vw;
+	max-width: 260px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	scroll-snap-align: start;
+}
+.blnm .blnm-sc::before {
+	content: none;
+	display: none;
+}
+@media (min-width: 640px) {
+	.blnm .blnm-sc {
+		flex-basis: 220px;
+	}
+}
+.blnm .blnm-sc-link {
+	display: flex;
+	flex-direction: column;
+	gap: var(--blnm-space-2);
+	height: 100%;
+	box-sizing: border-box;
+	padding: var(--blnm-space-3);
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-m);
+	background: var(--blnm-paper);
+	color: var(--blnm-ink);
+	text-decoration: none;
+	transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.blnm .blnm-sc-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 3 / 2;
+	border: 1px solid var(--blnm-rule);
+	border-radius: var(--blnm-radius-s);
+	background: var(--blnm-paper-sunk);
+	opacity: 0.55;
+}
+.blnm .blnm-sc-name {
+	font-family: var(--blnm-font-display);
+	font-weight: 600;
+	font-size: 18px;
+	line-height: 24px;
+	color: var(--blnm-ink);
+}
+.blnm .blnm-sc-meta {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--blnm-ink-muted);
+}
+.blnm .blnm-sc--live .blnm-sc-link:hover,
+.blnm .blnm-sc--live .blnm-sc-link:focus-visible {
+	border-color: var(--blnm-spruce);
+	transform: translateY(-2px);
+}
+.blnm .blnm-sc--live .blnm-sc-link:hover .blnm-sc-name,
+.blnm .blnm-sc--live .blnm-sc-link:focus-visible .blnm-sc-name {
+	color: var(--blnm-spruce);
+}
+.blnm .blnm-sc--live .blnm-sc-link:focus-visible {
+	outline: 2px solid var(--blnm-focus);
+	outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.blnm .blnm-sc-link {
+		transition: none;
+	}
+	.blnm .blnm-sc--live .blnm-sc-link:hover,
+	.blnm .blnm-sc--live .blnm-sc-link:focus-visible {
+		transform: none;
+	}
+}
+.blnm .blnm-sc--soon .blnm-sc-name {
+	color: var(--blnm-ink-muted);
+}

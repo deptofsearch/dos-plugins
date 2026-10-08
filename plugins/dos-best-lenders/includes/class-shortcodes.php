@@ -89,40 +89,141 @@ final class Shortcodes {
 			return $out . '</ul></div>';
 		}
 
-		$rows = Rest::index();
-		if ( '' !== $state ) {
-			$rows = array_values(
-				array_filter(
-					$rows,
-					static function ( $r ) use ( $state ) {
-						return $r['s'] === $state;
-					}
-				)
-			);
+		$hub = self::hub( $state );
+		if ( '' !== $hub ) {
+			return $hub;
 		}
+		return '<p class="blnm blnm-empty">' . esc_html__( 'No city pages are published yet.', 'dos-best-lenders' ) . '</p>';
+	}
+
+	/** Sanitized hub filters from the query string: q (city name), county, has (1), sort (population|az). */
+	public static function hub_request( array $src ) {
+		$q = isset( $src['q'] ) && is_scalar( $src['q'] ) ? Data_Model::plain_text( wp_unslash( (string) $src['q'] ), 80 ) : '';
+		$c = isset( $src['county'] ) && is_scalar( $src['county'] ) ? Data_Model::sanitize_county_name( wp_unslash( (string) $src['county'] ) ) : '';
+		$h = ! empty( $src['has'] ) && '0' !== $src['has'];
+		$s = isset( $src['sort'] ) && 'az' === $src['sort'] ? 'az' : 'population';
+		return array( 'q' => $q, 'county' => $c, 'has' => $h, 'sort' => $s );
+	}
+
+	/**
+	 * The state hub: optional hero, one stats line, filters, and a grid of city cards (map tile, name, county,
+	 * lender count, top lenders). The server filters and sorts from the query string, so it works without JS and
+	 * the count is right on load; blnm.js then filters in place. Every card is in the HTML (non-matches are
+	 * `hidden`) so crawlers see all links. Returns '' when the state has no published cities.
+	 */
+	public static function hub( $state ) {
+		$rows = Rest::hub_index( $state );
 		if ( ! $rows ) {
-			return '<p class="blnm blnm-empty">' . esc_html__( 'No city pages are published yet.', 'dos-best-lenders' ) . '</p>';
+			return '';
+		}
+		static $n = 0;
+		$uid = 'blnm-hub-' . ++$n; // ids stay unique when two hubs share a page
+		$req        = self::hub_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
+		$state_name = Rest::STATE_NAMES[ $state ] ?? $state;
+		$qn         = Search::norm( $req['q'] );
+
+		$counties = array();
+		$with     = 0;
+		$year     = 0;
+		foreach ( $rows as $r ) {
+			if ( '' !== $r['county'] ) {
+				$counties[ $r['county'] ] = ( $counties[ $r['county'] ] ?? 0 ) + 1;
+			}
+			$with += $r['lenders'] > 0 ? 1 : 0;
+			$year  = max( $year, (int) $r['yr'] );
+		}
+		ksort( $counties, SORT_NATURAL | SORT_FLAG_CASE );
+
+		if ( 'az' === $req['sort'] ) {
+			usort( $rows, static function ( $a, $b ) {
+				return strnatcasecmp( $a['n'], $b['n'] );
+			} );
+		} else {
+			usort( $rows, static function ( $a, $b ) {
+				return ( $b['pop'] <=> $a['pop'] ) ?: strnatcasecmp( $a['n'], $b['n'] );
+			} );
+		}
+		$visible = static function ( $r ) use ( $req, $qn ) {
+			if ( '' !== $qn && false === strpos( Search::norm( $r['n'] ), $qn ) ) {
+				return false;
+			}
+			if ( '' !== $req['county'] && 0 !== strcasecmp( $r['county'], $req['county'] ) ) {
+				return false;
+			}
+			return ! ( $req['has'] && $r['lenders'] < 1 );
+		};
+		$shown = 0;
+		foreach ( $rows as $r ) {
+			$shown += $visible( $r ) ? 1 : 0;
 		}
 
-		$by = array();
-		foreach ( $rows as $r ) {
-			$by[ $r['s'] ][] = $r;
+		$stats = sprintf(
+			/* translators: 1: cities, 2: counties */
+			_n( '%1$s city across %2$s counties', '%1$s cities across %2$s counties', count( $rows ), 'dos-best-lenders' ),
+			number_format_i18n( count( $rows ) ),
+			number_format_i18n( count( $counties ) )
+		);
+		$stats .= ' · ' . sprintf( /* translators: %s: number of cities */ __( '%s with listed lenders', 'dos-best-lenders' ), number_format_i18n( $with ) );
+		if ( $year ) {
+			$stats .= ' · ' . sprintf( /* translators: %d: year */ __( '%d HMDA data', 'dos-best-lenders' ), $year );
 		}
-		ksort( $by );
 
 		ob_start();
-		echo '<div class="blnm blnm-states">';
-		foreach ( $by as $st => $cities ) {
-			if ( '' === $state ) {
-				echo '<h3 class="blnm-state-name">' . esc_html( $st ) . '</h3>';
+		echo '<div class="blnm blnm-hub" data-blnm-hub>';
+		$thumb = function_exists( 'get_queried_object_id' ) ? (int) get_post_thumbnail_id( get_queried_object_id() ) : 0;
+		if ( $thumb ) {
+			$img = wp_get_attachment_image( $thumb, 'large', false, array( 'class' => 'blnm-hero-img', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => '(min-width: 1100px) 1100px, 100vw' ) );
+			if ( $img ) {
+				echo '<figure class="blnm-hero-fig">' . $img . '</figure>'; // phpcs:ignore WordPress.Security.EscapeOutput
 			}
-			echo '<ul class="blnm-city-list">';
-			foreach ( $cities as $c ) {
-				echo '<li><a href="' . esc_url( $c['u'] ) . '">' . esc_html( $c['n'] . ( $c['s'] ? ', ' . $c['s'] : '' ) ) . '</a></li>';
-			}
-			echo '</ul>';
 		}
-		echo '</div>';
+		echo '<p class="blnm-hub-stats">' . esc_html( $stats ) . '</p>';
+		?>
+<form class="blnm-filters blnm-hub-filters" method="get" action="">
+<div class="blnm-f blnm-f-q"><label for="<?php echo esc_attr( $uid ); ?>-q"><?php esc_html_e( 'City name', 'dos-best-lenders' ); ?></label>
+<input id="<?php echo esc_attr( $uid ); ?>-q" name="q" type="search" value="<?php echo esc_attr( $req['q'] ); ?>" placeholder="<?php esc_attr_e( 'Filter by city name...', 'dos-best-lenders' ); ?>" autocomplete="off" spellcheck="false"></div>
+<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-county"><?php esc_html_e( 'County', 'dos-best-lenders' ); ?></label>
+<select id="<?php echo esc_attr( $uid ); ?>-county" name="county"><option value=""><?php esc_html_e( 'All counties', 'dos-best-lenders' ); ?></option>
+<?php foreach ( $counties as $name => $n ) : ?>
+<option value="<?php echo esc_attr( $name ); ?>"<?php selected( 0 === strcasecmp( $name, $req['county'] ) ); ?>><?php echo esc_html( sprintf( '%s County (%d)', $name, $n ) ); ?></option>
+<?php endforeach; ?>
+</select></div>
+<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-sort"><?php esc_html_e( 'Sort by', 'dos-best-lenders' ); ?></label>
+<select id="<?php echo esc_attr( $uid ); ?>-sort" name="sort"><option value="population"<?php selected( 'population' === $req['sort'] ); ?>><?php esc_html_e( 'Population', 'dos-best-lenders' ); ?></option><option value="az"<?php selected( 'az' === $req['sort'] ); ?>><?php esc_html_e( 'A to Z', 'dos-best-lenders' ); ?></option></select></div>
+<div class="blnm-f blnm-f-has"><label class="blnm-check" for="<?php echo esc_attr( $uid ); ?>-has"><input id="<?php echo esc_attr( $uid ); ?>-has" name="has" type="checkbox" value="1"<?php checked( $req['has'] ); ?>> <?php esc_html_e( 'Has lenders', 'dos-best-lenders' ); ?></label></div>
+<div class="blnm-f blnm-f-status">
+<p class="blnm-count" role="status" aria-live="polite"><?php echo esc_html( sprintf( _n( 'Showing %s city', 'Showing %s cities', $shown, 'dos-best-lenders' ), number_format_i18n( $shown ) ) ); ?></p>
+<span class="blnm-hub-actions"><noscript><button type="submit" class="blnm-more"><?php esc_html_e( 'Apply', 'dos-best-lenders' ); ?></button> </noscript><a class="blnm-reset" href="<?php echo esc_url( remove_query_arg( array( 'q', 'county', 'has', 'sort' ) ) ); ?>"<?php echo ( '' === $req['q'] && '' === $req['county'] && ! $req['has'] && 'population' === $req['sort'] ) ? ' hidden' : ''; ?>><?php esc_html_e( 'Reset', 'dos-best-lenders' ); ?></a></span>
+</div>
+</form>
+<h2 class="blnm-sr"><?php echo esc_html( sprintf( /* translators: %s: state name */ __( 'Cities in %s', 'dos-best-lenders' ), $state_name ) ); ?></h2>
+<ul class="blnm-hub-grid">
+		<?php
+		foreach ( $rows as $r ) {
+			$lenders = (int) $r['lenders'];
+			$alt     = Maps::alt( $r['n'], $r['county'], $state_name );
+			$tile    = Maps::tile_url( $r + array( 'st' => $state, 'state_name' => $state_name, 'alt' => $alt ) );
+			if ( $lenders > 1 ) {
+				/* translators: %s: number of lenders */
+				$line = sprintf( __( '%s lenders listed', 'dos-best-lenders' ), number_format_i18n( $lenders ) );
+			} elseif ( 1 === $lenders ) {
+				$line = __( '1 lender listed', 'dos-best-lenders' );
+			} else {
+				$line = __( 'No lenders listed yet · see nearby towns', 'dos-best-lenders' );
+			}
+			?>
+<li class="blnm-hub-card" data-name="<?php echo esc_attr( strtolower( $r['n'] ) ); ?>" data-county="<?php echo esc_attr( $r['county'] ); ?>" data-lenders="<?php echo (int) $lenders; ?>" data-pop="<?php echo (int) $r['pop']; ?>"<?php echo $visible( $r ) ? '' : ' hidden'; ?>>
+<a class="blnm-hub-link" href="<?php echo esc_url( $r['u'] ); ?>">
+<?php if ( '' !== $tile ) : ?><img class="blnm-hub-img" src="<?php echo esc_url( $tile, array( 'http', 'https', 'data' ) ); ?>" alt="<?php echo esc_attr( $alt ); ?>" width="300" height="200" loading="lazy" decoding="async"><?php endif; ?>
+<h3 class="blnm-hub-name"><?php echo esc_html( $r['n'] ); ?></h3>
+</a>
+<?php if ( '' !== $r['county'] ) : ?><p class="blnm-hub-county"><?php echo esc_html( $r['county'] . ' County' ); ?></p><?php endif; ?>
+<p class="blnm-hub-lenders"><?php echo esc_html( $line ); ?></p>
+<?php if ( $r['top'] ) : ?><p class="blnm-hub-top"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), Render::join_names( $r['top'] ) ) ); ?></p><?php endif; ?>
+</li>
+			<?php
+		}
+		echo '</ul></div>';
 		return ob_get_clean();
 	}
 }

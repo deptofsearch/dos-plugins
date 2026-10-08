@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.6.0
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,12 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.6.0 =
+* State pages ([blnm_state_index state="XX"]) become a filterable grid of city cards with a county map tile, lender counts and top lenders. Filters work without JavaScript.
+* New admin routes to fetch county outlines (Census TIGERweb) and build or clear map tiles per state.
+* City upsert accepts lat, lng and population; sending only those leaves everything else untouched.
+* State pages no longer print the featured image twice (the hub shows it as a hero).
 
 = 0.5.1 =
 * First release from the shared dos-plugins repository: merges the two 0.4.9 lines and the 0.5.0 manual build. Nothing is lost from either. See CHANGELOG.md.

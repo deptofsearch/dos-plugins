@@ -824,7 +824,7 @@
 	color: var(--blnm-ink-muted);
 }
 .blnm-hub-filters {
-	grid-template-columns: minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr); /* phones: name box, checkbox, count/Reset stacked */
 }
 .blnm-f input[type="search"] {
 	width: 100%;
@@ -874,9 +874,13 @@
 	grid-template-columns: minmax(0, 1fr);
 }
 @container (min-width: 640px) {
+	/* Name box takes the width; the checkbox sits beside it; count and Reset get their own row below. */
 	.blnm-hub-filters {
-		grid-template-columns: 2fr 1.2fr 1fr auto;
+		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: end;
+	}
+	.blnm-hub-filters .blnm-f-has {
+		white-space: nowrap;
 	}
 	.blnm-hub-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));

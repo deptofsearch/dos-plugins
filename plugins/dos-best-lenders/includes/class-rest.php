@@ -216,9 +216,11 @@ final class Rest {
 					return ( $b['score'] ?? -1 ) <=> ( $a['score'] ?? -1 ) ?: ( $b['loans_2025'] ?? 0 ) <=> ( $a['loans_2025'] ?? 0 );
 				}
 			);
-			$top = array();
+			$top  = array();
+			$topd = array(); // card display names; Render::display_name prefers the branch/Google name
 			foreach ( array_slice( $lenders, 0, 3 ) as $l ) {
-				$top[] = (string) $l['name'];
+				$top[]  = (string) $l['name'];
+				$topd[] = Render::display_name( (string) $l['name'], (string) ( $l['branch_name'] ?? '' ) );
 			}
 			$lat    = get_post_meta( $id, 'blnm_lat', true );
 			$lng    = get_post_meta( $id, 'blnm_lng', true );
@@ -230,6 +232,7 @@ final class Rest {
 				'fips'    => (string) get_post_meta( $id, 'blnm_county_fips', true ),
 				'lenders' => count( $lenders ),
 				'top'     => $top,
+				'topd'    => $topd,
 				'pop'     => (int) get_post_meta( $id, 'blnm_population', true ),
 				'lat'     => '' === $lat ? null : (float) $lat,
 				'lng'     => '' === $lng ? null : (float) $lng,

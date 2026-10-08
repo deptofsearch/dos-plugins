@@ -163,15 +163,40 @@ check( 'lender create without status is published', 'publish' === end( $GLOBALS[
 
 // ---- Hub request parsing ----
 use BLNM\Shortcodes;
+use BLNM\Render;
 $d = Shortcodes::hub_request( array() );
-check( 'hub_request defaults', '' === $d['q'] && '' === $d['county'] && false === $d['has'] && 'population' === $d['sort'] );
-$a = Shortcodes::hub_request( array( 'q' => array( 'x' ), 'county' => array( 'y' ), 'has' => array( '1' ), 'sort' => array( 'az' ) ) );
-check( 'hub_request ignores array values', '' === $a['q'] && '' === $a['county'] && true === $a['has'] && 'population' === $a['sort'] );
+check( 'hub_request defaults', array( 'q' => '', 'has' => false ) === $d );
+$a = Shortcodes::hub_request( array( 'q' => array( 'x' ), 'has' => array( '1' ) ) );
+check( 'hub_request ignores array values', '' === $a['q'] && true === $a['has'] );
 check( 'hub_request has=0 is off', false === Shortcodes::hub_request( array( 'has' => '0' ) )['has'] );
 check( 'hub_request has="" is off', false === Shortcodes::hub_request( array( 'has' => '' ) )['has'] );
-check( 'hub_request has=1 is on, sort=az', Shortcodes::hub_request( array( 'has' => '1', 'sort' => 'az' ) )['has'] && 'az' === Shortcodes::hub_request( array( 'sort' => 'az' ) )['sort'] );
-check( 'hub_request unknown sort falls back', 'population' === Shortcodes::hub_request( array( 'sort' => 'drop table' ) )['sort'] );
-check( 'hub_request strips tags and trims county "County"', 'Spokane' === Shortcodes::hub_request( array( 'county' => 'Spokane County' ) )['county'] && 'x' === Shortcodes::hub_request( array( 'q' => '<b>x</b>' ) )['q'] );
+check( 'hub_request has=1 is on', true === Shortcodes::hub_request( array( 'has' => '1' ) )['has'] );
+check( 'hub_request ignores old county and sort', array( 'q' => '', 'has' => false ) === Shortcodes::hub_request( array( 'county' => 'Spokane', 'sort' => 'az' ) ) );
+check( 'hub_request strips tags from q', 'x' === Shortcodes::hub_request( array( 'q' => '<b>x</b>' ) )['q'] );
+
+// ---- Lender display names (hub cards) ----
+$dn = array(
+	array( 'CMG MORTGAGE, INC.', '', 'CMG Mortgage' ),
+	array( 'MOVEMENT MORTGAGE, LLC', '', 'Movement Mortgage' ),
+	array( 'Broker Solutions, Inc.', 'New American Funding - Kirkland, WA', 'New American Funding' ),
+	array( 'WELLS FARGO BANK, N.A.', '', 'Wells Fargo Bank' ),
+	array( 'UNITED WHOLESALE MORTGAGE, LLC', '', 'United Wholesale Mortgage' ),
+	array( 'LOANDEPOT.COM, LLC', '', 'loanDepot.com' ),
+	array( 'JPMORGAN CHASE BANK, NATIONAL ASSOCIATION', '', 'JPMorgan Chase Bank, National Association' ),
+	array( 'BANK OF AMERICA, N.A.', '', 'Bank of America' ),
+	array( 'U.S. BANK NATIONAL ASSOCIATION', '', 'U.S. Bank National Association' ),
+	array( 'GUILD MORTGAGE COMPANY LLC', '', 'Guild Mortgage Company' ),
+	array( 'USAA FEDERAL SAVINGS BANK', '', 'USAA Federal Savings Bank' ),
+	array( 'Rocket Mortgage, LLC', '', 'Rocket Mortgage' ),
+	array( 'CMG MORTGAGE, INC.', 'CMG Home Loans', 'CMG Home Loans' ),
+	array( 'X', '', 'X' ),
+	array( '', '', '' ),
+);
+foreach ( $dn as $t ) {
+	$got = Render::display_name( $t[0], $t[1] );
+	check( 'display_name ' . $t[0] . ( $t[1] ? ' + ' . $t[1] : '' ) . ' -> ' . $t[2], $t[2] === $got );
+	if ( $t[2] !== $got ) { echo "        got: $got\n"; }
+}
 
 // ---- Tile file naming ----
 $f1 = Maps::tile_file( 'spokane-wa', '53063', 47.6588, -117.426, 'Map of Spokane' );

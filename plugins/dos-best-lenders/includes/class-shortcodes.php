@@ -96,18 +96,16 @@ final class Shortcodes {
 		return '<p class="blnm blnm-empty">' . esc_html__( 'No city pages are published yet.', 'dos-best-lenders' ) . '</p>';
 	}
 
-	/** Sanitized hub filters from the query string: q (city name), county, has (1), sort (population|az). */
+	/** Sanitized hub filters from the query string: q (city name) and has (1). Old ?county= and ?sort= are ignored. */
 	public static function hub_request( array $src ) {
 		$q = isset( $src['q'] ) && is_scalar( $src['q'] ) ? Data_Model::plain_text( wp_unslash( (string) $src['q'] ), 80 ) : '';
-		$c = isset( $src['county'] ) && is_scalar( $src['county'] ) ? Data_Model::sanitize_county_name( wp_unslash( (string) $src['county'] ) ) : '';
 		$h = ! empty( $src['has'] ) && '0' !== $src['has'];
-		$s = isset( $src['sort'] ) && 'az' === $src['sort'] ? 'az' : 'population';
-		return array( 'q' => $q, 'county' => $c, 'has' => $h, 'sort' => $s );
+		return array( 'q' => $q, 'has' => $h );
 	}
 
 	/**
 	 * The state hub: optional hero, one stats line, filters, and a grid of city cards (map tile, name, county,
-	 * lender count, top lenders). The server filters and sorts from the query string, so it works without JS and
+	 * lender count, top lenders), always by population. The server filters from the query string, so it works without JS and
 	 * the count is right on load; blnm.js then filters in place. Every card is in the HTML (non-matches are
 	 * `hidden`) so crawlers see all links. Returns '' when the state has no published cities.
 	 */
@@ -134,20 +132,11 @@ final class Shortcodes {
 		}
 		ksort( $counties, SORT_NATURAL | SORT_FLAG_CASE );
 
-		if ( 'az' === $req['sort'] ) {
-			usort( $rows, static function ( $a, $b ) {
-				return strnatcasecmp( $a['n'], $b['n'] );
-			} );
-		} else {
-			usort( $rows, static function ( $a, $b ) {
-				return ( $b['pop'] <=> $a['pop'] ) ?: strnatcasecmp( $a['n'], $b['n'] );
-			} );
-		}
+		usort( $rows, static function ( $a, $b ) {
+			return ( $b['pop'] <=> $a['pop'] ) ?: strnatcasecmp( $a['n'], $b['n'] );
+		} );
 		$visible = static function ( $r ) use ( $req, $qn ) {
 			if ( '' !== $qn && false === strpos( Search::norm( $r['n'] ), $qn ) ) {
-				return false;
-			}
-			if ( '' !== $req['county'] && 0 !== strcasecmp( $r['county'], $req['county'] ) ) {
 				return false;
 			}
 			return ! ( $req['has'] && $r['lenders'] < 1 );
@@ -182,18 +171,10 @@ final class Shortcodes {
 <form class="blnm-filters blnm-hub-filters" method="get" action="">
 <div class="blnm-f blnm-f-q"><label for="<?php echo esc_attr( $uid ); ?>-q"><?php esc_html_e( 'City name', 'dos-best-lenders' ); ?></label>
 <input id="<?php echo esc_attr( $uid ); ?>-q" name="q" type="search" value="<?php echo esc_attr( $req['q'] ); ?>" placeholder="<?php esc_attr_e( 'Filter by city name...', 'dos-best-lenders' ); ?>" autocomplete="off" spellcheck="false"></div>
-<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-county"><?php esc_html_e( 'County', 'dos-best-lenders' ); ?></label>
-<select id="<?php echo esc_attr( $uid ); ?>-county" name="county"><option value=""><?php esc_html_e( 'All counties', 'dos-best-lenders' ); ?></option>
-<?php foreach ( $counties as $name => $n ) : ?>
-<option value="<?php echo esc_attr( $name ); ?>"<?php selected( 0 === strcasecmp( $name, $req['county'] ) ); ?>><?php echo esc_html( sprintf( '%s County (%d)', $name, $n ) ); ?></option>
-<?php endforeach; ?>
-</select></div>
-<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-sort"><?php esc_html_e( 'Sort by', 'dos-best-lenders' ); ?></label>
-<select id="<?php echo esc_attr( $uid ); ?>-sort" name="sort"><option value="population"<?php selected( 'population' === $req['sort'] ); ?>><?php esc_html_e( 'Population', 'dos-best-lenders' ); ?></option><option value="az"<?php selected( 'az' === $req['sort'] ); ?>><?php esc_html_e( 'A to Z', 'dos-best-lenders' ); ?></option></select></div>
 <div class="blnm-f blnm-f-has"><label class="blnm-check" for="<?php echo esc_attr( $uid ); ?>-has"><input id="<?php echo esc_attr( $uid ); ?>-has" name="has" type="checkbox" value="1"<?php checked( $req['has'] ); ?>> <?php esc_html_e( 'Has lenders', 'dos-best-lenders' ); ?></label></div>
 <div class="blnm-f blnm-f-status">
 <p class="blnm-count" role="status" aria-live="polite"><?php echo esc_html( sprintf( _n( 'Showing %s city', 'Showing %s cities', $shown, 'dos-best-lenders' ), number_format_i18n( $shown ) ) ); ?></p>
-<span class="blnm-hub-actions"><noscript><button type="submit" class="blnm-more"><?php esc_html_e( 'Apply', 'dos-best-lenders' ); ?></button> </noscript><a class="blnm-reset" href="<?php echo esc_url( remove_query_arg( array( 'q', 'county', 'has', 'sort' ) ) ); ?>"<?php echo ( '' === $req['q'] && '' === $req['county'] && ! $req['has'] && 'population' === $req['sort'] ) ? ' hidden' : ''; ?>><?php esc_html_e( 'Reset', 'dos-best-lenders' ); ?></a></span>
+<span class="blnm-hub-actions"><noscript><button type="submit" class="blnm-more"><?php esc_html_e( 'Apply', 'dos-best-lenders' ); ?></button> </noscript><a class="blnm-reset" href="<?php echo esc_url( remove_query_arg( array( 'q', 'county', 'has', 'sort' ) ) ); ?>"<?php echo ( '' === $req['q'] && ! $req['has'] ) ? ' hidden' : ''; ?>><?php esc_html_e( 'Reset', 'dos-best-lenders' ); ?></a></span>
 </div>
 </form>
 <h2 class="blnm-sr"><?php echo esc_html( sprintf( /* translators: %s: state name */ __( 'Cities in %s', 'dos-best-lenders' ), $state_name ) ); ?></h2>
@@ -212,14 +193,14 @@ final class Shortcodes {
 				$line = __( 'No lenders listed yet · see nearby towns', 'dos-best-lenders' );
 			}
 			?>
-<li class="blnm-hub-card" data-name="<?php echo esc_attr( strtolower( $r['n'] ) ); ?>" data-county="<?php echo esc_attr( $r['county'] ); ?>" data-lenders="<?php echo (int) $lenders; ?>" data-pop="<?php echo (int) $r['pop']; ?>"<?php echo $visible( $r ) ? '' : ' hidden'; ?>>
+<li class="blnm-hub-card" data-name="<?php echo esc_attr( strtolower( $r['n'] ) ); ?>" data-lenders="<?php echo (int) $lenders; ?>" data-pop="<?php echo (int) $r['pop']; ?>"<?php echo $visible( $r ) ? '' : ' hidden'; ?>>
 <a class="blnm-hub-link" href="<?php echo esc_url( $r['u'] ); ?>">
 <?php if ( '' !== $tile ) : ?><img class="blnm-hub-img" src="<?php echo esc_url( $tile, array( 'http', 'https', 'data' ) ); ?>" alt="<?php echo esc_attr( $alt ); ?>" width="300" height="200" loading="lazy" decoding="async"><?php endif; ?>
 <h3 class="blnm-hub-name"><?php echo esc_html( $r['n'] ); ?></h3>
 </a>
 <?php if ( '' !== $r['county'] ) : ?><p class="blnm-hub-county"><?php echo esc_html( $r['county'] . ' County' ); ?></p><?php endif; ?>
 <p class="blnm-hub-lenders"><?php echo esc_html( $line ); ?></p>
-<?php if ( $r['top'] ) : ?><p class="blnm-hub-top"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), Render::join_names( $r['top'] ) ) ); ?></p><?php endif; ?>
+<?php if ( $r['top'] ) : ?><p class="blnm-hub-top"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), Render::join_names( $r['topd'] ?? array_map( array( Render::class, 'display_name' ), $r['top'] ) ) ) ); ?></p><?php endif; ?>
 </li>
 			<?php
 		}

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.6.1
+Stable tag: 0.6.2
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,10 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.6.2 =
+* State hub: the County and Sort dropdowns are gone. Cities always list by population (ties by name); old ?county= and ?sort= links are ignored. What remains is the city name box, a Has lenders checkbox, the live count and Reset, laid out side by side on desktop and stacked on phones.
+* Hub cards show cleaned lender names: the branch/Google name when stored, otherwise ALL CAPS legal names in title case without the trailing Inc./LLC/N.A.
 
 = 0.6.1 =
 * Geometry route: a failed TIGERweb fetch now reports why (per-layer error, HTTP code, start of the reply) in the 502, and sends a plain user-agent.

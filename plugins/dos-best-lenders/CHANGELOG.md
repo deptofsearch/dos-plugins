@@ -5,6 +5,23 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.6.2
+
+State hub controls trimmed and lender names made readable.
+
+- The County and Sort dropdowns are removed (markup, `county`/`sort` query handling, JS, CSS). Why: with every
+  state's cities already listed by population, two extra selects added a row of controls and nothing a visitor
+  needed that the name box does not do faster. Cities always sort by population, ties by name, on the server;
+  the JS no longer reorders. Old `?county=` and `?sort=` URLs are ignored, and Reset still strips them.
+- Remaining controls: city name box, Has lenders checkbox, live count, Reset. Name box takes the width with the
+  checkbox beside it from 640px; on phones they stack.
+- `Render::display_name( $legal, $google = '' )`: the "Including ..." line on hub cards. HMDA legal names are
+  often ALL CAPS ("CMG MORTGAGE, INC."). It prefers the stored `branch_name` (dropping a " - Kirkland, WA" place
+  suffix), title-cases all-caps names while keeping acronyms (LLC, USA, NMLS, CMG, FSB, ...) and strips trailing
+  Inc./LLC/N.A./Corp. City page cards are unchanged. `hub_index` rows gain `topd` (display names); a cached row
+  without it falls back to the legal names, cleaned.
+- The stats line (cities across counties) is unchanged.
+
 ## 0.6.1
 
 Geometry route fix. On a live host `POST /states/WA/geometry` answered 502 "TIGERweb returned no counties" while the

@@ -15,8 +15,8 @@ $plugin = dirname( __DIR__ ) . '/plugins/dos-best-lenders';
 $GLOBALS['posts'] = array();
 $GLOBALS['inserted'] = array();
 $GLOBALS['meta']  = array();
-class WP_Error { public $code; function __construct( $c = '', $m = '' ) { $this->code = $c; } }
-class WP_REST_Request { public $p; function __construct( $p ) { $this->p = $p; } function get_json_params() { return $this->p; } function get_params() { return $this->p; } }
+class WP_Error { public $code; public $msg; public $data; function __construct( $c = '', $m = '', $d = null ) { $this->code = $c; $this->msg = $m; $this->data = $d; } function get_error_message() { return $this->msg; } function get_error_data() { return $this->data; } }
+class WP_REST_Request implements ArrayAccess { public $p; function __construct( $p ) { $this->p = $p; } function get_json_params() { return $this->p; } function get_params() { return $this->p; } function offsetExists( $k ): bool { return isset( $this->p[ $k ] ); } function offsetGet( $k ): mixed { return $this->p[ $k ] ?? null; } function offsetSet( $k, $v ): void { $this->p[ $k ] = $v; } function offsetUnset( $k ): void { unset( $this->p[ $k ] ); } }
 function is_wp_error( $x ) { return $x instanceof WP_Error; }
 function sanitize_title( $s ) { return strtolower( trim( preg_replace( '/[^a-zA-Z0-9]+/', '-', $s ), '-' ) ); }
 function sanitize_text_field( $s ) { return trim( strip_tags( (string) $s ) ); }
@@ -35,6 +35,13 @@ function get_permalink( $id ) { return "/p/$id/"; }
 function get_post_status( $id ) { return 'publish'; }
 function wp_unslash( $s ) { return $s; }
 function rest_ensure_response( $v ) { return $v; }
+$GLOBALS['options'] = array();
+$GLOBALS['http_calls'] = array();
+$GLOBALS['http_next'] = null;
+function update_option( $k, $v, $a = null ) { $GLOBALS['options'][ $k ] = $v; return true; }
+function wp_remote_get( $url, $args = array() ) { $GLOBALS['http_calls'][] = array( $url, $args ); return $GLOBALS['http_next']; }
+function wp_remote_retrieve_body( $r ) { return $r['body'] ?? ''; }
+function wp_remote_retrieve_response_code( $r ) { return $r['code'] ?? 0; }
 require $plugin . '/includes/class-data-model.php';
 require $plugin . '/includes/class-rest.php';
 require $plugin . '/includes/class-maps.php';
@@ -174,6 +181,39 @@ check( 'changed lat, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53063', 
 check( 'changed county, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53033', 47.6588, -117.426, 'Map of Spokane' ) );
 check( 'changed alt, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53063', 47.6588, -117.426, 'Map of Spokane in X' ) );
 check( 'valid_state accepts WA, rejects ZZ', Maps::valid_state( 'wa' ) && ! Maps::valid_state( 'ZZ' ) );
+
+// ---- Geometry route: posted body and fetch diagnostics ----
+$sq = static function ( $geoid, $type = 'Polygon', $x = -120.0 ) {
+	$ring = array( array( $x, 47.0 ), array( $x + 1, 47.0 ), array( $x + 1, 48.0 ), array( $x, 48.0 ), array( $x, 47.0 ) );
+	return array( 'type' => 'Feature', 'properties' => array( 'GEOID' => $geoid, 'BASENAME' => 'County ' . $geoid ), 'geometry' => array( 'type' => $type, 'coordinates' => 'Polygon' === $type ? array( $ring ) : array( array( $ring ) ) ) );
+};
+$fc = array( 'type' => 'FeatureCollection', 'features' => array( $sq( '53063' ), $sq( '53033', 'MultiPolygon', -122.0 ) ) );
+$r = Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $fc ) ) );
+check( 'valid body stores counties, source body', is_array( $r ) && 2 === $r['counties'] && 'body' === $r['source'] && isset( $GLOBALS['options']['blnm_geo_WA'] ) && ! $GLOBALS['http_calls'], json_encode( $r ) );
+$bad = $fc; $bad['features'][0] = $sq( '41063' );
+$r = Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $bad ) ) );
+check( 'GEOID from another state is 400', $r instanceof WP_Error && 400 === $r->data['status'] );
+$bad = $fc; $bad['features'][0]['geometry']['type'] = 'Point'; $bad['features'][0]['geometry']['coordinates'] = array( -120, 47 );
+$r = Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $bad ) ) );
+check( 'Point geometry is 400', $r instanceof WP_Error && 400 === $r->data['status'] );
+$bad = $fc; $bad['features'][0]['geometry']['coordinates'][0][1][0] = 500;
+check( 'out-of-range longitude is 400', Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $bad ) ) ) instanceof WP_Error );
+$bad = $fc; $bad['features'][0]['geometry']['coordinates'][0][1][0] = '-120';
+check( 'string coordinate is 400', Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $bad ) ) ) instanceof WP_Error );
+check( 'non-collection and empty features are 400', Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => 'x' ) ) ) instanceof WP_Error && Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => array( 'type' => 'FeatureCollection', 'features' => array() ) ) ) ) instanceof WP_Error );
+$bad = $fc; $bad['features'][0]['properties']['BASENAME'] = str_repeat( 'a', 81 );
+check( 'BASENAME over 80 chars is 400', Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $bad ) ) ) instanceof WP_Error );
+$big = $fc; $big['features'][0]['geometry']['coordinates'][0] = array_fill( 0, 200001, array( -120.5, 47.5 ) );
+check( 'over 200k coordinate pairs is 400', Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA', 'geojson' => $big ) ) ) instanceof WP_Error );
+
+$GLOBALS['http_next'] = new WP_Error( 'http_request_failed', 'cURL error 28: timed out' );
+$r = Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA' ) ) );
+$att = $r instanceof WP_Error ? ( $r->data['attempts'] ?? array() ) : array();
+check( 'fetch failure is 502 with a diagnostic per layer', 502 === $r->data['status'] && 2 === count( $att ) && false !== strpos( $att[0]['error'], 'timed out' ), json_encode( $att ) );
+check( 'fetch sends a plain user-agent', false !== strpos( $GLOBALS['http_calls'][0][1]['user-agent'], 'BestLendersNearMe' ) && false !== strpos( $GLOBALS['http_calls'][0][0], 'where=STATE%3D%2753%27' ) );
+$GLOBALS['http_next'] = array( 'code' => 403, 'body' => '<html>Forbidden ' . str_repeat( 'x', 500 ) );
+$r = Maps::rest_geometry( new WP_REST_Request( array( 'st' => 'WA' ) ) );
+check( 'non-JSON reply shows HTTP code and 200-char body', 403 === $r->data['attempts'][0]['http'] && 200 === strlen( $r->data['attempts'][0]['body'] ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

@@ -5,6 +5,22 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.6.1
+
+Geometry route fix. On a live host `POST /states/WA/geometry` answered 502 "TIGERweb returned no counties" while the
+same URL worked from a laptop, and the code threw away the reason.
+
+- `fetch_geometry` records each layer attempt (WP_Error message, HTTP code, first 200 characters of a reply that is
+  not JSON with features) and returns them as `attempts` in the error data, so the REST response says why. It also
+  sends a plain browser-style user-agent. `sslverify` stays at the WordPress default. The query string was checked
+  against what a browser sends: `where=STATE%3D%2753%27`, identical.
+- The route accepts an optional JSON body `{"geojson": <FeatureCollection>}` (same `manage_options` permission).
+  When present the fetch is skipped. Why: lets a machine that can reach TIGERweb supply the outlines when the web
+  host cannot. Validation (400 on failure): FeatureCollection, 1 to 300 features, `properties.GEOID` a 5-digit string
+  starting with the state's FIPS, `properties.BASENAME` a string of at most 80 characters, geometry Polygon or
+  MultiPolygon with numeric [lon, lat] inside -180..180 / -90..90, at most 200,000 coordinate pairs in total (this
+  is the size cap). The response now includes `source`: `body` or `tigerweb`.
+
 ## 0.6.0
 
 State hub redesign: `[blnm_state_index state="XX"]` is now a filterable grid of city cards with a county map

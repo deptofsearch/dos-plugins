@@ -20,6 +20,8 @@ Homepage "Browse by state" is now a carousel of state cards.
   `tools/blnm-state-outlines/build.php` from Census TIGERweb States 20M. Why a shipped asset: the outline must exist for
   states with no geometry option yet. They are written once as cached SVG files in `uploads/blnm-maps/v2/states/` and
   used as lazy `<img>`; without a writable uploads folder the cards simply have no picture.
+- Look: every card is a white card with the muted outline picture; live cards differ only by ink-coloured name, city
+  count, being a link, and a spruce border plus 2px lift on hover/focus. Coming-soon names stay muted.
 - Motion: native swipe/scroll with CSS scroll-snap, plus Previous/Next buttons (added by blnm.js, disabled at the ends,
   instant scroll under prefers-reduced-motion). No autoplay. Without JS it is a scrollable list and the buttons stay
   hidden. The track is keyboard focusable and cards are list items.

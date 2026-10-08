@@ -3,7 +3,7 @@
  * Plugin Name:       DoS Best Lenders
  * Plugin URI:        https://github.com/deptofsearch/dos-plugins
  * Description:       Brand layer (fonts, tokens, logo), data model, REST surface, and rendering for bestlendersnearme.com: one page per city (blnm_city) with filterable mortgage lender cards built from public HMDA data, lender profiles (blnm_lender), [blnm_city_search] and [blnm_state_index]. Market-agnostic: no city lists or lender data live in this code.
- * Version:           0.6.3
+ * Version:           0.7.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Department of Search
@@ -18,7 +18,7 @@ namespace BLNM;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION     = '0.6.3';
+const VERSION     = '0.7.0';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/includes/class-data-model.php';

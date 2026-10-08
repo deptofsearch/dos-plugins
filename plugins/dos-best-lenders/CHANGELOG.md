@@ -5,6 +5,25 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.7.0
+
+Homepage "Browse by state" is now a carousel of state cards.
+
+- `[blnm_state_index]` with no `state=` renders a horizontal, scroll-snap carousel instead of a text list: live states
+  first (linked to their state page, with the city count), then every upcoming state in rollout order as a muted,
+  unlinked card labelled "Coming soon". All 51 show. Why: it tells visitors where we are and what is coming, and
+  gives the homepage something to look at.
+- The rollout order is `Rest::ROLLOUT` (WA, OR, CA, NV, ... HI), filterable with `blnm_rollout_order`; codes the
+  filter drops are appended A to Z so no state vanishes. "Live" is unchanged: published cities plus a published state page.
+- Each card shows a plain state outline (white state on the paper-sunk card colour, rule-coloured border, no counties,
+  no dots). Outlines come from `assets/state-outlines.json`, pre-projected with the city-tile projection and built by
+  `tools/blnm-state-outlines/build.php` from Census TIGERweb States 20M. Why a shipped asset: the outline must exist for
+  states with no geometry option yet. They are written once as cached SVG files in `uploads/blnm-maps/v2/states/` and
+  used as lazy `<img>`; without a writable uploads folder the cards simply have no picture.
+- Motion: native swipe/scroll with CSS scroll-snap, plus Previous/Next buttons (added by blnm.js, disabled at the ends,
+  instant scroll under prefers-reduced-motion). No autoplay. Without JS it is a scrollable list and the buttons stay
+  hidden. The track is keyboard focusable and cards are list items.
+
 ## 0.6.3
 
 State hub featured image no longer renders twice.

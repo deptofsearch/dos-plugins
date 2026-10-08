@@ -204,6 +204,55 @@ final class Maps {
 		return $svg . '</svg>';
 	}
 
+	/** The pre-projected state outlines (assets/state-outlines.json, built by tools/blnm-state-outlines/build.php): { ST: path d }. */
+	public static function outlines( $file = '' ) {
+		static $cache = array();
+		$file = '' !== $file ? $file : dirname( __DIR__ ) . '/assets/state-outlines.json';
+		if ( ! isset( $cache[ $file ] ) ) {
+			$json            = is_readable( $file ) ? json_decode( (string) file_get_contents( $file ), true ) : null;
+			$cache[ $file ] = is_array( $json ) && isset( $json['paths'] ) ? (array) $json['paths'] : array();
+		}
+		return $cache[ $file ];
+	}
+
+	/** Carousel picture: paper-sunk background and the state in white with a 1px rule outline. No dots, no county lines. */
+	public static function outline_svg( $d, $alt ) {
+		$c = self::COLORS;
+		return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . self::W . ' ' . self::H . '" width="' . self::W . '" height="' . self::H . '" role="img">'
+			. '<title>' . self::x( $alt ) . '</title>'
+			. '<rect width="' . self::W . '" height="' . self::H . '" fill="' . $c['paper-sunk'] . '"/>'
+			. '<path d="' . self::x( $d ) . '" fill="' . $c['paper'] . '" stroke="' . $c['rule'] . '" stroke-width="1.5" stroke-linejoin="round"/>'
+			. '</svg>';
+	}
+
+	/** File name for a state outline: the hash covers the drawing version, the path and the alt text. */
+	public static function outline_file( $st, $d, $alt ) {
+		return strtolower( $st ) . '-' . substr( md5( self::TILE_VER . '|outline|' . $d . '|' . $alt ), 0, 8 ) . '.svg';
+	}
+
+	/** Alt text of a state outline picture. */
+	public static function outline_alt( $state_name ) {
+		return 'Outline map of ' . $state_name;
+	}
+
+	/** URL of a state's outline SVG (uploads/blnm-maps/v<ver>/states/), written on first use; '' when there is no outline or uploads is unwritable. */
+	public static function outline_url( $st, $state_name ) {
+		$d = self::outlines()[ $st ] ?? '';
+		if ( '' === $d ) {
+			return '';
+		}
+		$alt  = self::outline_alt( $state_name );
+		$dir  = self::dir( 'states' );
+		$name = self::outline_file( $st, $d, $alt );
+		if ( file_exists( $dir['path'] . '/' . $name ) ) {
+			return $dir['url'] . '/' . $name;
+		}
+		if ( wp_mkdir_p( $dir['path'] ) && self::write( $dir['path'] . '/' . $name, self::outline_svg( $d, $alt ) ) ) {
+			return $dir['url'] . '/' . $name;
+		}
+		return '';
+	}
+
 	/** "Map of Spokane in Spokane County, Washington" (county part left out when unknown). */
 	public static function alt( $city, $county, $state_name ) {
 		$county = trim( (string) $county );

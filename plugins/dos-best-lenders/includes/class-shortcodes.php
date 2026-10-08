@@ -69,24 +69,14 @@ final class Shortcodes {
 		return ob_get_clean();
 	}
 
-	/** Cities for one state (state="WA"), or with no state a list of state names linking to each state page. */
+	/** Cities for one state (state="WA"), or with no state the carousel of state cards. */
 	public static function state_index( $atts ) {
 		$a     = shortcode_atts( array( 'state' => '' ), $atts, 'blnm_state_index' );
 		$state = Data_Model::sanitize_state( $a['state'] );
 		Frontend::enqueue();
 
 		if ( '' === $state ) {
-			$states = Rest::states();
-			if ( ! $states ) {
-				return '<p class="blnm blnm-empty">' . esc_html__( 'No state pages are published yet.', 'dos-best-lenders' ) . '</p>';
-			}
-			$out = '<div class="blnm blnm-states"><ul class="blnm-city-list blnm-state-list">';
-			foreach ( $states as $s ) {
-				$out .= '<li><a href="' . esc_url( $s['u'] ) . '">' . esc_html( $s['name'] ) . '</a> <span class="blnm-state-count">'
-					. esc_html( sprintf( /* translators: %s: number of cities */ _n( '%s city', '%s cities', $s['n'], 'dos-best-lenders' ), number_format_i18n( $s['n'] ) ) )
-					. '</span></li>';
-			}
-			return $out . '</ul></div>';
+			return self::carousel( Rest::carousel_cards( Rest::states() ) );
 		}
 
 		$hub = self::hub( $state );
@@ -94,6 +84,38 @@ final class Shortcodes {
 			return $hub;
 		}
 		return '<p class="blnm blnm-empty">' . esc_html__( 'No city pages are published yet.', 'dos-best-lenders' ) . '</p>';
+	}
+
+	/**
+	 * Homepage "Browse by state": a horizontal carousel of state cards, live states first (linked, with their city
+	 * count) then upcoming ones muted and unlinked ("Coming soon"). A plain scrollable list with CSS scroll-snap;
+	 * blnm.js only adds the previous/next buttons (hidden until it runs).
+	 *
+	 * @param array $cards Rest::carousel_cards() rows.
+	 */
+	public static function carousel( array $cards ) {
+		$out  = '<section class="blnm blnm-carousel" aria-roledescription="carousel" aria-label="' . esc_attr__( 'Browse by state', 'dos-best-lenders' ) . '" data-blnm-carousel>';
+		$out .= '<div class="blnm-carousel-nav">'
+			. '<button type="button" class="blnm-carousel-btn" data-dir="-1" aria-label="' . esc_attr__( 'Previous states', 'dos-best-lenders' ) . '" hidden><span aria-hidden="true">&#8249;</span></button>'
+			. '<button type="button" class="blnm-carousel-btn" data-dir="1" aria-label="' . esc_attr__( 'Next states', 'dos-best-lenders' ) . '" hidden><span aria-hidden="true">&#8250;</span></button>'
+			. '</div>';
+		$out .= '<ul class="blnm-carousel-track" tabindex="0" aria-label="' . esc_attr__( 'States', 'dos-best-lenders' ) . '">';
+		foreach ( $cards as $c ) {
+			$img = Maps::outline_url( $c['c'], $c['name'] );
+			$pic = '' !== $img
+				? '<img class="blnm-sc-img" src="' . esc_url( $img ) . '" width="' . Maps::W . '" height="' . Maps::H . '" alt="' . esc_attr( Maps::outline_alt( $c['name'] ) ) . '" loading="lazy" decoding="async">'
+				: '';
+			$meta = $c['live']
+				? esc_html( sprintf( /* translators: %s: number of cities */ _n( '%s city', '%s cities', $c['n'], 'dos-best-lenders' ), number_format_i18n( $c['n'] ) ) )
+				: esc_html__( 'Coming soon', 'dos-best-lenders' );
+			$body = $pic . '<span class="blnm-sc-name">' . esc_html( $c['name'] ) . '</span><span class="blnm-sc-meta">' . $meta . '</span>';
+			if ( $c['live'] ) {
+				$out .= '<li class="blnm-sc blnm-sc--live"><a class="blnm-sc-link" href="' . esc_url( $c['u'] ) . '">' . $body . '</a></li>';
+			} else {
+				$out .= '<li class="blnm-sc blnm-sc--soon"><div class="blnm-sc-link">' . $body . '</div></li>';
+			}
+		}
+		return $out . '</ul></section>';
 	}
 
 	/** Sanitized hub filters from the query string: q (city name) and has (1). Old ?county= and ?sort= are ignored. */

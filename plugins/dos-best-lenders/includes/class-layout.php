@@ -44,12 +44,12 @@ final class Layout {
 		return in_array( get_post_type( $post_id ), array( Data_Model::CITY, Data_Model::LENDER ), true );
 	}
 
-	/** A Page whose content holds the [blnm_state_index shortcode. Memoised: this filter runs for every meta read. */
+	/** A Page whose content holds [blnm_state_index state=...] (the hub, not the no-state list). Memoised: this filter runs for every meta read. */
 	private static function is_hub_page( $post_id ) {
 		static $memo = array();
 		if ( ! isset( $memo[ $post_id ] ) ) {
 			$post = get_post( $post_id );
-			$memo[ $post_id ] = $post && 'page' === $post->post_type && false !== strpos( (string) $post->post_content, '[blnm_state_index' );
+			$memo[ $post_id ] = $post && 'page' === $post->post_type && (bool) preg_match( '/\[blnm_state_index\b[^\]]*\bstate=/', (string) $post->post_content );
 		}
 		return $memo[ $post_id ];
 	}

@@ -116,6 +116,8 @@ final class Shortcodes {
 		if ( ! $rows ) {
 			return '';
 		}
+		static $n = 0;
+		$uid = 'blnm-hub-' . ++$n; // ids stay unique when two hubs share a page
 		$req        = self::hub_request( $_GET ); // phpcs:ignore WordPress.Security.NonceVerification
 		$state_name = Rest::STATE_NAMES[ $state ] ?? $state;
 		$qn         = Search::norm( $req['q'] );
@@ -178,28 +180,29 @@ final class Shortcodes {
 		echo '<p class="blnm-hub-stats">' . esc_html( $stats ) . '</p>';
 		?>
 <form class="blnm-filters blnm-hub-filters" method="get" action="">
-<div class="blnm-f blnm-f-q"><label for="blnm-hub-q"><?php esc_html_e( 'City name', 'dos-best-lenders' ); ?></label>
-<input id="blnm-hub-q" name="q" type="search" value="<?php echo esc_attr( $req['q'] ); ?>" placeholder="<?php esc_attr_e( 'Filter by city name...', 'dos-best-lenders' ); ?>" autocomplete="off" spellcheck="false"></div>
-<div class="blnm-f"><label for="blnm-hub-county"><?php esc_html_e( 'County', 'dos-best-lenders' ); ?></label>
-<select id="blnm-hub-county" name="county"><option value=""><?php esc_html_e( 'All counties', 'dos-best-lenders' ); ?></option>
+<div class="blnm-f blnm-f-q"><label for="<?php echo esc_attr( $uid ); ?>-q"><?php esc_html_e( 'City name', 'dos-best-lenders' ); ?></label>
+<input id="<?php echo esc_attr( $uid ); ?>-q" name="q" type="search" value="<?php echo esc_attr( $req['q'] ); ?>" placeholder="<?php esc_attr_e( 'Filter by city name...', 'dos-best-lenders' ); ?>" autocomplete="off" spellcheck="false"></div>
+<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-county"><?php esc_html_e( 'County', 'dos-best-lenders' ); ?></label>
+<select id="<?php echo esc_attr( $uid ); ?>-county" name="county"><option value=""><?php esc_html_e( 'All counties', 'dos-best-lenders' ); ?></option>
 <?php foreach ( $counties as $name => $n ) : ?>
 <option value="<?php echo esc_attr( $name ); ?>"<?php selected( 0 === strcasecmp( $name, $req['county'] ) ); ?>><?php echo esc_html( sprintf( '%s County (%d)', $name, $n ) ); ?></option>
 <?php endforeach; ?>
 </select></div>
-<div class="blnm-f"><label for="blnm-hub-sort"><?php esc_html_e( 'Sort by', 'dos-best-lenders' ); ?></label>
-<select id="blnm-hub-sort" name="sort"><option value="population"<?php selected( 'population' === $req['sort'] ); ?>><?php esc_html_e( 'Population', 'dos-best-lenders' ); ?></option><option value="az"<?php selected( 'az' === $req['sort'] ); ?>><?php esc_html_e( 'A to Z', 'dos-best-lenders' ); ?></option></select></div>
-<div class="blnm-f blnm-f-has"><label class="blnm-check" for="blnm-hub-has"><input id="blnm-hub-has" name="has" type="checkbox" value="1"<?php checked( $req['has'] ); ?>> <?php esc_html_e( 'Has lenders', 'dos-best-lenders' ); ?></label></div>
+<div class="blnm-f"><label for="<?php echo esc_attr( $uid ); ?>-sort"><?php esc_html_e( 'Sort by', 'dos-best-lenders' ); ?></label>
+<select id="<?php echo esc_attr( $uid ); ?>-sort" name="sort"><option value="population"<?php selected( 'population' === $req['sort'] ); ?>><?php esc_html_e( 'Population', 'dos-best-lenders' ); ?></option><option value="az"<?php selected( 'az' === $req['sort'] ); ?>><?php esc_html_e( 'A to Z', 'dos-best-lenders' ); ?></option></select></div>
+<div class="blnm-f blnm-f-has"><label class="blnm-check" for="<?php echo esc_attr( $uid ); ?>-has"><input id="<?php echo esc_attr( $uid ); ?>-has" name="has" type="checkbox" value="1"<?php checked( $req['has'] ); ?>> <?php esc_html_e( 'Has lenders', 'dos-best-lenders' ); ?></label></div>
 <div class="blnm-f blnm-f-status">
 <p class="blnm-count" role="status" aria-live="polite"><?php echo esc_html( sprintf( _n( 'Showing %s city', 'Showing %s cities', $shown, 'dos-best-lenders' ), number_format_i18n( $shown ) ) ); ?></p>
 <span class="blnm-hub-actions"><noscript><button type="submit" class="blnm-more"><?php esc_html_e( 'Apply', 'dos-best-lenders' ); ?></button> </noscript><a class="blnm-reset" href="<?php echo esc_url( remove_query_arg( array( 'q', 'county', 'has', 'sort' ) ) ); ?>"<?php echo ( '' === $req['q'] && '' === $req['county'] && ! $req['has'] && 'population' === $req['sort'] ) ? ' hidden' : ''; ?>><?php esc_html_e( 'Reset', 'dos-best-lenders' ); ?></a></span>
 </div>
 </form>
+<h2 class="blnm-sr"><?php echo esc_html( sprintf( /* translators: %s: state name */ __( 'Cities in %s', 'dos-best-lenders' ), $state_name ) ); ?></h2>
 <ul class="blnm-hub-grid">
 		<?php
 		foreach ( $rows as $r ) {
 			$lenders = (int) $r['lenders'];
 			$alt     = Maps::alt( $r['n'], $r['county'], $state_name );
-			$tile    = Maps::tile_url( $r + array( 'st' => $state, 'state_name' => $state_name ) );
+			$tile    = Maps::tile_url( $r + array( 'st' => $state, 'state_name' => $state_name, 'alt' => $alt ) );
 			if ( $lenders > 1 ) {
 				/* translators: %s: number of lenders */
 				$line = sprintf( __( '%s lenders listed', 'dos-best-lenders' ), number_format_i18n( $lenders ) );

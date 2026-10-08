@@ -131,6 +131,11 @@ final class Rest {
 		);
 	}
 
+	/** JSON false, "false", "0", "no" and 0 are false; everything else true. */
+	private static function truthy( $v ) {
+		return ! ( false === $v || 0 === $v || in_array( $v, array( 'false', '0', 'no', '' ), true ) );
+	}
+
 	public static function can_publish() {
 		return current_user_can( 'publish_posts' );
 	}
@@ -311,12 +316,12 @@ final class Rest {
 	}
 
 	public static function flush_on_meta( $meta_id, $post_id, $meta_key ) {
-		if ( in_array( $meta_key, array( 'blnm_city_name', 'blnm_state', 'blnm_lat', 'blnm_lng', 'blnm_population' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
+		if ( in_array( $meta_key, array( 'blnm_city_name', 'blnm_state' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
 			self::flush_index();
 			return;
 		}
-		// Hub-only inputs: refresh the per-state hub rows without bumping the city-search version on every lender write.
-		if ( in_array( $meta_key, array( 'blnm_county_name', 'blnm_county_fips', 'blnm_lenders_json', 'blnm_data_year' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
+		// Hub-only inputs (not in the /cities payload): refresh the per-state hub rows without bumping the city-search version.
+		if ( in_array( $meta_key, array( 'blnm_county_name', 'blnm_county_fips', 'blnm_lenders_json', 'blnm_data_year', 'blnm_lat', 'blnm_lng', 'blnm_population' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
 			self::flush_hubs();
 		}
 	}
@@ -324,7 +329,7 @@ final class Rest {
 	/**
 	 * POST blnm/v1/cities/upsert
 	 * Body: slug (required, "<city>-<st>"), city_name (required when creating), state, county_fips, county_name,
-	 *       data_year, lenders (array or JSON string), title, content, excerpt, status (draft|publish|pending),
+	 *       data_year, lenders (array or JSON string), title, content, excerpt, status (draft|publish|pending), create (false = 404 instead of creating when the slug is unknown),
 	 *       updated_at, reviewed_at (YYYY-MM-DD), nearby (up to 3 nearest towns with lenders; see
 	 *       Data_Model::sanitize_nearby(), shown only when the city has no lenders).
 	 *
@@ -346,6 +351,9 @@ final class Rest {
 			return new \WP_Error( 'blnm_bad_request', 'slug is required.', array( 'status' => 400 ) );
 		}
 		$existing = get_page_by_path( $slug, OBJECT, Data_Model::CITY );
+		if ( ! $existing && array_key_exists( 'create', $p ) && ! self::truthy( $p['create'] ) ) {
+			return new \WP_Error( 'blnm_not_found', 'No city with that slug, and create is false.', array( 'status' => 404 ) );
+		}
 		$name     = sanitize_text_field( (string) ( $p['city_name'] ?? '' ) );
 		if ( ! $existing && '' === $name ) {
 			return new \WP_Error( 'blnm_bad_request', 'city_name is required when creating a city.', array( 'status' => 400 ) );
@@ -357,7 +365,8 @@ final class Rest {
 			'post_name' => $slug,
 		);
 		if ( $has( 'status' ) || ! $existing ) {
-			$args['post_status'] = in_array( $p['status'] ?? 'publish', array( 'draft', 'publish', 'pending' ), true ) ? $p['status'] : 'publish';
+			$status              = $p['status'] ?? 'publish';
+			$args['post_status'] = in_array( $status, array( 'draft', 'publish', 'pending' ), true ) ? $status : 'publish';
 		}
 		if ( $has( 'title' ) && '' !== $p['title'] ) {
 			$args['post_title'] = sanitize_text_field( $p['title'] );
@@ -446,8 +455,12 @@ final class Rest {
 		if ( '' === $slug || '' === $name ) {
 			return new \WP_Error( 'blnm_bad_request', 'name and lei (or slug) are required.', array( 'status' => 400 ) );
 		}
-		$status   = in_array( $p['status'] ?? 'publish', array( 'draft', 'publish', 'pending' ), true ) ? $p['status'] : 'publish';
+		$status   = $p['status'] ?? 'publish';
+		$status   = in_array( $status, array( 'draft', 'publish', 'pending' ), true ) ? $status : 'publish';
 		$existing = get_page_by_path( $slug, OBJECT, Data_Model::LENDER );
+		if ( ! $existing && array_key_exists( 'create', $p ) && ! self::truthy( $p['create'] ) ) {
+			return new \WP_Error( 'blnm_not_found', 'No lender with that slug, and create is false.', array( 'status' => 404 ) );
+		}
 		$args     = array(
 			'post_type'   => Data_Model::LENDER,
 			'post_name'   => $slug,

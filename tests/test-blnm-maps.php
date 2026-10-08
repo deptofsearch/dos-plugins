@@ -5,11 +5,15 @@
  */
 
 define( 'ABSPATH', '/tmp/' );
+// Any PHP warning or notice is a failure: the upsert once read an undefined array key without anyone noticing.
+error_reporting( E_ALL );
+set_error_handler( static function ( $no, $str, $file, $line ) { throw new ErrorException( $str, 0, $no, $file, $line ); } );
 define( 'OBJECT', 'OBJECT' );
 $plugin = dirname( __DIR__ ) . '/plugins/dos-best-lenders';
 
 // ---- WordPress stubs, just enough for Rest::upsert_city ----
 $GLOBALS['posts'] = array();
+$GLOBALS['inserted'] = array();
 $GLOBALS['meta']  = array();
 class WP_Error { public $code; function __construct( $c = '', $m = '' ) { $this->code = $c; } }
 class WP_REST_Request { public $p; function __construct( $p ) { $this->p = $p; } function get_json_params() { return $this->p; } function get_params() { return $this->p; } }
@@ -23,16 +27,21 @@ function wp_json_encode( $v ) { return json_encode( $v ); }
 function esc_url_raw( $u ) { return (string) $u; }
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 function get_page_by_path( $slug ) { foreach ( $GLOBALS['posts'] as $id => $s ) { if ( $s === $slug ) { return (object) array( 'ID' => $id ); } } return null; }
-function wp_insert_post( $a ) { $id = count( $GLOBALS['posts'] ) + 1; $GLOBALS['posts'][ $id ] = $a['post_name']; return $id; }
+function wp_insert_post( $a ) { $GLOBALS['inserted'][] = $a; $id = count( $GLOBALS['posts'] ) + 1; $GLOBALS['posts'][ $id ] = $a['post_name']; return $id; }
 function wp_update_post( $a ) { return $a['ID']; }
 function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; }
 function get_post_meta( $id, $k = '', $single = false ) { return $GLOBALS['meta'][ $id ][ $k ] ?? ''; }
 function get_permalink( $id ) { return "/p/$id/"; }
 function get_post_status( $id ) { return 'publish'; }
+function wp_unslash( $s ) { return $s; }
 function rest_ensure_response( $v ) { return $v; }
 require $plugin . '/includes/class-data-model.php';
 require $plugin . '/includes/class-rest.php';
 require $plugin . '/includes/class-maps.php';
+require $plugin . '/includes/class-render.php';
+require $plugin . '/includes/class-search.php';
+require $plugin . '/includes/class-shortcodes.php';
+function sanitize_file_name( $s ) { return $s; }
 
 use BLNM\Maps;
 use BLNM\Rest;
@@ -111,12 +120,14 @@ foreach ( Maps::COLORS as $name => $hex ) {
 
 // ---- Upsert: hub keys ----
 check( 'sanitize_lat clamps', 90.0 === Data_Model::sanitize_lat( 120 ) && -90.0 === Data_Model::sanitize_lat( -95 ) );
-check( 'sanitize_lng clamps', 180.0 === Data_Model::sanitize_lng( 400 ) && 47.60621 === Data_Model::sanitize_lat( 47.606209999 ) );
+check( 'sanitize_lng clamps', 180.0 === Data_Model::sanitize_lng( 400 ) && -180.0 === Data_Model::sanitize_lng( -400 ) );
+check( 'sanitize_lat rounds to 5 places', 47.60621 === Data_Model::sanitize_lat( 47.606209999 ) );
 
 $r = Rest::upsert_city( new WP_REST_Request( array(
 	'slug' => 'spokane-wa', 'city_name' => 'Spokane', 'state' => 'WA', 'status' => 'publish', 'lenders' => array( array( 'name' => 'Acme Mortgage', 'loans_2025' => 4 ) ),
 ) ) );
 $id = $r['id'];
+check( 'create without status is published (no undefined-key read)', 'publish' === $GLOBALS['inserted'][0]['post_status'] );
 $before = $GLOBALS['meta'][ $id ];
 check( 'create stores lenders json', false !== strpos( $before['blnm_lenders_json'], 'Acme' ) );
 check( 'create without hub keys sets none', ! isset( $before['blnm_lat'] ) && ! isset( $before['blnm_population'] ) );
@@ -130,6 +141,39 @@ check( 'every other meta untouched (lenders, state, county, dates)', $other === 
 
 $r3 = Rest::upsert_city( new WP_REST_Request( array( 'slug' => 'spokane-wa', 'lat' => 'north' ) ) );
 check( 'non-numeric lat is ignored', 47.6588 === $GLOBALS['meta'][ $id ]['blnm_lat'] );
+
+$n_before = count( $GLOBALS['posts'] );
+$r4 = Rest::upsert_city( new WP_REST_Request( array( 'slug' => 'nowhere-xx', 'lat' => 1, 'lng' => 2 ) ) );
+check( 'unknown slug with only lat/lng is an error, not a post', $r4 instanceof WP_Error && count( $GLOBALS['posts'] ) === $n_before );
+$r5 = Rest::upsert_city( new WP_REST_Request( array( 'slug' => 'nowhere-xx', 'city_name' => 'Nowhere', 'create' => false ) ) );
+check( 'create:false on unknown slug is 404 blnm_not_found', $r5 instanceof WP_Error && 'blnm_not_found' === $r5->code && count( $GLOBALS['posts'] ) === $n_before );
+$r6 = Rest::upsert_city( new WP_REST_Request( array( 'slug' => 'spokane-wa', 'create' => false, 'population' => 230000 ) ) );
+check( 'create:false on an existing slug still updates', is_array( $r6 ) && 230000 === $GLOBALS['meta'][ $id ]['blnm_population'] );
+$r7 = Rest::upsert_lender( new WP_REST_Request( array( 'lei' => 'ABC123', 'name' => 'X', 'create' => 'false' ) ) );
+check( 'lender create:"false" is 404 too', $r7 instanceof WP_Error && 'blnm_not_found' === $r7->code );
+Rest::upsert_lender( new WP_REST_Request( array( 'lei' => 'ABC123', 'name' => 'X' ) ) );
+check( 'lender create without status is published', 'publish' === end( $GLOBALS['inserted'] )['post_status'] );
+
+// ---- Hub request parsing ----
+use BLNM\Shortcodes;
+$d = Shortcodes::hub_request( array() );
+check( 'hub_request defaults', '' === $d['q'] && '' === $d['county'] && false === $d['has'] && 'population' === $d['sort'] );
+$a = Shortcodes::hub_request( array( 'q' => array( 'x' ), 'county' => array( 'y' ), 'has' => array( '1' ), 'sort' => array( 'az' ) ) );
+check( 'hub_request ignores array values', '' === $a['q'] && '' === $a['county'] && true === $a['has'] && 'population' === $a['sort'] );
+check( 'hub_request has=0 is off', false === Shortcodes::hub_request( array( 'has' => '0' ) )['has'] );
+check( 'hub_request has="" is off', false === Shortcodes::hub_request( array( 'has' => '' ) )['has'] );
+check( 'hub_request has=1 is on, sort=az', Shortcodes::hub_request( array( 'has' => '1', 'sort' => 'az' ) )['has'] && 'az' === Shortcodes::hub_request( array( 'sort' => 'az' ) )['sort'] );
+check( 'hub_request unknown sort falls back', 'population' === Shortcodes::hub_request( array( 'sort' => 'drop table' ) )['sort'] );
+check( 'hub_request strips tags and trims county "County"', 'Spokane' === Shortcodes::hub_request( array( 'county' => 'Spokane County' ) )['county'] && 'x' === Shortcodes::hub_request( array( 'q' => '<b>x</b>' ) )['q'] );
+
+// ---- Tile file naming ----
+$f1 = Maps::tile_file( 'spokane-wa', '53063', 47.6588, -117.426, 'Map of Spokane' );
+check( 'tile file is slug-hash.svg', 1 === preg_match( '/^spokane-wa-[0-9a-f]{8}\.svg$/', $f1 ) );
+check( 'same inputs, same file', $f1 === Maps::tile_file( 'spokane-wa', '53063', '47.6588', '-117.426', 'Map of Spokane' ) );
+check( 'changed lat, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53063', 47.66, -117.426, 'Map of Spokane' ) );
+check( 'changed county, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53033', 47.6588, -117.426, 'Map of Spokane' ) );
+check( 'changed alt, new file', $f1 !== Maps::tile_file( 'spokane-wa', '53063', 47.6588, -117.426, 'Map of Spokane in X' ) );
+check( 'valid_state accepts WA, rejects ZZ', Maps::valid_state( 'wa' ) && ! Maps::valid_state( 'ZZ' ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

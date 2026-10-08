@@ -255,10 +255,10 @@ final class Maps {
 	}
 
 	/**
-	 * URL of a city's tile, writing the file when it is missing. Falls back to a data: URI when the uploads
-	 * folder is not writable. '' when the state has no stored geometry yet.
+	 * URL of a city's tile, writing the file when it is missing. '' (the card renders without a map) when the
+	 * state has no stored geometry yet or the uploads folder is not writable.
 	 *
-	 * @param array $row Hub row (slug, fips, lat, lng, n, county) plus 'st' and 'state_name'.
+	 * @param array $row Hub row (slug, fips, lat, lng, n, county) plus 'st', 'state_name' and optionally 'alt'.
 	 */
 	public static function tile_url( array $row ) {
 		$st  = $row['st'];
@@ -267,16 +267,44 @@ final class Maps {
 			return '';
 		}
 		$d    = self::dir( $st );
-		$file = $d['path'] . '/' . sanitize_file_name( $row['slug'] ) . '.svg';
-		$url  = $d['url'] . '/' . sanitize_file_name( $row['slug'] ) . '.svg';
-		if ( file_exists( $file ) ) {
-			return $url;
+		$alt  = $row['alt'] ?? self::alt( $row['n'], $row['county'], $row['state_name'] );
+		$name = self::tile_file( $row['slug'], $row['fips'], $row['lat'], $row['lng'], $alt );
+		if ( file_exists( $d['path'] . '/' . $name ) ) {
+			return $d['url'] . '/' . $name;
 		}
-		$svg = self::tile_svg( $geo, $row['fips'], $row['lat'], $row['lng'], self::alt( $row['n'], $row['county'], $row['state_name'] ), $st );
-		if ( wp_mkdir_p( $d['path'] ) && false !== @file_put_contents( $file, $svg ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors
-			return $url;
+		$svg = self::tile_svg( $geo, $row['fips'], $row['lat'], $row['lng'], $alt, $st );
+		if ( wp_mkdir_p( $d['path'] ) && self::write( $d['path'] . '/' . $name, $svg ) ) {
+			return $d['url'] . '/' . $name;
 		}
-		return 'data:image/svg+xml;base64,' . base64_encode( $svg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
+		static $logged = false;
+		if ( ! $logged ) {
+			$logged = true;
+			error_log( 'dos-best-lenders: cannot write map tiles to ' . $d['path'] . '; cards render without a map.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
+		}
+		return '';
+	}
+
+	/** File name with a hash of everything the drawing depends on, so changed inputs get a new file (and a new URL). */
+	public static function tile_file( $slug, $fips, $lat, $lng, $alt ) {
+		$key = substr( md5( self::TILE_VER . '|' . self::STYLE . '|' . $fips . '|' . $lat . '|' . $lng . '|' . $alt ), 0, 8 );
+		return sanitize_file_name( $slug ) . '-' . $key . '.svg';
+	}
+
+	/** Write through a temp file and rename, so a reader never sees half a tile. */
+	private static function write( $file, $svg ) {
+		$tmp = $file . '.' . getmypid() . '.tmp';
+		if ( false === @file_put_contents( $tmp, $svg ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			return false;
+		}
+		if ( ! @rename( $tmp, $file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			@unlink( $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			return false;
+		}
+		return true;
+	}
+
+	public static function valid_state( $v ) {
+		return isset( self::FIPS[ strtoupper( (string) $v ) ] );
 	}
 
 	public static function register_routes() {
@@ -287,11 +315,13 @@ final class Maps {
 			'type'              => 'string',
 			'required'          => true,
 			'sanitize_callback' => array( Data_Model::class, 'sanitize_state' ),
+			'validate_callback' => array( __CLASS__, 'valid_state' ),
 		);
 		register_rest_route(
 			Rest::NAMESPACE_V1,
 			'/states/(?P<st>[A-Za-z]{2})/geometry',
 			array(
+				'args'                => array( 'st' => array( 'validate_callback' => array( __CLASS__, 'valid_state' ) ) ),
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'permission_callback' => $admin,
 				'callback'            => array( __CLASS__, 'rest_geometry' ),
@@ -343,6 +373,9 @@ final class Maps {
 	/** POST blnm/v1/maps/build?state=XX: (re)write the tile for every published and draft city of the state. */
 	public static function rest_build( \WP_REST_Request $request ) {
 		$st  = Data_Model::sanitize_state( $request['state'] );
+		if ( ! self::valid_state( $st ) ) {
+			return new \WP_Error( 'blnm_bad_state', 'Unknown state.', array( 'status' => 400 ) );
+		}
 		$geo = self::geo( $st );
 		if ( ! $geo ) {
 			return new \WP_Error( 'blnm_no_geo', 'POST /states/' . $st . '/geometry first.', array( 'status' => 409 ) );
@@ -376,7 +409,7 @@ final class Maps {
 			}
 			$alt = self::alt( (string) get_post_meta( $id, 'blnm_city_name', true ), (string) get_post_meta( $id, 'blnm_county_name', true ), Rest::STATE_NAMES[ $st ] ?? $st );
 			$svg = self::tile_svg( $geo, $fips, $lat, $lng, $alt, $st );
-			if ( false !== @file_put_contents( $d['path'] . '/' . sanitize_file_name( $slug ) . '.svg', $svg ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			if ( self::write( $d['path'] . '/' . self::tile_file( $slug, $fips, $lat, $lng, $alt ), $svg ) ) {
 				++$out['written'];
 			} else {
 				++$out['failed'];
@@ -388,6 +421,9 @@ final class Maps {
 	/** DELETE blnm/v1/maps?state=XX: remove the state's tile files (every tile version); they are rewritten on next use. */
 	public static function rest_delete( \WP_REST_Request $request ) {
 		$st      = Data_Model::sanitize_state( $request['state'] );
+		if ( ! self::valid_state( $st ) ) {
+			return new \WP_Error( 'blnm_bad_state', 'Unknown state.', array( 'status' => 400 ) );
+		}
 		$up      = wp_upload_dir();
 		$root    = trailingslashit( $up['basedir'] ) . 'blnm-maps';
 		$deleted = 0;

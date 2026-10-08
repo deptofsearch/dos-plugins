@@ -92,47 +92,34 @@
     apply(true);
   }
 
-  /* ---------- State hub: filter and sort the city cards in place ----------
-     The server already filtered and sorted from the query string (works without JS); this takes over once loaded.
-     Matching uses norm() below, the same folding the city search uses. */
+  /* ---------- State hub: filter the city cards in place ----------
+     The server already filtered from the query string and sorted by population (works without JS); this takes
+     over once loaded and never reorders. Matching uses norm() below, the same folding the city search uses. */
   function initHub(root) {
     var grid = root.querySelector('.blnm-hub-grid');
     var form = root.querySelector('.blnm-hub-filters');
     if (!grid || !form) return;
     var cards = Array.prototype.slice.call(grid.children);
-    var q = form.elements.q, county = form.elements.county, has = form.elements.has, sort = form.elements.sort;
+    var q = form.elements.q, has = form.elements.has;
     var count = root.querySelector('.blnm-count'), reset = root.querySelector('.blnm-reset');
     var timer = null;
     cards.forEach(function (c) { c._k = norm(c.getAttribute('data-name') || ''); });
 
     function n(c, k) { return parseInt(c.getAttribute('data-' + k), 10) || 0; }
-    var sorters = {
-      population: function (a, b) { return n(b, 'pop') - n(a, 'pop') || (a._k < b._k ? -1 : a._k > b._k ? 1 : 0); },
-      az: function (a, b) { return a._k < b._k ? -1 : a._k > b._k ? 1 : 0; }
-    };
 
     function apply() {
-      var key = norm(q.value), cty = county.value, only = has.checked;
-      var list = cards.slice().sort(sorters[sort.value] || sorters.population);
-      var frag = document.createDocumentFragment(), shown = 0;
-      list.forEach(function (c) {
-        var ok = (!key || c._k.indexOf(key) !== -1) &&
-          (!cty || c.getAttribute('data-county') === cty) &&
-          (!only || n(c, 'lenders') > 0);
+      var key = norm(q.value), only = has.checked, shown = 0;
+      cards.forEach(function (c) {
+        var ok = (!key || c._k.indexOf(key) !== -1) && (!only || n(c, 'lenders') > 0);
         c.hidden = !ok;
         if (ok) shown++;
-        frag.appendChild(c);
       });
-      grid.appendChild(frag);
       count.textContent = 'Showing ' + shown + ' ' + (shown === 1 ? 'city' : 'cities');
-      var dirty = !!(q.value.trim() || cty || only || sort.value !== 'population');
-      reset.hidden = !dirty;
+      reset.hidden = !(q.value.trim() || only);
       if (window.history && history.replaceState) {
         var p = new URLSearchParams();
         if (q.value.trim()) p.set('q', q.value.trim());
-        if (cty) p.set('county', cty);
         if (only) p.set('has', '1');
-        if (sort.value !== 'population') p.set('sort', sort.value);
         var qs = p.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
       }
@@ -141,9 +128,7 @@
     // The server rendered from the same query string, but read it again so a cached page still matches the URL.
     var params = new URLSearchParams(location.search);
     if (params.has('q')) q.value = params.get('q');
-    if (params.has('county')) county.value = params.get('county');
     if (params.has('has')) has.checked = params.get('has') !== '0' && params.get('has') !== '';
-    if (params.get('sort') === 'az') sort.value = 'az';
 
     form.addEventListener('input', function (e) {
       if (e.target === q) { clearTimeout(timer); timer = setTimeout(apply, 120); }
@@ -152,7 +137,7 @@
     form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); apply(); });
     reset.addEventListener('click', function (e) {
       e.preventDefault();
-      q.value = ''; county.value = ''; has.checked = false; sort.value = 'population';
+      q.value = ''; has.checked = false;
       apply();
     });
     apply();

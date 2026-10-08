@@ -323,6 +323,70 @@ final class Render {
 		return ob_get_clean();
 	}
 
+	/** Words kept as typed-in-this-case when an ALL CAPS lender name is title-cased. */
+	const NAME_CASE = array(
+		'LLC' => 'LLC', 'LP' => 'LP', 'USA' => 'USA', 'US' => 'US', 'NMLS' => 'NMLS', 'CMG' => 'CMG', 'FSB' => 'FSB',
+		'SSB' => 'SSB', 'UWM' => 'UWM', 'PNC' => 'PNC', 'USAA' => 'USAA', 'BMO' => 'BMO', 'TD' => 'TD', 'HSBC' => 'HSBC',
+		'FHA' => 'FHA', 'VA' => 'VA', 'II' => 'II', 'III' => 'III', 'NA' => 'N.A.', 'N.A.' => 'N.A.', 'JPMORGAN' => 'JPMorgan',
+		'LOANDEPOT.COM' => 'loanDepot.com', 'NEWREZ' => 'NewRez', 'CROSSCOUNTRY' => 'CrossCountry',
+	);
+
+	const NAME_SMALL = array( 'and', 'of', 'the', 'for', 'at', 'in', 'on', 'to', 'a', 'an' );
+
+	/**
+	 * A short, readable lender name for cards. HMDA legal names are often ALL CAPS with a legal suffix
+	 * ("CMG MORTGAGE, INC."). Prefers the Google/branch name when given (its " - Kirkland, WA" place suffix is
+	 * dropped), converts an all-caps name to title case keeping known acronyms upper, and strips trailing
+	 * legal suffixes (Inc., LLC, N.A., Corp, ...). Never returns an empty string for a non-empty input.
+	 */
+	public static function display_name( $legal, $google = '' ) {
+		$legal  = trim( preg_replace( '/\s+/', ' ', (string) $legal ) );
+		$google = trim( preg_replace( '/\s+/', ' ', (string) $google ) );
+		$name   = '' !== $google ? $google : $legal;
+		if ( '' !== $google ) {
+			$brand = trim( preg_split( '/\s+[-\x{2013}\x{2014}|]\s+/u', $google )[0] );
+			$name  = '' !== $brand ? $brand : $google;
+		}
+		$strip = static function ( $s ) {
+			$re = '/[\s,]+(?:inc\.?|incorporated|llc\.?|l\.l\.c\.?|lp|l\.p\.|llp|ltd\.?|corp\.?|corporation|company|co\.?|national\s+association|n\.a\.?|na)\s*\.?$/i';
+			for ( $i = 0; $i < 3; $i++ ) {
+				$t = preg_replace( $re, '', $s );
+				if ( null === $t || '' === trim( $t ) || $t === $s ) {
+					break;
+				}
+				$s = $t;
+			}
+			return rtrim( $s, " ,." ) === '' ? $s : rtrim( $s, ' ,' );
+		};
+		$name = $strip( $name );
+		if ( 1 === preg_match( '/[a-z]/', $name ) || 1 !== preg_match( '/[A-Z]/', $name ) ) {
+			return $name;
+		}
+		$words = explode( ' ', $name );
+		foreach ( $words as $i => $w ) {
+			$words[ $i ] = preg_replace_callback(
+				'/[^\-\/]+/',
+				static function ( $m ) use ( $i ) {
+					$tok = $m[0];
+					$key = rtrim( $tok, '.,' );
+					if ( isset( self::NAME_CASE[ $key ] ) ) {
+						return self::NAME_CASE[ $key ] . substr( $tok, strlen( $key ) );
+					}
+					if ( 1 === preg_match( '/^(?:[A-Z]\.){2,}$/', $tok ) ) {
+						return $tok; // initials such as J.P.
+					}
+					$low = strtolower( $tok );
+					if ( $i > 0 && in_array( $low, self::NAME_SMALL, true ) ) {
+						return $low;
+					}
+					return ucfirst( $low );
+				},
+				$w
+			);
+		}
+		return implode( ' ', $words );
+	}
+
 	public static function join_names( array $names ) {
 		if ( count( $names ) < 2 ) {
 			return implode( '', $names );

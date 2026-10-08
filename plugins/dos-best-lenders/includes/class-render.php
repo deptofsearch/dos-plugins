@@ -323,7 +323,7 @@ final class Render {
 		return ob_get_clean();
 	}
 
-	private static function join_names( array $names ) {
+	public static function join_names( array $names ) {
 		if ( count( $names ) < 2 ) {
 			return implode( '', $names );
 		}

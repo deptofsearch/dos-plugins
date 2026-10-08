@@ -94,6 +94,9 @@ final class Data_Model {
 			'blnm_lender_count' => array( 'integer', 'Derived: number of lenders in blnm_lenders_json.', 'absint' ),
 			'blnm_loan_total'   => array( 'integer', 'Derived: sum of loans_2025 across lenders.', 'absint' ),
 			'blnm_reviewed_at'  => array( 'string', 'YYYY-MM-DD the Google review check last ran for this city\'s county. Empty = not checked yet.', array( __CLASS__, 'sanitize_date' ) ),
+			'blnm_lat'          => array( 'number', 'City latitude (decimal degrees, -90 to 90). Places the dot on the state hub map tile.', array( __CLASS__, 'sanitize_lat' ) ),
+			'blnm_lng'          => array( 'number', 'City longitude (decimal degrees, -180 to 180).', array( __CLASS__, 'sanitize_lng' ) ),
+			'blnm_population'   => array( 'integer', 'City population (Census). Used to sort the state hub.', 'absint' ),
 			'blnm_nearby_json'  => array( 'string', 'JSON: up to 3 nearest towns with listed lenders, shown when this city has none. See Data_Model::sanitize_nearby().', array( __CLASS__, 'sanitize_nearby_json' ) ),
 		);
 		foreach ( $city_meta as $key => $def ) {
@@ -170,6 +173,16 @@ final class Data_Model {
 
 	public static function sanitize_state( $v ) {
 		return strtoupper( substr( preg_replace( '/[^A-Za-z]/', '', (string) $v ), 0, 2 ) );
+	}
+
+	/** Latitude clamped to -90..90, rounded to 5 places. */
+	public static function sanitize_lat( $v ) {
+		return round( max( -90.0, min( 90.0, (float) $v ) ), 5 );
+	}
+
+	/** Longitude clamped to -180..180, rounded to 5 places. */
+	public static function sanitize_lng( $v ) {
+		return round( max( -180.0, min( 180.0, (float) $v ) ), 5 );
 	}
 
 	public static function sanitize_fips( $v ) {

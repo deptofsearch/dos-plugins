@@ -18,6 +18,8 @@ final class Rest {
 	const NAMESPACE_V1 = 'blnm/v1';
 	const TRANSIENT    = 'blnm_city_index_v2';
 	const STATES_TRANS = 'blnm_state_list_v1';
+	const HUB_TRANS    = 'blnm_hub_';
+	const HUB_STATES   = 'blnm_hub_states';
 
 	/** USPS code => state name (50 states + DC). */
 	const STATE_NAMES = array(
@@ -170,6 +172,80 @@ final class Rest {
 		return $index;
 	}
 
+	/**
+	 * Rows for the state hub, A to Z by city, cached per state in transient blnm_hub_<ST>:
+	 * { n: name, slug, u: url, county (no "County"), fips, lenders: count, top: up to 3 names by score, pop, lat, lng, yr }.
+	 * One query for the IDs and one meta-cache priming, so 90 cities cost two queries, not 90.
+	 */
+	public static function hub_index( $state ) {
+		$state = Data_Model::sanitize_state( $state );
+		if ( '' === $state ) {
+			return array();
+		}
+		$rows = get_transient( self::HUB_TRANS . $state );
+		if ( false !== $rows ) {
+			return $rows;
+		}
+		$ids = get_posts(
+			array(
+				'post_type'      => Data_Model::CITY,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_key'       => 'blnm_state',
+				'meta_value'     => $state,
+			)
+		);
+		update_meta_cache( 'post', $ids );
+		$rows = array();
+		foreach ( $ids as $id ) {
+			$name = (string) get_post_meta( $id, 'blnm_city_name', true );
+			if ( '' === $name ) {
+				continue;
+			}
+			$lenders = Data_Model::city_lenders( $id );
+			usort(
+				$lenders,
+				static function ( $a, $b ) {
+					return ( $b['score'] ?? -1 ) <=> ( $a['score'] ?? -1 ) ?: ( $b['loans_2025'] ?? 0 ) <=> ( $a['loans_2025'] ?? 0 );
+				}
+			);
+			$top = array();
+			foreach ( array_slice( $lenders, 0, 3 ) as $l ) {
+				$top[] = (string) $l['name'];
+			}
+			$lat    = get_post_meta( $id, 'blnm_lat', true );
+			$lng    = get_post_meta( $id, 'blnm_lng', true );
+			$rows[] = array(
+				'n'       => $name,
+				'slug'    => (string) get_post_field( 'post_name', $id ),
+				'u'       => get_permalink( $id ),
+				'county'  => (string) get_post_meta( $id, 'blnm_county_name', true ),
+				'fips'    => (string) get_post_meta( $id, 'blnm_county_fips', true ),
+				'lenders' => count( $lenders ),
+				'top'     => $top,
+				'pop'     => (int) get_post_meta( $id, 'blnm_population', true ),
+				'lat'     => '' === $lat ? null : (float) $lat,
+				'lng'     => '' === $lng ? null : (float) $lng,
+				'yr'      => (int) get_post_meta( $id, 'blnm_data_year', true ),
+			);
+		}
+		usort(
+			$rows,
+			static function ( $a, $b ) {
+				return strnatcasecmp( $a['n'], $b['n'] );
+			}
+		);
+		set_transient( self::HUB_TRANS . $state, $rows, DAY_IN_SECONDS );
+		$known = (array) get_option( self::HUB_STATES, array() );
+		if ( ! in_array( $state, $known, true ) ) {
+			$known[] = $state;
+			update_option( self::HUB_STATES, $known, false );
+		}
+		return $rows;
+	}
+
 	public static function list_cities( \WP_REST_Request $request ) {
 		$rows  = self::index();
 		$state = (string) $request->get_param( 'state' );
@@ -192,7 +268,15 @@ final class Rest {
 	public static function flush_index() {
 		delete_transient( self::TRANSIENT );
 		delete_transient( self::STATES_TRANS );
+		self::flush_hubs();
 		update_option( 'blnm_city_index_ver', time(), false );
+	}
+
+	/** Drop every cached state hub (transient blnm_hub_<ST>). */
+	public static function flush_hubs() {
+		foreach ( (array) get_option( self::HUB_STATES, array() ) as $st ) {
+			delete_transient( self::HUB_TRANS . $st );
+		}
 	}
 
 	public static function index_ver() {
@@ -227,8 +311,13 @@ final class Rest {
 	}
 
 	public static function flush_on_meta( $meta_id, $post_id, $meta_key ) {
-		if ( in_array( $meta_key, array( 'blnm_city_name', 'blnm_state' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
+		if ( in_array( $meta_key, array( 'blnm_city_name', 'blnm_state', 'blnm_lat', 'blnm_lng', 'blnm_population' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
 			self::flush_index();
+			return;
+		}
+		// Hub-only inputs: refresh the per-state hub rows without bumping the city-search version on every lender write.
+		if ( in_array( $meta_key, array( 'blnm_county_name', 'blnm_county_fips', 'blnm_lenders_json', 'blnm_data_year' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
+			self::flush_hubs();
 		}
 	}
 
@@ -315,6 +404,16 @@ final class Rest {
 		}
 		if ( $has( 'reviewed_at' ) ) {
 			update_post_meta( $id, 'blnm_reviewed_at', Data_Model::sanitize_date( $p['reviewed_at'] ) );
+		}
+		// Hub map and sort inputs. Each is written only when sent, so {slug, lat, lng, population} alone touches nothing else.
+		if ( $has( 'lat' ) && is_numeric( $p['lat'] ) ) {
+			update_post_meta( $id, 'blnm_lat', Data_Model::sanitize_lat( $p['lat'] ) );
+		}
+		if ( $has( 'lng' ) && is_numeric( $p['lng'] ) ) {
+			update_post_meta( $id, 'blnm_lng', Data_Model::sanitize_lng( $p['lng'] ) );
+		}
+		if ( $has( 'population' ) && is_numeric( $p['population'] ) ) {
+			update_post_meta( $id, 'blnm_population', absint( $p['population'] ) );
 		}
 		if ( $has( 'nearby' ) ) {
 			update_post_meta( $id, 'blnm_nearby_json', wp_slash( Data_Model::sanitize_nearby_json( $p['nearby'] ) ) );

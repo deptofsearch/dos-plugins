@@ -44,11 +44,28 @@ final class Layout {
 		return in_array( get_post_type( $post_id ), array( Data_Model::CITY, Data_Model::LENDER ), true );
 	}
 
+	/** A Page whose content holds the [blnm_state_index shortcode. Memoised: this filter runs for every meta read. */
+	private static function is_hub_page( $post_id ) {
+		static $memo = array();
+		if ( ! isset( $memo[ $post_id ] ) ) {
+			$post = get_post( $post_id );
+			$memo[ $post_id ] = $post && 'page' === $post->post_type && false !== strpos( (string) $post->post_content, '[blnm_state_index' );
+		}
+		return $memo[ $post_id ];
+	}
+
 	public static function themify_meta( $value, $object_id, $meta_key, $single ) {
 		if ( null !== $value || '' === $meta_key || ! isset( self::THEMIFY_META[ $meta_key ] ) ) {
 			return $value;
 		}
-		if ( is_admin() || ! self::enabled() || ! self::is_ours( $object_id ) ) {
+		if ( is_admin() || ! self::enabled() ) {
+			return $value;
+		}
+		// State hub pages: the hub prints its own hero figure, so Themify must not print the featured image too.
+		if ( 'hide_post_image' === $meta_key && self::is_hub_page( $object_id ) ) {
+			return $single ? 'yes' : array( 'yes' );
+		}
+		if ( ! self::is_ours( $object_id ) ) {
 			return $value;
 		}
 		$v = self::THEMIFY_META[ $meta_key ];

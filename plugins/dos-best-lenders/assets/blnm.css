@@ -591,6 +591,17 @@
 	content: none;
 	display: none;
 }
+.blnm-state-list {
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.blnm-state-count {
+	margin-left: var(--blnm-space-1);
+	font-size: 0.875em;
+	color: var(--blnm-ink-muted);
+}
+.blnm-state-count::before {
+	content: "\00b7\00a0";
+}
 .blnm .blnm-state-name {
 	margin: var(--blnm-space-6) 0 var(--blnm-space-2);
 	font-family: var(--blnm-font-display);

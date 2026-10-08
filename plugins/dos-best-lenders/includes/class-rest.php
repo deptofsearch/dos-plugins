@@ -16,12 +16,78 @@ defined( 'ABSPATH' ) || exit;
 final class Rest {
 
 	const NAMESPACE_V1 = 'blnm/v1';
-	const TRANSIENT    = 'blnm_city_index_v1';
+	const TRANSIENT    = 'blnm_city_index_v2';
+	const STATES_TRANS = 'blnm_state_list_v1';
+
+	/** USPS code => state name (50 states + DC). */
+	const STATE_NAMES = array(
+		'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas', 'CA' => 'California',
+		'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware', 'DC' => 'District of Columbia',
+		'FL' => 'Florida', 'GA' => 'Georgia', 'HI' => 'Hawaii', 'ID' => 'Idaho', 'IL' => 'Illinois',
+		'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas', 'KY' => 'Kentucky', 'LA' => 'Louisiana',
+		'ME' => 'Maine', 'MD' => 'Maryland', 'MA' => 'Massachusetts', 'MI' => 'Michigan', 'MN' => 'Minnesota',
+		'MS' => 'Mississippi', 'MO' => 'Missouri', 'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
+		'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico', 'NY' => 'New York',
+		'NC' => 'North Carolina', 'ND' => 'North Dakota', 'OH' => 'Ohio', 'OK' => 'Oklahoma', 'OR' => 'Oregon',
+		'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina', 'SD' => 'South Dakota',
+		'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah', 'VT' => 'Vermont', 'VA' => 'Virginia',
+		'WA' => 'Washington', 'WV' => 'West Virginia', 'WI' => 'Wisconsin', 'WY' => 'Wyoming',
+	);
 
 	public static function hooks() {
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 		add_action( 'transition_post_status', array( __CLASS__, 'maybe_flush' ), 10, 3 );
+		add_action( 'added_post_meta', array( __CLASS__, 'flush_on_meta' ), 10, 3 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'flush_on_meta' ), 10, 3 );
+		add_action( 'deleted_post_meta', array( __CLASS__, 'flush_on_deleted_meta' ), 10, 4 );
+		add_action( 'before_delete_post', array( __CLASS__, 'flush_on_delete' ) );
+		add_action( 'save_post_page', array( __CLASS__, 'flush_states' ) );
+	}
+
+	/**
+	 * States that have at least one published city AND a published state page (slug = slugified state name).
+	 * [ { c: "WA", name: "Washington", n: 91, u: url } ], A to Z by name. Cached in a transient flushed with the index.
+	 */
+	public static function states() {
+		$list = get_transient( self::STATES_TRANS );
+		if ( false === $list ) {
+			$counts = array();
+			foreach ( self::index() as $r ) {
+				if ( '' !== $r['s'] ) {
+					$counts[ $r['s'] ] = ( $counts[ $r['s'] ] ?? 0 ) + 1;
+				}
+			}
+			$list = array();
+			foreach ( $counts as $code => $n ) {
+				if ( ! isset( self::STATE_NAMES[ $code ] ) ) {
+					continue;
+				}
+				$name = self::STATE_NAMES[ $code ];
+				$page = get_page_by_path( sanitize_title( $name ), OBJECT, 'page' );
+				if ( ! $page || 'publish' !== $page->post_status ) {
+					continue;
+				}
+				$list[] = array(
+					'c'    => $code,
+					'name' => $name,
+					'n'    => $n,
+					'u'    => get_permalink( $page ),
+				);
+			}
+			usort(
+				$list,
+				static function ( $a, $b ) {
+					return strcasecmp( $a['name'], $b['name'] );
+				}
+			);
+			set_transient( self::STATES_TRANS, $list, DAY_IN_SECONDS );
+		}
+		return $list;
+	}
+
+	/** Pages changing (new state page published, slug edited, trashed) can change the state list. */
+	public static function flush_states() {
+		delete_transient( self::STATES_TRANS );
 	}
 
 	public static function register_routes() {
@@ -67,7 +133,7 @@ final class Rest {
 		return current_user_can( 'publish_posts' );
 	}
 
-	/** Public list: [ { n: "Kennewick, WA", u: url, s: "WA" } ], A to Z. */
+	/** Public list of published cities: [ { n: "Kennewick", s: "WA", u: url } ], A to Z. Cached in a transient. */
 	public static function index() {
 		$index = get_transient( self::TRANSIENT );
 		if ( false === $index ) {
@@ -88,18 +154,18 @@ final class Rest {
 					continue;
 				}
 				$index[] = array(
-					'n' => $city . ( $state ? ', ' . $state : '' ),
-					'u' => get_permalink( $id ),
+					'n' => $city,
 					's' => $state,
+					'u' => get_permalink( $id ),
 				);
 			}
 			usort(
 				$index,
 				static function ( $a, $b ) {
-					return strnatcasecmp( $a['n'], $b['n'] );
+					return strnatcasecmp( $a['n'] . ', ' . $a['s'], $b['n'] . ', ' . $b['s'] );
 				}
 			);
-			set_transient( self::TRANSIENT, $index, 12 * HOUR_IN_SECONDS );
+			set_transient( self::TRANSIENT, $index, DAY_IN_SECONDS );
 		}
 		return $index;
 	}
@@ -118,19 +184,51 @@ final class Rest {
 			);
 		}
 		$res = rest_ensure_response( $rows );
-		$res->header( 'Cache-Control', 'public, max-age=3600' );
+		$res->header( 'Cache-Control', 'public, max-age=300, s-maxage=300' );
 		return $res;
 	}
 
+	/** Drop the cached index and bump the version the shortcode appends to the API URL, so browsers/CDNs refetch. */
+	public static function flush_index() {
+		delete_transient( self::TRANSIENT );
+		delete_transient( self::STATES_TRANS );
+		update_option( 'blnm_city_index_ver', time(), false );
+	}
+
+	public static function index_ver() {
+		$v = (int) get_option( 'blnm_city_index_ver', 0 );
+		if ( ! $v ) {
+			$v = time();
+			update_option( 'blnm_city_index_ver', $v, false );
+		}
+		return $v;
+	}
+
 	public static function maybe_flush( $new, $old, $post ) {
+		if ( 'page' === $post->post_type && ( 'publish' === $new || 'publish' === $old ) ) {
+			self::flush_states();
+		}
 		if ( Data_Model::CITY === $post->post_type && ( 'publish' === $new || 'publish' === $old ) ) {
-			delete_transient( self::TRANSIENT );
+			self::flush_index();
+		}
+	}
+
+	public static function flush_on_deleted_meta( $meta_ids, $post_id, $meta_key, $value ) {
+		self::flush_on_meta( 0, $post_id, $meta_key );
+	}
+
+	public static function flush_on_delete( $post_id ) {
+		if ( 'page' === get_post_type( $post_id ) ) {
+			self::flush_states();
+		}
+		if ( Data_Model::CITY === get_post_type( $post_id ) ) {
+			self::flush_index();
 		}
 	}
 
 	public static function flush_on_meta( $meta_id, $post_id, $meta_key ) {
 		if ( in_array( $meta_key, array( 'blnm_city_name', 'blnm_state' ), true ) && Data_Model::CITY === get_post_type( $post_id ) ) {
-			delete_transient( self::TRANSIENT );
+			self::flush_index();
 		}
 	}
 

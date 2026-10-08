@@ -42,7 +42,7 @@ final class Shortcodes {
 		$a  = shortcode_atts(
 			array(
 				'heading'     => __( 'Find a lender in your city', 'dos-best-lenders' ),
-				'placeholder' => __( 'City, ST (for example Kennewick, WA)', 'dos-best-lenders' ),
+				'placeholder' => __( 'Type a city (for example Kennewick)', 'dos-best-lenders' ),
 				'button'      => __( 'Search', 'dos-best-lenders' ),
 			),
 			$atts,
@@ -52,11 +52,11 @@ final class Shortcodes {
 
 		ob_start();
 		?>
-<section class="blnm blnm-search" data-api="<?php echo esc_url( rest_url( Rest::NAMESPACE_V1 . '/cities' ) ); ?>">
+<section class="blnm blnm-search" data-api="<?php echo esc_url( add_query_arg( 'v', Rest::index_ver(), rest_url( Rest::NAMESPACE_V1 . '/cities' ) ) ); ?>">
 <h2 class="blnm-search-heading"><?php echo esc_html( $a['heading'] ); ?></h2>
 <form class="blnm-search-form" role="search" action="<?php echo esc_url( home_url( '/' ) ); ?>" method="get" autocomplete="off">
 <input type="hidden" name="post_type" value="<?php echo esc_attr( Data_Model::CITY ); ?>">
-<label class="blnm-sr" for="<?php echo esc_attr( $id ); ?>"><?php esc_html_e( 'City and state', 'dos-best-lenders' ); ?></label>
+<label class="blnm-sr" for="<?php echo esc_attr( $id ); ?>"><?php esc_html_e( 'City name', 'dos-best-lenders' ); ?></label>
 <div class="blnm-search-wrap">
 <input id="<?php echo esc_attr( $id ); ?>" name="s" type="text" placeholder="<?php echo esc_attr( $a['placeholder'] ); ?>" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="<?php echo esc_attr( $id ); ?>-list" spellcheck="false" autocapitalize="words" enterkeyhint="go">
 <ul id="<?php echo esc_attr( $id ); ?>-list" class="blnm-search-list" role="listbox" hidden></ul>
@@ -69,11 +69,25 @@ final class Shortcodes {
 		return ob_get_clean();
 	}
 
-	/** Cities for one state, or every state grouped when no state is given. */
+	/** Cities for one state (state="WA"), or with no state a list of state names linking to each state page. */
 	public static function state_index( $atts ) {
 		$a     = shortcode_atts( array( 'state' => '' ), $atts, 'blnm_state_index' );
 		$state = Data_Model::sanitize_state( $a['state'] );
 		Frontend::enqueue();
+
+		if ( '' === $state ) {
+			$states = Rest::states();
+			if ( ! $states ) {
+				return '<p class="blnm blnm-empty">' . esc_html__( 'No state pages are published yet.', 'dos-best-lenders' ) . '</p>';
+			}
+			$out = '<div class="blnm blnm-states"><ul class="blnm-city-list blnm-state-list">';
+			foreach ( $states as $s ) {
+				$out .= '<li><a href="' . esc_url( $s['u'] ) . '">' . esc_html( $s['name'] ) . '</a> <span class="blnm-state-count">'
+					. esc_html( sprintf( /* translators: %s: number of cities */ _n( '%s city', '%s cities', $s['n'], 'dos-best-lenders' ), number_format_i18n( $s['n'] ) ) )
+					. '</span></li>';
+			}
+			return $out . '</ul></div>';
+		}
 
 		$rows = Rest::index();
 		if ( '' !== $state ) {
@@ -104,7 +118,7 @@ final class Shortcodes {
 			}
 			echo '<ul class="blnm-city-list">';
 			foreach ( $cities as $c ) {
-				echo '<li><a href="' . esc_url( $c['u'] ) . '">' . esc_html( $c['n'] ) . '</a></li>';
+				echo '<li><a href="' . esc_url( $c['u'] ) . '">' . esc_html( $c['n'] . ( $c['s'] ? ', ' . $c['s'] : '' ) ) . '</a></li>';
 			}
 			echo '</ul>';
 		}

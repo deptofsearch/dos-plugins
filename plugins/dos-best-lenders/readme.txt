@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.9
+Stable tag: 0.5.1
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -29,9 +29,21 @@ The same review fields plus `summary` are accepted by `POST /lenders/upsert` (st
 
 == Changelog ==
 
+= 0.5.1 =
+* First release from the shared dos-plugins repository: merges the two 0.4.9 lines and the 0.5.0 manual build. Nothing is lost from either. See CHANGELOG.md.
+* Updates itself from GitHub releases (shared DoS updater, tag `dos-best-lenders-v<version>`, asset `dos-best-lenders.zip`).
+
+= 0.5.0 =
+* Homepage "Browse by state": `[blnm_state_index]` with no state now lists state names (e.g. Washington, "91 cities") linking to each state page (page slug = slugified state name), instead of every city under a bare code. Only states with a published city and a published state page appear. `[blnm_state_index state="WA"]` is unchanged. List is cached and flushed with the city index and on page publish/update/delete.
+* wp-admin only: the City list gets a sortable "Lenders" column, a "No lenders (N)" view, a State filter, and a county / nearby-towns column. Count uses the stored `blnm_lender_count` meta (backfilled when missing). 
+* City search index URL now carries `?v=<blnm_city_index_ver>`, bumped whenever the index is flushed (publish/unpublish/update/delete), so browsers never keep a stale empty index.
+
 = 0.4.9 =
 * "What reviewers mention" starts closed on every screen; clicking it opens the summary, highlights and pros. It used to start open on desktop and close only on phones. The text is still in the page HTML. Version bump so the changed blnm.js loads past caches.
-* Updates itself from GitHub releases (shared DoS updater, `Plugin URI` and `Update URI` headers, tag `dos-best-lenders-v<version>`). 0.4.8 has no updater, so 0.4.9 is installed by hand once.
+* Cities with no qualifying lenders no longer show the "0 lenders made 0 home loans" summary line. Singular forms checked ("1 lender made 1 home loan").
+* Homepage city search works by city name: accepts "Seattle", "seattle wa", "Seattle, Washington", "Saint/St. Helens", extra spaces and partial prefixes; typeahead from 2 characters with keyboard navigation. A name in several states lists each state and asks the visitor to pick; no match shows a friendly message instead of a 404 or search page.
+* No-JS search fallback (?s=&post_type=blnm_city) redirects to the city page when exactly one published city matches, otherwise falls through.
+* `GET blnm/v1/cities` payload is now `{ n: city, s: state, u: url }` (city name no longer includes ", ST"); cache invalidates on city publish, unpublish, update, delete and meta changes (including first-time meta on create).
 
 = 0.4.8 =
 * Defers meta description and Open Graph/Twitter tags to the DoS Toolkit SEO module when it is active (same as for Yoast, Rank Math, AIOSEO, SEOPress).

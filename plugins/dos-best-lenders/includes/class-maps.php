@@ -222,7 +222,8 @@ final class Maps {
 		if ( ! isset( self::FIPS[ $st ] ) ) {
 			return new \WP_Error( 'blnm_bad_state', 'Unknown state.', array( 'status' => 400 ) );
 		}
-		$layers = in_array( $st, self::SMALL, true ) ? array( 12, 13 ) : array( 13, 12 );
+		$layers   = in_array( $st, self::SMALL, true ) ? array( 12, 13 ) : array( 13, 12 );
+		$attempts = array();
 		foreach ( $layers as $layer ) {
 			$url = self::TIGER . $layer . '/query?' . http_build_query(
 				array(
@@ -234,16 +235,97 @@ final class Maps {
 					'f'                 => 'geojson',
 				)
 			);
-			$res = wp_remote_get( $url, array( 'timeout' => 60 ) );
+			$res = wp_remote_get(
+				$url,
+				array(
+					'timeout'    => 60,
+					'user-agent' => 'Mozilla/5.0 (compatible; BestLendersNearMe/1.0; +https://bestlendersnearme.com)',
+				)
+			);
 			if ( is_wp_error( $res ) ) {
+				$attempts[] = array( 'layer' => $layer, 'error' => $res->get_error_message() );
 				continue;
 			}
-			$body = json_decode( (string) wp_remote_retrieve_body( $res ), true );
+			$raw  = (string) wp_remote_retrieve_body( $res );
+			$body = json_decode( $raw, true );
 			if ( is_array( $body ) && ! empty( $body['features'] ) ) {
 				return $body;
 			}
+			$attempts[] = array(
+				'layer' => $layer,
+				'http'  => (int) wp_remote_retrieve_response_code( $res ),
+				'body'  => substr( $raw, 0, 200 ),
+			);
 		}
-		return new \WP_Error( 'blnm_geo_failed', 'TIGERweb returned no counties for ' . $st . '.', array( 'status' => 502 ) );
+		return new \WP_Error( 'blnm_geo_failed', 'TIGERweb returned no counties for ' . $st . '.', array( 'status' => 502, 'attempts' => $attempts ) );
+	}
+
+	/** Most coordinate pairs a posted FeatureCollection may carry (a full state at precision 3 is well under this). */
+	const MAX_PAIRS = 200000;
+
+	/** True when $pt is [lon, lat, ...] of numbers inside the world's bounds. */
+	private static function good_pair( $pt ) {
+		return is_array( $pt ) && count( $pt ) >= 2 && isset( $pt[0], $pt[1] )
+			&& ( is_int( $pt[0] ) || is_float( $pt[0] ) ) && ( is_int( $pt[1] ) || is_float( $pt[1] ) )
+			&& $pt[0] >= -180 && $pt[0] <= 180 && $pt[1] >= -90 && $pt[1] <= 90;
+	}
+
+	/**
+	 * Validate a posted county FeatureCollection for a state. Returns the collection, or a 400 WP_Error.
+	 *
+	 * @param mixed  $gj Decoded JSON.
+	 * @param string $st Two-letter state code.
+	 */
+	public static function validate_geojson( $gj, $st ) {
+		$bad = static function ( $msg ) {
+			return new \WP_Error( 'blnm_bad_geojson', $msg, array( 'status' => 400 ) );
+		};
+		if ( ! isset( self::FIPS[ $st ] ) ) {
+			return $bad( 'Unknown state.' );
+		}
+		if ( ! is_array( $gj ) || ( $gj['type'] ?? '' ) !== 'FeatureCollection' || ! isset( $gj['features'] ) || ! is_array( $gj['features'] ) ) {
+			return $bad( 'geojson must be a FeatureCollection.' );
+		}
+		$n = count( $gj['features'] );
+		if ( $n < 1 || $n > 300 ) {
+			return $bad( 'geojson must have between 1 and 300 features.' );
+		}
+		$pairs = 0;
+		foreach ( $gj['features'] as $i => $f ) {
+			$geoid = is_array( $f ) ? ( $f['properties']['GEOID'] ?? null ) : null;
+			$base  = is_array( $f ) ? ( $f['properties']['BASENAME'] ?? null ) : null;
+			if ( ! is_string( $geoid ) || ! preg_match( '/^\d{5}$/', $geoid ) || 0 !== strpos( $geoid, self::FIPS[ $st ] ) ) {
+				return $bad( 'Feature ' . $i . ': properties.GEOID must be a 5-digit string starting with ' . self::FIPS[ $st ] . '.' );
+			}
+			if ( ! is_string( $base ) || '' === $base || strlen( $base ) > 80 ) {
+				return $bad( 'Feature ' . $i . ': properties.BASENAME must be a string of 1 to 80 characters.' );
+			}
+			$g    = $f['geometry'] ?? null;
+			$type = is_array( $g ) ? ( $g['type'] ?? '' ) : '';
+			if ( ! in_array( $type, array( 'Polygon', 'MultiPolygon' ), true ) || ! isset( $g['coordinates'] ) || ! is_array( $g['coordinates'] ) ) {
+				return $bad( 'Feature ' . $i . ': geometry must be a Polygon or MultiPolygon.' );
+			}
+			$polys = 'Polygon' === $type ? array( $g['coordinates'] ) : $g['coordinates'];
+			foreach ( $polys as $poly ) {
+				if ( ! is_array( $poly ) ) {
+					return $bad( 'Feature ' . $i . ': malformed coordinates.' );
+				}
+				foreach ( $poly as $ring ) {
+					if ( ! is_array( $ring ) ) {
+						return $bad( 'Feature ' . $i . ': malformed coordinates.' );
+					}
+					foreach ( $ring as $pt ) {
+						if ( ! self::good_pair( $pt ) ) {
+							return $bad( 'Feature ' . $i . ': coordinates must be numeric [lon, lat] within -180..180 / -90..90.' );
+						}
+						if ( ++$pairs > self::MAX_PAIRS ) {
+							return $bad( 'geojson has more than ' . self::MAX_PAIRS . ' coordinate pairs.' );
+						}
+					}
+				}
+			}
+		}
+		return $gj;
 	}
 
 	private static function dir( $st = '' ) {
@@ -349,10 +431,17 @@ final class Maps {
 		);
 	}
 
-	/** POST blnm/v1/states/XX/geometry: fetch county outlines, project, store in option blnm_geo_XX. Rewrites no tiles. */
+	/** POST blnm/v1/states/XX/geometry: fetch county outlines (or take them from an optional JSON body {"geojson": FeatureCollection}), project, store in option blnm_geo_XX. Rewrites no tiles. */
 	public static function rest_geometry( \WP_REST_Request $request ) {
-		$st = Data_Model::sanitize_state( $request['st'] );
-		$gj = self::fetch_geometry( $st );
+		$st     = Data_Model::sanitize_state( $request['st'] );
+		$params = $request->get_json_params();
+		$source = 'tigerweb';
+		if ( is_array( $params ) && array_key_exists( 'geojson', $params ) ) {
+			$source = 'body';
+			$gj     = self::validate_geojson( $params['geojson'], $st );
+		} else {
+			$gj = self::fetch_geometry( $st );
+		}
 		if ( is_wp_error( $gj ) ) {
 			return $gj;
 		}
@@ -366,6 +455,7 @@ final class Maps {
 				'state'    => $st,
 				'counties' => count( $geo['counties'] ),
 				'bytes'    => strlen( wp_json_encode( $geo ) ),
+				'source'   => $source,
 			)
 		);
 	}

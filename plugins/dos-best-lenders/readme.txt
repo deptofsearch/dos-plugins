@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,10 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.6.1 =
+* Geometry route: a failed TIGERweb fetch now reports why (per-layer error, HTTP code, start of the reply) in the 502, and sends a plain user-agent.
+* POST /states/XX/geometry also accepts a JSON body {"geojson": FeatureCollection} (admin only, validated) for hosts that cannot reach TIGERweb.
 
 = 0.6.0 =
 * State pages ([blnm_state_index state="XX"]) become a filterable grid of city cards with a county map tile, lender counts and top lenders. Filters work without JavaScript.

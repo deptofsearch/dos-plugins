@@ -18,7 +18,10 @@ defined( 'ABSPATH' ) || exit;
 final class Maps {
 
 	/** Bump when the drawing changes: tiles live in uploads/blnm-maps/v<TILE_VER>/, so old ones are simply ignored. */
-	const TILE_VER = 1;
+	const TILE_VER = 2;
+
+	/** Tile style: 'A' keeps faint interior county lines, 'B' draws the state outline only. One-line switch. */
+	const STYLE = 'A';
 
 	const W   = 300;
 	const H   = 200;
@@ -26,12 +29,10 @@ final class Maps {
 
 	/** Hex values of the brand tokens in assets/blnm-brand.css (light theme). An SVG used as <img> cannot read CSS variables. */
 	const COLORS = array(
-		'paper-sunk'   => '#eceae2', // --blnm-paper-sunk
-		'rule'         => '#d3d0c6', // --blnm-rule
-		'spruce'       => '#1d5446', // --blnm-spruce
-		'spruce-tint'  => '#dceae3', // --blnm-spruce-tint
-		'marigold'     => '#e8a317', // --blnm-marigold
-		'ink'          => '#17201e', // --blnm-ink
+		'paper'      => '#ffffff', // --blnm-paper: the state's interior and the dot's ring
+		'paper-sunk' => '#eceae2', // --blnm-paper-sunk: tile background, same shade as the card
+		'rule'       => '#d3d0c6', // --blnm-rule: state outline and county lines
+		'spruce'     => '#1d5446', // --blnm-spruce: the city dot
 	);
 
 	/** TIGERweb Generalized_ACS2023 State_County: 13 = Counties at 1:20M, 12 = Counties at 1:5M (finer, for tiny states). */
@@ -165,32 +166,40 @@ final class Maps {
 	}
 
 	/**
-	 * The tile as an SVG string. All counties are drawn paper-sunk with a rule stroke; the city's county is
-	 * drawn last in spruce-tint with a 1.5 spruce stroke; a marigold dot with an ink outline marks the city.
-	 * No lat/lng gives a state-only tile (no highlight dot; the county is still tinted when its FIPS is known).
+	 * The tile as an SVG string: paper-sunk background, the state in white with a 1px rule outline, and a spruce
+	 * dot (r 6, 2px white ring) for the city. No county highlight. Style A also draws faint interior county lines;
+	 * style B draws none. Both draw a 2px rule stroke under all counties first and cover it with white fills, so
+	 * only the outer half of the stroke survives: a clean state outline with no union geometry needed.
+	 * No lat/lng gives a tile without the dot.
 	 */
-	public static function tile_svg( array $geo, $fips, $lat, $lng, $alt, $st = '' ) {
-		$c   = self::COLORS;
-		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . self::W . ' ' . self::H . '" width="' . self::W . '" height="' . self::H . '" role="img">'
+	public static function tile_svg( array $geo, $fips, $lat, $lng, $alt, $st = '', $style = self::STYLE ) {
+		$c    = self::COLORS;
+		$ds   = array();
+		foreach ( (array) ( $geo['counties'] ?? array() ) as $county ) {
+			$ds[] = self::x( $county['d'] );
+		}
+		$svg  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . self::W . ' ' . self::H . '" width="' . self::W . '" height="' . self::H . '" role="img">'
 			. '<title>' . self::x( $alt ) . '</title>'
-			. '<g fill="' . $c['paper-sunk'] . '" stroke="' . $c['rule'] . '" stroke-width="1" stroke-linejoin="round">';
-		$hit = '';
-		foreach ( (array) ( $geo['counties'] ?? array() ) as $id => $county ) {
-			if ( (string) $id === (string) $fips ) {
-				$hit = $county['d'];
-				continue;
-			}
-			$svg .= '<path d="' . self::x( $county['d'] ) . '"/>';
+			. '<rect width="' . self::W . '" height="' . self::H . '" fill="' . $c['paper-sunk'] . '"/>'
+			. '<g fill="none" stroke="' . $c['rule'] . '" stroke-width="2" stroke-linejoin="round">';
+		foreach ( $ds as $d ) {
+			$svg .= '<path d="' . $d . '"/>';
 		}
 		$svg .= '</g>';
-		if ( '' !== $hit ) {
-			$svg .= '<path d="' . self::x( $hit ) . '" fill="' . $c['spruce-tint'] . '" stroke="' . $c['spruce'] . '" stroke-width="1.5" stroke-linejoin="round"/>';
+		if ( 'B' === $style ) {
+			$svg .= '<g fill="' . $c['paper'] . '" stroke="none">';
+		} else {
+			$svg .= '<g fill="' . $c['paper'] . '" stroke="' . $c['rule'] . '" stroke-width="0.5" stroke-opacity="0.6" stroke-linejoin="round">';
 		}
+		foreach ( $ds as $d ) {
+			$svg .= '<path d="' . $d . '"/>';
+		}
+		$svg .= '</g>';
 		if ( null !== $lat && null !== $lng && '' !== $lat && '' !== $lng && isset( $geo['scale'] ) ) {
 			$p    = self::xy( $geo['scale'], $lng, $lat, $st );
-			$p[0] = max( 5, min( self::W - 5, $p[0] ) );
-			$p[1] = max( 5, min( self::H - 5, $p[1] ) );
-			$svg .= '<circle cx="' . $p[0] . '" cy="' . $p[1] . '" r="5" fill="' . $c['marigold'] . '" stroke="' . $c['ink'] . '" stroke-width="1"/>';
+			$p[0] = max( 8, min( self::W - 8, $p[0] ) );
+			$p[1] = max( 8, min( self::H - 8, $p[1] ) );
+			$svg .= '<circle cx="' . $p[0] . '" cy="' . $p[1] . '" r="6" fill="' . $c['spruce'] . '" stroke="' . $c['paper'] . '" stroke-width="2"/>';
 		}
 		return $svg . '</svg>';
 	}

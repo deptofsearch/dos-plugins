@@ -11,14 +11,15 @@ State hub redesign: `[blnm_state_index state="XX"]` is now a filterable grid of 
 tile each, instead of a flat list of links. Why: a 90-city state page as a bare list gave visitors no way to
 find their town or to see which cities have lenders, and offered search engines no more than anchor text.
 
-- Cards show a small map (the state's counties, the city's county tinted, a dot for the city), the city, its
+- Cards show a small map (the state in white on the card's own shade, a spruce dot for the city; no county highlight), the city, its
   county, how many lenders are listed and up to three top lender names. One link per card (image and name
   share it) so there are no nested anchors.
 - Filters: city name, county (with counts), "Has lenders", sort by population or A to Z. The server filters
   and sorts from the query string (`?q=&county=&has=1&sort=az`), so it works without JavaScript and the count
   is right on load; `blnm.js` then filters in place and keeps the URL in step with `history.replaceState`.
   Every card is in the HTML (non-matches are `hidden`) so crawlers still see every link.
-- Maps are static SVG files in `uploads/blnm-maps/v1/<st>/<slug>.svg`, written on first use, with an inline
+- Tile style is `Maps::STYLE`: `A` keeps faint interior county lines, `B` draws the state outline only (one-line switch; the tile version is 2, so changing style means rebuilding tiles with the build route).
+- Maps are static SVG files in `uploads/blnm-maps/v2/<st>/<slug>.svg`, written on first use, with an inline
   `data:` fallback if uploads is not writable. They are not drawn in the browser and make no third-party
   request at view time. County outlines come from Census TIGERweb, fetched once per state and stored in the
   option `blnm_geo_<ST>`. Tile colours are hex copies of the brand tokens (an SVG used as an image cannot read

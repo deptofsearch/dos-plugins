@@ -5,6 +5,21 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.6.3
+
+State hub featured image no longer renders twice.
+
+- Layout answers Themify's `hide_image` ('yes') as well as `hide_post_image` for hub pages. Why: Themify Magazine
+  pages read `hide_image` (default/yes/no); 0.6.2 only answered the post-style key, so Themify still printed its
+  `figure.post-image` above the shortcode's own hero. Same scoping as before: a Page whose content has
+  `[blnm_state_index ... state=]`, front end only.
+- Hub pages get body class `blnm-hub-page`, and blnm.css hides `.page-content > figure.post-image` and
+  `article > figure.post-image` under it. Why: belt and braces if a theme update reads the meta another way. The
+  selectors are direct-child only, so our `.blnm-hero-fig` (inside the shortcode output) is untouched.
+- The hub hero uses the `full` size (WP serves the -scaled file with srcset) with
+  `sizes="(min-width: 1200px) 1140px, 100vw"`, `decoding=async`, `fetchpriority=high`. Why: `large` is 1024px wide,
+  soft on desktop.
+
 ## 0.6.2
 
 State hub controls trimmed and lender names made readable.

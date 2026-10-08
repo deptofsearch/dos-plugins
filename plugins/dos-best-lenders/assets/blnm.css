@@ -968,3 +968,7 @@
 	line-height: 20px;
 	color: var(--blnm-ink-muted);
 }
+
+/* State hub pages print their own hero (.blnm-hero-fig inside the shortcode); hide Themify's featured-image figure. */
+.blnm-hub-page .page-content > figure.post-image,
+.blnm-hub-page article > figure.post-image { display: none; }

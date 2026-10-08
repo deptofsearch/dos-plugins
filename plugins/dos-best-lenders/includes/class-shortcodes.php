@@ -161,7 +161,7 @@ final class Shortcodes {
 		echo '<div class="blnm blnm-hub" data-blnm-hub>';
 		$thumb = function_exists( 'get_queried_object_id' ) ? (int) get_post_thumbnail_id( get_queried_object_id() ) : 0;
 		if ( $thumb ) {
-			$img = wp_get_attachment_image( $thumb, 'large', false, array( 'class' => 'blnm-hero-img', 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => '(min-width: 1100px) 1100px, 100vw' ) );
+			$img = wp_get_attachment_image( $thumb, 'full', false, array( 'class' => 'blnm-hero-img', 'loading' => 'eager', 'decoding' => 'async', 'fetchpriority' => 'high', 'sizes' => '(min-width: 1200px) 1140px, 100vw' ) );
 			if ( $img ) {
 				echo '<figure class="blnm-hero-fig">' . $img . '</figure>'; // phpcs:ignore WordPress.Security.EscapeOutput
 			}

@@ -178,6 +178,7 @@ final class Render {
 <header class="blnm-head">
 <?php // The theme's H1 already says "Mortgage Lenders in <City>"; a visible H2 repeating it read as a double title. Kept for screen readers and document outline. ?>
 <h2 class="blnm-title blnm-sr"><?php echo esc_html( sprintf( /* translators: %s: City, ST */ __( 'Lenders in %s ranked by Local Lending Score', 'dos-best-lenders' ), $name ) ); ?></h2>
+<?php if ( $count ) : // No lenders: the "No lender in X made our list yet" block says it, so no "0 lenders made 0 home loans" line. ?>
 <p class="blnm-sub"><?php
 		if ( $county ) {
 			echo esc_html(
@@ -194,14 +195,15 @@ final class Render {
 			echo esc_html(
 				sprintf(
 					/* translators: 1: lender count, 2: loan count, 3: year */
-					_n( '%1$s lender made %2$s home loans here in %3$d', '%1$s lenders made %2$s home loans here in %3$d', $count, 'dos-best-lenders' ),
+					_n( '%1$s lender made %2$s here in %3$d', '%1$s lenders made %2$s here in %3$d', $count, 'dos-best-lenders' ),
 					number_format_i18n( $count ),
-					number_format_i18n( $loans ),
+					sprintf( /* translators: %s: number of loans */ _n( '%s home loan', '%s home loans', $loans, 'dos-best-lenders' ), number_format_i18n( $loans ) ),
 					$year
 				)
 			);
 		}
 		?></p>
+<?php endif; ?>
 </header>
 
 <?php if ( $count ) : ?>

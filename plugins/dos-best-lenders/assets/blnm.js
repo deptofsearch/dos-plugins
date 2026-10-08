@@ -92,11 +92,97 @@
     apply(true);
   }
 
-  /* ---------- City search: "City, ST" against blnm/v1/cities ---------- */
+  /* ---------- City search: type a city name against blnm/v1/cities ----------
+     Matching mirrors includes/class-search.php (the no-JS fallback); keep them in step. */
+  var STATES = {
+    AL: 'alabama', AK: 'alaska', AZ: 'arizona', AR: 'arkansas', CA: 'california', CO: 'colorado', CT: 'connecticut',
+    DE: 'delaware', DC: 'district of columbia', FL: 'florida', GA: 'georgia', HI: 'hawaii', ID: 'idaho', IL: 'illinois',
+    IN: 'indiana', IA: 'iowa', KS: 'kansas', KY: 'kentucky', LA: 'louisiana', ME: 'maine', MD: 'maryland',
+    MA: 'massachusetts', MI: 'michigan', MN: 'minnesota', MS: 'mississippi', MO: 'missouri', MT: 'montana',
+    NE: 'nebraska', NV: 'nevada', NH: 'new hampshire', NJ: 'new jersey', NM: 'new mexico', NY: 'new york',
+    NC: 'north carolina', ND: 'north dakota', OH: 'ohio', OK: 'oklahoma', OR: 'oregon', PA: 'pennsylvania',
+    RI: 'rhode island', SC: 'south carolina', SD: 'south dakota', TN: 'tennessee', TX: 'texas', UT: 'utah',
+    VT: 'vermont', VA: 'virginia', WA: 'washington', WV: 'west virginia', WI: 'wisconsin', WY: 'wyoming'
+  };
+
+  // Lowercase, no accents or punctuation, single spaces; Saint/Mount/Fort folded to St/Mt/Ft.
   function norm(s) {
-    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/\bsaint\b/g, 'st').replace(/\bmount\b/g, 'mt').replace(/[.,'’]/g, '').replace(/[\s-]+/g, ' ').trim();
+    return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[.'’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()
+      .replace(/\bsaint\b/g, 'st').replace(/\bmount\b/g, 'mt').replace(/\bfort\b/g, 'ft');
   }
+
+  // State codes a normalised string can mean: exact code, exact name, or a name prefix of minPrefix+ letters.
+  function resolveStates(s, minPrefix) {
+    if (!s) return [];
+    var code = s.toUpperCase();
+    if (STATES[code]) return [code];
+    var out = [];
+    for (var ab in STATES) {
+      if (STATES[ab] === s) return [ab];
+      if (s.length >= minPrefix && STATES[ab].indexOf(s) === 0) out.push(ab);
+    }
+    return out;
+  }
+
+  // Ways to read a query: [{ c: city, st: [codes] | null }].
+  function readings(raw) {
+    raw = String(raw);
+    var out = [], pos = raw.indexOf(',');
+    if (pos !== -1) {
+      var city = norm(raw.slice(0, pos)), state = norm(raw.slice(pos + 1));
+      if (!city) return out;
+      if (!state) out.push({ c: city, st: null });
+      else {
+        var st = resolveStates(state, 1);
+        if (st.length) out.push({ c: city, st: st });
+      }
+      return out;
+    }
+    var n = norm(raw);
+    if (!n) return out;
+    out.push({ c: n, st: null });
+    var t = n.split(' ');
+    for (var i = 1; i < t.length; i++) {
+      var s2 = resolveStates(t.slice(i).join(' '), 3);
+      if (s2.length) out.push({ c: t.slice(0, i).join(' '), st: s2 });
+    }
+    return out;
+  }
+
+  // Rank rows ({ n: city, s: state, u: url }). rank 0/1 exact city (1 = no state given), 2/3 prefix, 4/5 later word.
+  function match(rows, raw) {
+    var rd = readings(raw), hits = [];
+    if (!rd.length) return hits;
+    rows.forEach(function (r) {
+      var k = r.k !== undefined ? r.k : norm(r.n), best = null;
+      rd.forEach(function (x) {
+        if (x.st && x.st.indexOf(r.s) === -1) return;
+        var tier;
+        if (k === x.c) tier = 0;
+        else if (k.indexOf(x.c) === 0) tier = 2;
+        else if (k.indexOf(' ' + x.c) !== -1) tier = 4;
+        else return;
+        var rank = tier + (x.st ? 0 : 1);
+        if (best === null || rank < best) best = rank;
+      });
+      if (best !== null) hits.push({ r: r, k: k, rank: best });
+    });
+    hits.sort(function (a, b) {
+      return a.rank - b.rank || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0) || (a.r.s < b.r.s ? -1 : a.r.s > b.r.s ? 1 : 0);
+    });
+    return hits.map(function (h) { h.r.rank = h.rank; return h.r; });
+  }
+
+  // Enter with nothing highlighted: { go: row } or { choose: [rows] } when the same city name is in several states.
+  function decide(rows, raw) {
+    var hits = match(rows, raw);
+    if (!hits.length) return { none: true };
+    var same = hits.filter(function (h) { return h.rank === hits[0].rank && norm(h.n) === norm(hits[0].n); });
+    return same.length > 1 ? { choose: same } : { go: hits[0] };
+  }
+
+  function label(c) { return c.s ? c.n + ', ' + c.s : c.n; }
 
   function initSearch(sec) {
     var api = sec.getAttribute('data-api');
@@ -104,36 +190,24 @@
     var ul = sec.querySelector('.blnm-search-list'), msg = sec.querySelector('.blnm-search-msg');
     var list = null, loading = false, results = [], active = -1;
 
-    function load(cb) {
+    function load(cb, fail) {
       if (list) { cb(); return; }
       if (loading) return;
       loading = true;
       fetch(api, { headers: { Accept: 'application/json' } })
-        .then(function (r) { return r.json(); })
+        .then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); })
         .then(function (rows) {
           list = (Array.isArray(rows) ? rows : []).map(function (c) { c.k = norm(c.n); return c; });
           loading = false;
           cb();
         })
-        .catch(function () { loading = false; list = null; });
+        .catch(function () { loading = false; list = null; if (fail) fail(); });
     }
 
-    // Empty box: every city. Otherwise names that start with the query, then names with a word that does.
-    function search(q) {
-      var k = norm(q);
-      if (!list) return [];
-      if (!k) return list.slice(0, 50);
-      var starts = [], words = [];
-      list.forEach(function (c) {
-        if (c.k.indexOf(k) === 0) starts.push(c);
-        else if (c.k.indexOf(' ' + k) > 0) words.push(c);
-      });
-      return starts.concat(words).slice(0, 50);
-    }
     function go(c) {
-      input.value = c.n;
+      input.value = label(c);
       close();
-      msg.textContent = 'Opening ' + c.n + '…';
+      msg.textContent = 'Opening ' + label(c) + '…';
       window.location.href = c.u;
     }
     function close() {
@@ -144,23 +218,24 @@
     }
     function paint() {
       if (!results.length) { close(); return; }
-      var k = input.value.trim(), n = k.length;
+      var k = input.value.trim().toLowerCase(), n = k.length;
       ul.innerHTML = results.map(function (c, i) {
-        var lab = esc(c.n);
-        if (n && c.n.toLowerCase().indexOf(k.toLowerCase()) === 0) lab = '<mark>' + esc(c.n.slice(0, n)) + '</mark>' + esc(c.n.slice(n));
-        return '<li role="option" id="' + input.id + '-o' + i + '" aria-selected="' + (i === active) + '">' + lab + '</li>';
+        var lab = label(c), html = esc(lab);
+        if (n && lab.toLowerCase().indexOf(k) === 0) html = '<mark>' + esc(lab.slice(0, n)) + '</mark>' + esc(lab.slice(n));
+        return '<li role="option" id="' + input.id + '-o' + i + '" aria-selected="' + (i === active) + '">' + html + '</li>';
       }).join('');
       ul.hidden = false;
       input.setAttribute('aria-expanded', 'true');
       if (active >= 0) input.setAttribute('aria-activedescendant', input.id + '-o' + active);
       else input.removeAttribute('aria-activedescendant');
     }
+    // Typeahead starts at 2 characters.
     function update() {
       msg.textContent = '';
-      load(function () { results = search(input.value); active = -1; paint(); });
+      if (norm(input.value).length < 2) { results = []; close(); return; }
+      load(function () { results = match(list, input.value).slice(0, 8); active = -1; paint(); });
     }
 
-    input.addEventListener('focus', update);
     input.addEventListener('input', update);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -183,17 +258,26 @@
     });
     input.addEventListener('blur', function () { setTimeout(close, 150); });
 
-    form.addEventListener('submit', function (e) {
+    function submit() {
       var q = input.value.trim();
-      if (!list) { e.preventDefault(); load(function () { form.dispatchEvent(new Event('submit', { cancelable: true })); }); return; }
-      e.preventDefault();
       if (active >= 0 && results[active]) { go(results[active]); return; }
-      if (!q) { input.focus(); update(); return; }
-      var k = norm(q), hits = search(q);
-      var exact = hits.filter(function (c) { return c.k === k; })[0];
-      if (exact || hits.length) { go(exact || hits[0]); return; }
+      if (!q) { input.focus(); return; }
+      var d = decide(list, q);
+      if (d.go) { go(d.go); return; }
+      if (d.choose) {
+        results = d.choose; active = -1; paint();
+        msg.textContent = 'There is more than one ' + d.choose[0].n + '. Pick the state you want.';
+        return;
+      }
       close();
-      msg.innerHTML = 'No city page for “' + esc(q) + '” yet. Check back soon.';
+      msg.textContent = 'We don’t have a page for “' + q + '” yet. We’re adding states through 2026.';
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      msg.textContent = '';
+      // If the city list can't load, let the server-side fallback (?s=...) handle it.
+      if (list) submit(); else load(submit, function () { form.submit(); });
     });
   }
 
@@ -201,5 +285,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-blnm-grid]'), initGrid);
     Array.prototype.forEach.call(document.querySelectorAll('.blnm-search'), initSearch);
   }
+  if (typeof module !== 'undefined' && module.exports) module.exports = { norm: norm, match: match, decide: decide, readings: readings, label: label };
+  if (typeof document === 'undefined') return;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

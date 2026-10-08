@@ -348,7 +348,7 @@ final class Render {
 			$name  = '' !== $brand ? $brand : $google;
 		}
 		$strip = static function ( $s ) {
-			$re = '/[\s,]+(?:inc\.?|incorporated|llc\.?|l\.l\.c\.?|lp|l\.p\.|llp|ltd\.?|corp\.?|corporation|co\.?|n\.a\.?|na)\s*\.?$/i';
+			$re = '/[\s,]+(?:inc\.?|incorporated|llc\.?|l\.l\.c\.?|lp|l\.p\.|llp|ltd\.?|corp\.?|corporation|company|co\.?|national\s+association|n\.a\.?|na)\s*\.?$/i';
 			for ( $i = 0; $i < 3; $i++ ) {
 				$t = preg_replace( $re, '', $s );
 				if ( null === $t || '' === trim( $t ) || $t === $s ) {

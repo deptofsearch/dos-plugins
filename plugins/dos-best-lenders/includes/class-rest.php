@@ -217,10 +217,10 @@ final class Rest {
 				}
 			);
 			$top  = array();
-			$topd = array(); // card display names; Render::display_name prefers the branch/Google name
+			$topd = array(); // card display names: cleaned legal names (branch_name is too inconsistent to use)
 			foreach ( array_slice( $lenders, 0, 3 ) as $l ) {
 				$top[]  = (string) $l['name'];
-				$topd[] = Render::display_name( (string) $l['name'], (string) ( $l['branch_name'] ?? '' ) );
+				$topd[] = Render::display_name( (string) $l['name'] );
 			}
 			$lat    = get_post_meta( $id, 'blnm_lat', true );
 			$lng    = get_post_meta( $id, 'blnm_lng', true );

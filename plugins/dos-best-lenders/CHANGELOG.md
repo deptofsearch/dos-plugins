@@ -16,9 +16,9 @@ State hub controls trimmed and lender names made readable.
 - Remaining controls: city name box, Has lenders checkbox, live count, Reset. Name box takes the width with the
   checkbox beside it from 640px; on phones they stack.
 - `Render::display_name( $legal, $google = '' )`: the "Including ..." line on hub cards. HMDA legal names are
-  often ALL CAPS ("CMG MORTGAGE, INC."). It prefers the stored `branch_name` (dropping a " - Kirkland, WA" place
-  suffix), title-cases all-caps names while keeping acronyms (LLC, USA, NMLS, CMG, FSB, ...) and strips trailing
-  Inc./LLC/N.A./Corp. City page cards are unchanged. `hub_index` rows gain `topd` (display names); a cached row
+  often ALL CAPS ("CMG MORTGAGE, INC."). Hub cards pass the legal name only (stored `branch_name` values are too inconsistent); the optional
+  `$google` argument still prefers a name and drops a " - place" suffix. It title-cases all-caps names while keeping acronyms (LLC, USA, NMLS, CMG, FSB, ...) and strips trailing
+  Inc./LLC/N.A./Corp./Company/National Association (only after another word). City page cards are unchanged. `hub_index` rows gain `topd` (display names); a cached row
   without it falls back to the legal names, cleaned.
 - The stats line (cities across counties) is unchanged.
 

@@ -31,7 +31,7 @@ The same review fields plus `summary` are accepted by `POST /lenders/upsert` (st
 
 = 0.6.2 =
 * State hub: the County and Sort dropdowns are gone. Cities always list by population (ties by name); old ?county= and ?sort= links are ignored. What remains is the city name box, a Has lenders checkbox, the live count and Reset, laid out side by side on desktop and stacked on phones.
-* Hub cards show cleaned lender names: the branch/Google name when stored, otherwise ALL CAPS legal names in title case without the trailing Inc./LLC/N.A.
+* Hub cards show cleaned lender names: legal names cleaned up: ALL CAPS in title case, without a trailing Inc., LLC, N.A., Corporation, Company or National Association
 
 = 0.6.1 =
 * Geometry route: a failed TIGERweb fetch now reports why (per-layer error, HTTP code, start of the reply) in the 502, and sends a plain user-agent.

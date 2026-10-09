@@ -8,12 +8,12 @@
     {
      "slug": "paper",
      "name": "Paper",
-     "color": "#F2E8D5"
+     "color": "#FFFFFF"
     },
     {
      "slug": "paper-raised",
      "name": "Paper Raised",
-     "color": "#FAF4E8"
+     "color": "#F5F6F7"
     },
     {
      "slug": "black",
@@ -58,7 +58,7 @@
     {
      "slug": "on-navy",
      "name": "On Navy",
-     "color": "#F2E8D5"
+     "color": "#FFFFFF"
     },
     {
      "slug": "navy-ink",
@@ -78,7 +78,7 @@
     {
      "slug": "on-vermilion",
      "name": "On Vermilion",
-     "color": "#F2E8D5"
+     "color": "#FFFFFF"
     },
     {
      "slug": "orange",

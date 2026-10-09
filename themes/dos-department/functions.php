@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_DEPT_VERSION', '0.1.1' );
+define( 'DOS_DEPT_VERSION', '0.2.0' );
 
 require_once __DIR__ . '/inc/posters.php';
 require_once __DIR__ . '/inc/helpers.php';

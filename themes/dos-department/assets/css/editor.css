@@ -1,8 +1,8 @@
 /* Classic Editor (TinyMCE) content styles. Deliberately minimal. */
 body {
-	background: #faf4e8;
+	background: #ffffff;
 	color: #111316;
-	font-family: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+	font-family: "Libre Franklin", "Franklin Gothic Medium", system-ui, -apple-system, "Segoe UI", sans-serif;
 	font-size: 17px;
 	line-height: 1.6;
 	padding: 12px 16px;

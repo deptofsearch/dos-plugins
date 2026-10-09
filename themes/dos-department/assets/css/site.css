@@ -237,7 +237,7 @@ a.dos-postnav__cell:hover .dos-postnav__title { color: var(--navy-ink); }
 .dos-stamp { border: 1px solid var(--rule); background: var(--paper-raised); }
 .dos-stamp__no { display: flex; justify-content: space-between; align-items: baseline; padding: 20px; background: var(--charcoal); color: var(--on-charcoal); }
 .dos-stamp__no .dos-kicker { color: #A3A7AE; }
-.dos-stamp__no strong { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; letter-spacing: .02em; }
+.dos-stamp__no strong { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: .02em; }
 .dos-stamp__facts { margin: 0; }
 .dos-stamp__facts > div { padding: 16px 20px; border-top: 1px solid var(--rule); }
 .dos-stamp__facts > div:first-child { border-top: 0; }

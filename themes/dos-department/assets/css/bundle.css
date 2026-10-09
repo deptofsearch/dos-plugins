@@ -3,11 +3,11 @@
 .dos *, .dos *::before, .dos *::after { box-sizing: border-box; }
 
 /* Kicker / label — the mono "file stamp" */
-.dos-kicker { font-family: var(--font-mono); font-weight: 500; font-size: 12px; line-height: 16px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-muted); }
+.dos-kicker { font-family: var(--font-mono); font-weight: 400; font-size: 12px; line-height: 16px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-muted); }
 .dos-kicker--accent { color: var(--navy-ink); }
 
 /* Display headings */
-.dos-h1, .dos-h2, .dos-h3 { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; color: var(--ink); margin: 0; letter-spacing: .01em; }
+.dos-h1, .dos-h2, .dos-h3 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; color: var(--ink); margin: 0; letter-spacing: .01em; }
 .dos-h1 { font-size: 96px; line-height: .92; }
 .dos-h2 { font-size: 56px; line-height: 1; }
 .dos-h3 { font-size: 32px; line-height: 1.1; font-weight: 700; }
@@ -16,7 +16,7 @@
 @media (max-width: 640px) { .dos-h1 { font-size: 60px; } .dos-h2 { font-size: 40px; } }
 
 /* Button */
-.dos-btn { display: inline-flex; align-items: center; gap: var(--space-2); height: 44px; padding: 0 var(--space-6); border: 2px solid transparent; border-radius: var(--radius-none); font-family: var(--font-mono); font-weight: 500; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: transform .08s, background .15s; }
+.dos-btn { display: inline-flex; align-items: center; gap: var(--space-2); height: 44px; padding: 0 var(--space-6); border: 2px solid transparent; border-radius: var(--radius-none); font-family: var(--font-mono); font-weight: 400; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: transform .08s, background .15s; }
 .dos-btn:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
 .dos-btn:active { transform: translateY(1px); }
 .dos-btn--primary { background: var(--navy); color: var(--on-navy); }
@@ -28,7 +28,7 @@
 .dos-btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 /* Tag */
-.dos-tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border: 1.5px solid currentColor; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
+.dos-tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border: 1.5px solid currentColor; font-family: var(--font-mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
 .dos-tag--solid { background: var(--charcoal); color: var(--on-charcoal); border-color: var(--charcoal); }
 .dos-tag--navy { background: var(--navy); color: var(--on-navy); border-color: var(--navy); }
 .dos-tag--accent { color: var(--orange); }
@@ -36,7 +36,7 @@
 
 /* Nav */
 .dos-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--rule); background: var(--paper); }
-.dos-nav__brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: .02em; text-transform: uppercase; }
+.dos-nav__brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; text-transform: uppercase; }
 .dos-nav__brand img { width: 32px; height: 32px; }
 .dos-nav__links { display: flex; gap: var(--space-6); list-style: none; margin: 0; padding: 0; }
 .dos-nav__links a { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; color: var(--ink-muted); }
@@ -84,7 +84,7 @@ a.dos-post:hover .dos-post__title { color: var(--navy-ink); }
 .dos-seal .ring { fill: none; stroke: var(--graphite); stroke-width: 2; }
 .dos-seal .disc { fill: var(--paper-raised); }
 .dos-seal .arc { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em; fill: var(--ink-muted); text-transform: uppercase; }
-.dos-seal .big { font-family: var(--font-display); font-weight: 800; font-size: 30px; fill: var(--ink); text-anchor: middle; }
+.dos-seal .big { font-family: var(--font-display); font-weight: 700; font-size: 30px; fill: var(--ink); text-anchor: middle; }
 .dos-seal .small { font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; fill: var(--navy-ink); text-anchor: middle; }
 
 /* Resume entry ("Personnel File") */

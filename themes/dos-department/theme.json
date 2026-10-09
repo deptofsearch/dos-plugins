@@ -173,85 +173,85 @@
    "customFontSize": true,
    "fontFamilies": [
     {
-     "fontFamily": "\"Big Shoulders Display\", \"Oswald\", \"Arial Narrow\", sans-serif",
+     "fontFamily": "\"Antonio\", \"Oswald\", \"Arial Narrow\", sans-serif",
      "slug": "display",
-     "name": "Big Shoulders Display",
+     "name": "Antonio",
      "fontFace": [
       {
-       "fontFamily": "Big Shoulders Display",
-       "fontWeight": "700",
-       "fontStyle": "normal",
-       "fontDisplay": "swap",
-       "src": [
-        "file:./assets/fonts/big-shoulders-display-latin-700-normal.woff2"
-       ]
-      },
-      {
-       "fontFamily": "Big Shoulders Display",
-       "fontWeight": "800",
-       "fontStyle": "normal",
-       "fontDisplay": "swap",
-       "src": [
-        "file:./assets/fonts/big-shoulders-display-latin-800-normal.woff2"
-       ]
-      }
-     ]
-    },
-    {
-     "fontFamily": "\"Work Sans\", system-ui, sans-serif",
-     "slug": "sans",
-     "name": "Work Sans",
-     "fontFace": [
-      {
-       "fontFamily": "Work Sans",
-       "fontWeight": "400",
-       "fontStyle": "normal",
-       "fontDisplay": "swap",
-       "src": [
-        "file:./assets/fonts/work-sans-latin-400-normal.woff2"
-       ]
-      },
-      {
-       "fontFamily": "Work Sans",
-       "fontWeight": "500",
-       "fontStyle": "normal",
-       "fontDisplay": "swap",
-       "src": [
-        "file:./assets/fonts/work-sans-latin-500-normal.woff2"
-       ]
-      },
-      {
-       "fontFamily": "Work Sans",
+       "fontFamily": "Antonio",
        "fontWeight": "600",
        "fontStyle": "normal",
        "fontDisplay": "swap",
        "src": [
-        "file:./assets/fonts/work-sans-latin-600-normal.woff2"
+        "file:./assets/fonts/antonio-latin-600-normal.woff2"
+       ]
+      },
+      {
+       "fontFamily": "Antonio",
+       "fontWeight": "700",
+       "fontStyle": "normal",
+       "fontDisplay": "swap",
+       "src": [
+        "file:./assets/fonts/antonio-latin-700-normal.woff2"
        ]
       }
      ]
     },
     {
-     "fontFamily": "\"IBM Plex Mono\", ui-monospace, monospace",
-     "slug": "mono",
-     "name": "IBM Plex Mono",
+     "fontFamily": "\"Libre Franklin\", \"Franklin Gothic Medium\", system-ui, sans-serif",
+     "slug": "sans",
+     "name": "Libre Franklin",
      "fontFace": [
       {
-       "fontFamily": "IBM Plex Mono",
+       "fontFamily": "Libre Franklin",
        "fontWeight": "400",
        "fontStyle": "normal",
        "fontDisplay": "swap",
        "src": [
-        "file:./assets/fonts/ibm-plex-mono-latin-400-normal.woff2"
+        "file:./assets/fonts/libre-franklin-latin-400-normal.woff2"
        ]
       },
       {
-       "fontFamily": "IBM Plex Mono",
+       "fontFamily": "Libre Franklin",
        "fontWeight": "500",
        "fontStyle": "normal",
        "fontDisplay": "swap",
        "src": [
-        "file:./assets/fonts/ibm-plex-mono-latin-500-normal.woff2"
+        "file:./assets/fonts/libre-franklin-latin-500-normal.woff2"
+       ]
+      },
+      {
+       "fontFamily": "Libre Franklin",
+       "fontWeight": "600",
+       "fontStyle": "normal",
+       "fontDisplay": "swap",
+       "src": [
+        "file:./assets/fonts/libre-franklin-latin-600-normal.woff2"
+       ]
+      }
+     ]
+    },
+    {
+     "fontFamily": "\"DM Mono\", ui-monospace, monospace",
+     "slug": "mono",
+     "name": "DM Mono",
+     "fontFace": [
+      {
+       "fontFamily": "DM Mono",
+       "fontWeight": "400",
+       "fontStyle": "normal",
+       "fontDisplay": "swap",
+       "src": [
+        "file:./assets/fonts/dm-mono-latin-400-normal.woff2"
+       ]
+      },
+      {
+       "fontFamily": "DM Mono",
+       "fontWeight": "500",
+       "fontStyle": "normal",
+       "fontDisplay": "swap",
+       "src": [
+        "file:./assets/fonts/dm-mono-latin-500-normal.woff2"
        ]
       }
      ]
@@ -343,7 +343,7 @@
     },
     "typography": {
      "fontFamily": "var(--wp--preset--font-family--display)",
-     "fontWeight": "800",
+     "fontWeight": "700",
      "textTransform": "uppercase",
      "lineHeight": "1",
      "letterSpacing": "0.01em"

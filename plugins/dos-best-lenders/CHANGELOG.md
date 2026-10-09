@@ -5,6 +5,22 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.7.2
+
+The plugin purges the page cache itself after an update.
+
+- New `Cache::purge_all()`: fires `litespeed_purge_all`, sends `X-LiteSpeed-Purge: *` when headers are still open,
+  fires any Hostinger cache hook something is listening on, and flushes our transients via `Rest::flush_index()`.
+  Why: the site runs behind Hostinger's server-level LiteSpeed cache, so after an update cached city pages kept
+  serving old HTML with old `?ver` assets, and the LiteSpeed Cache plugin's Purge All is not available to Ryan.
+  The response header works from any response with no plugin installed. The object cache is left alone on purpose.
+- Runs once per version: `admin_init` compares option `blnm_purged_version` to `VERSION` (an admin request, so the
+  header can be sent). `upgrader_process_complete` sets `blnm_purge_pending` when this plugin is updated, because the
+  upgrade request itself may already have sent headers. The first update to 0.7.2 relies on the version check, since
+  the old code has no upgrader hook.
+- Settings > DoS Best Lenders has a "Clear BLNM page cache" button (admin-post action, nonce, `manage_options`)
+  that redirects back with a "Page cache cleared" notice. Tests: `tests/test-blnm-cache.php`.
+
 ## 0.7.1
 
 Lender names on city pages read like names, not HMDA filings.

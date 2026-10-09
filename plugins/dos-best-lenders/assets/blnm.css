@@ -422,7 +422,8 @@
 	line-height: 17px;
 	color: var(--blnm-ink-muted);
 }
-.blnm .blnm-branch {
+.blnm .blnm-branch,
+.blnm .blnm-legal {
 	margin: 0;
 	font-size: 14px;
 	line-height: 21px;

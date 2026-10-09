@@ -18,6 +18,7 @@ final class Frontend {
 	public static function hooks() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 		add_filter( 'the_content', array( __CLASS__, 'content' ), 12 );
+		add_filter( 'the_title', array( __CLASS__, 'lender_title' ), 10, 2 );
 		add_filter( 'document_title_parts', array( __CLASS__, 'title_parts' ) );
 		add_action( 'wp_head', array( __CLASS__, 'meta_description' ) );
 	}
@@ -118,6 +119,14 @@ final class Frontend {
 		return $out;
 	}
 
+	/** Visible lender profile heading: the cleaned display name. The stored post title stays the legal name. */
+	public static function lender_title( $title, $id = 0 ) {
+		if ( is_admin() || ! $id || Data_Model::LENDER !== get_post_type( $id ) ) {
+			return $title;
+		}
+		return Render::display_name( (string) $title );
+	}
+
 	/** Lender profile: facts from meta plus a table of cities where this LEI appears. */
 	private static function lender_view( $id ) {
 		self::enqueue();
@@ -138,6 +147,7 @@ final class Frontend {
 		?>
 <section class="blnm blnm-lender">
 <p class="blnm-sub"><?php echo esc_html( Render::type_label( $type ) . ( $hq ? ' · HQ ' . $hq : '' ) ); ?></p>
+<p class="blnm-legal"><?php echo esc_html( sprintf( /* translators: %s: registered legal name */ __( 'Legal name: %s', 'dos-best-lenders' ), (string) get_post_field( 'post_title', $id ) ) ); ?></p>
 <?php if ( ! empty( $rev['is_builder_lender'] ) ) : ?><p class="blnm-builder-wrap"><?php echo Render::builder_tag(); // phpcs:ignore WordPress.Security.EscapeOutput ?></p><?php endif; ?>
 <?php if ( '' !== $sumtxt ) : ?><p class="blnm-lender-summary"><?php echo esc_html( $sumtxt ); ?></p><?php endif; ?>
 <?php echo Render::rating_line( $rev ); // phpcs:ignore WordPress.Security.EscapeOutput ?>

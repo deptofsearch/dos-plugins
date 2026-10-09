@@ -5,6 +5,20 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.7.1
+
+Lender names on city pages read like names, not HMDA filings.
+
+- City-page lender cards, the "Including ..." lines on no-lender pages and the lender profile heading now use
+  `Render::display_name()`, as hub cards already did. Why: legal names arrive as "GUILD MORTGAGE COMPANY" or
+  "PRIMELENDING, A PLAINSCAPITAL COMPANY", which looks like a data dump next to the rest of the page.
+- Nothing is lost: the heading carries a `title` tooltip and the NMLS lookup link a second one with "Legal name: ...",
+  and the profile page shows a muted "Legal name" line. Stored data, the post title, `data-name` (search/sort),
+  JSON-LD and meta/OG text keep the legal name, because structured data should match the registered entity.
+- `display_name()` also drops ", a ... Company", ", a division/subsidiary of ...", " d/b/a ..." and ", a Texas corporation"
+  tails, and knows PrimeLending, loanDepot, AmeriSave, HomeStreet and BECU. Tails are only cut after a comma (or
+  d/b/a, "a division of") so a name like "A Company Mortgage" is untouched. Tests: `tests/test-blnm-names.php`.
+
 ## 0.7.0
 
 Homepage "Browse by state" is now a carousel of state cards.

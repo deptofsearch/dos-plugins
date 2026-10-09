@@ -312,7 +312,7 @@ final class Render {
 		}
 		echo esc_html( implode( ' · ', $bits ) );
 		?></span>
-<?php if ( $n['top_lenders'] ) : ?><span class="blnm-nearby-lenders"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), self::join_names( $n['top_lenders'] ) ) ); ?></span><?php endif; ?>
+<?php if ( $n['top_lenders'] ) : ?><span class="blnm-nearby-lenders"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), self::join_names( array_map( array( __CLASS__, 'display_name' ), $n['top_lenders'] ) ) ) ); ?></span><?php endif; ?>
 </li>
 <?php endforeach; ?>
 </ul>
@@ -328,7 +328,8 @@ final class Render {
 		'LLC' => 'LLC', 'LP' => 'LP', 'USA' => 'USA', 'US' => 'US', 'NMLS' => 'NMLS', 'CMG' => 'CMG', 'FSB' => 'FSB',
 		'SSB' => 'SSB', 'UWM' => 'UWM', 'PNC' => 'PNC', 'USAA' => 'USAA', 'BMO' => 'BMO', 'TD' => 'TD', 'HSBC' => 'HSBC',
 		'FHA' => 'FHA', 'VA' => 'VA', 'II' => 'II', 'III' => 'III', 'NA' => 'N.A.', 'N.A.' => 'N.A.', 'JPMORGAN' => 'JPMorgan',
-		'LOANDEPOT.COM' => 'loanDepot.com', 'NEWREZ' => 'NewRez', 'CROSSCOUNTRY' => 'CrossCountry',
+		'LOANDEPOT.COM' => 'loanDepot.com', 'LOANDEPOT' => 'loanDepot', 'NEWREZ' => 'NewRez', 'CROSSCOUNTRY' => 'CrossCountry',
+		'PRIMELENDING' => 'PrimeLending', 'AMERISAVE' => 'AmeriSave', 'HOMESTREET' => 'HomeStreet', 'BECU' => 'BECU',
 	);
 
 	const NAME_SMALL = array( 'and', 'of', 'the', 'for', 'at', 'in', 'on', 'to', 'a', 'an' );
@@ -346,6 +347,19 @@ final class Render {
 		if ( '' !== $google ) {
 			$brand = trim( preg_split( '/\s+[-\x{2013}\x{2014}|]\s+/u', $google )[0] );
 			$name  = '' !== $brand ? $brand : $google;
+		}
+		// Drop descriptive tails: ", a PlainsCapital Company", ", a division of X", " d/b/a X", ", a Texas corporation".
+		$tails = array(
+			'/[\s,]+(?:d\/b\/a|dba)\s+.*$/i',
+			'/[\s,]+an?\s+(?:division|subsidiary|unit|member|brand|affiliate|branch)\s+of\s+.*$/i',
+			'/,\s+an?\s+[^,]+?\s+company$/i',
+			'/,\s+an?\s+[^,]+?\s+(?:corporation|limited\s+liability\s+company|limited\s+partnership)$/i',
+		);
+		foreach ( $tails as $re ) {
+			$t  = preg_replace( $re, '', $name );
+			if ( null !== $t && '' !== trim( $t, " ,." ) ) {
+				$name = $t;
+			}
 		}
 		$strip = static function ( $s ) {
 			$re = '/[\s,]+(?:inc\.?|incorporated|llc\.?|l\.l\.c\.?|lp|l\.p\.|llp|ltd\.?|corp\.?|corporation|company|co\.?|national\s+association|n\.a\.?|na)\s*\.?$/i';
@@ -409,7 +423,7 @@ final class Render {
 <li class="blnm-card" data-name="<?php echo esc_attr( strtolower( $l['name'] ) ); ?>" data-type="<?php echo esc_attr( $l['type'] ); ?>" data-loans="<?php echo (int) $l['loans_2025']; ?>" data-score="<?php echo esc_attr( null === $score ? '-1' : (string) $score ); ?>" data-rate="<?php echo esc_attr( null === $rate ? '' : (string) $rate ); ?>" data-products="<?php echo esc_attr( implode( ' ', $types ) ); ?>" data-rating="<?php echo esc_attr( isset( $l['google_rating'] ) ? (string) (float) $l['google_rating'] : '' ); ?>" data-reviews="<?php echo (int) ( $l['google_review_count'] ?? 0 ); ?>">
 <div class="blnm-card-top">
 <div class="blnm-card-id">
-<h3 class="blnm-name"><?php echo esc_html( $l['name'] ); ?></h3>
+<h3 class="blnm-name" title="<?php echo esc_attr( sprintf( /* translators: %s: registered legal name */ __( 'Legal name: %s', 'dos-best-lenders' ), $l['name'] ) ); ?>"><?php echo esc_html( self::display_name( (string) $l['name'] ) ); ?></h3>
 <span class="blnm-badge blnm-badge-<?php echo esc_attr( $l['type'] ); ?>"><?php echo esc_html( self::type_label( $l['type'] ) ); ?></span>
 </div>
 <div class="blnm-score blnm-score-<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( null === $score ? __( 'No score (fewer than 5 loans in this county)', 'dos-best-lenders' ) : __( 'Local Lending Score (LLS), 0 to 100', 'dos-best-lenders' ) ); ?>">
@@ -437,7 +451,7 @@ final class Render {
 <?php echo self::review_block( $l ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 <p class="blnm-links">
 <?php if ( ! empty( $l['url'] ) ) : ?><a class="blnm-link" href="<?php echo esc_url( $l['url'] ); ?>"><?php esc_html_e( 'View lender', 'dos-best-lenders' ); ?></a><?php endif; ?>
-<a class="blnm-link" href="<?php echo esc_url( $nmls ); ?>" target="_blank" rel="noopener nofollow"><?php esc_html_e( 'NMLS lookup', 'dos-best-lenders' ); ?></a>
+<a class="blnm-link" href="<?php echo esc_url( $nmls ); ?>" target="_blank" rel="noopener nofollow" title="<?php echo esc_attr( sprintf( /* translators: %s: registered legal name */ __( 'Legal name: %s', 'dos-best-lenders' ), $l['name'] ) ); ?>"><?php esc_html_e( 'NMLS lookup', 'dos-best-lenders' ); ?></a>
 </p>
 </li>
 		<?php

@@ -3,7 +3,7 @@
  * Plugin Name:       DoS Best Lenders
  * Plugin URI:        https://github.com/deptofsearch/dos-plugins
  * Description:       Brand layer (fonts, tokens, logo), data model, REST surface, and rendering for bestlendersnearme.com: one page per city (blnm_city) with filterable mortgage lender cards built from public HMDA data, lender profiles (blnm_lender), [blnm_city_search] and [blnm_state_index]. Market-agnostic: no city lists or lender data live in this code.
- * Version:           0.7.1
+ * Version:           0.7.2
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            Department of Search
@@ -18,7 +18,7 @@ namespace BLNM;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION     = '0.7.1';
+const VERSION     = '0.7.2';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/includes/class-data-model.php';
@@ -33,6 +33,7 @@ require_once __DIR__ . '/includes/class-settings.php';
 require_once __DIR__ . '/includes/class-search.php';
 require_once __DIR__ . '/includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-cache.php';
 
 Data_Model::hooks();
 Rest::hooks();
@@ -44,6 +45,7 @@ Social::hooks();
 Settings::hooks();
 Search::hooks();
 Admin::hooks();
+Cache::hooks();
 Shortcodes::hooks();
 
 // Not behind is_admin(): WP-Cron and the REST API run the update check too.

@@ -145,6 +145,7 @@ printf(
 submit_button();
 ?>
 </form>
+<?php Cache::render_button(); ?>
 </div>
 		<?php
 	}

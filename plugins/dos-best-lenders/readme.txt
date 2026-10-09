@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.7.1
+Stable tag: 0.7.2
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,9 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.7.2 =
+* The plugin now clears the server page cache (LiteSpeed) by itself once after each update, so city pages stop serving old HTML and old asset versions. Settings > DoS Best Lenders also has a "Clear BLNM page cache" button.
 
 = 0.7.1 =
 * City pages and the "Including ..." lines on no-lender pages now show cleaned lender names (title case, no Inc., LLC or "a ... Company" tails, brand spellings such as PrimeLending and loanDepot) like the state hub does. Lender profile headings do too, with the legal name shown beneath. The full legal name stays in each card's tooltip, and structured data and stored data are unchanged.

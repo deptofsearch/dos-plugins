@@ -128,8 +128,45 @@ final class Render {
 		return '<span class="blnm-builder" title="' . esc_attr__( 'Offered by a home builder to buyers of its new homes. Not an open-market lender, so its rate is left out of the score.', 'dos-best-lenders' ) . '">' . esc_html__( 'Builder lender: new homes only', 'dos-best-lenders' ) . '</span>';
 	}
 
+	/** Consolidated city-counties the Census names without "County", keyed "ST|name" (lowercase name). */
+	const CONSOLIDATED = array(
+		'NV|carson city' => 'Carson City',
+	);
+
+	/** County-equivalent suffixes kept as the Census writes them (longest first so "City and Borough" beats "Borough"). */
+	const COUNTY_SUFFIXES = array( 'City and Borough', 'Planning Region', 'Census Area', 'Municipality', 'Parish', 'Borough', 'County' );
+
 	/**
-	 * @param array $city    name, state, county (optional, without the word County), year, updated_at (optional).
+	 * Visible label for a stored county name. Stored values are bare ("King") or the full Census NAME
+	 * ("Orleans Parish", "Baltimore city"). Empty in, empty out.
+	 */
+	public static function county_label( $name, $state = '' ) {
+		$name = trim( preg_replace( '/\s+/', ' ', (string) $name ) );
+		if ( '' === $name ) {
+			return '';
+		}
+		foreach ( self::COUNTY_SUFFIXES as $suffix ) {
+			$len = strlen( $suffix );
+			if ( strlen( $name ) > $len + 1 && 0 === strcasecmp( substr( $name, -( $len + 1 ) ), ' ' . $suffix ) ) {
+				return substr( $name, 0, -$len ) . $suffix;
+			}
+		}
+		if ( 0 === strcasecmp( $name, 'District of Columbia' ) ) {
+			return 'District of Columbia';
+		}
+		$key = strtoupper( (string) $state ) . '|' . strtolower( $name );
+		if ( isset( self::CONSOLIDATED[ $key ] ) ) {
+			return self::CONSOLIDATED[ $key ];
+		}
+		// Census writes independent cities with a lowercase "city" ("Baltimore city", "Richmond city").
+		if ( preg_match( '/^(.+) city$/', $name, $m ) ) {
+			return 'City of ' . $m[1];
+		}
+		return $name . ' County';
+	}
+
+	/**
+	 * @param array $city    name, state, county (optional; bare name or full Census NAME), year, updated_at (optional).
 	 * @param array $lenders Rows as stored in blnm_lenders_json; each may carry an optional 'url' (profile page).
 	 */
 	public static function city( array $city, array $lenders, array $nearby = array() ) {
@@ -170,7 +207,8 @@ final class Render {
 		}
 		$name   = trim( $city['name'] . ', ' . $city['state'], ', ' );
 		$county = trim( (string) ( $city['county'] ?? '' ) );
-		$loc    = $county ? sprintf( /* translators: %s: county */ __( '%s County', 'dos-best-lenders' ), $county ) : $name;
+		$county = self::county_label( $county, (string) ( $city['state'] ?? '' ) );
+		$loc    = '' !== $county ? $county : $name;
 
 		ob_start();
 		?>
@@ -183,8 +221,8 @@ final class Render {
 		if ( $county ) {
 			echo esc_html(
 				sprintf(
-					/* translators: 1: lender count, 2: county, 3: state, 4: year */
-					_n( '%1$s lender in %2$s County, %3$s · %4$d home-purchase loans', '%1$s lenders in %2$s County, %3$s · %4$d home-purchase loans', $count, 'dos-best-lenders' ),
+					/* translators: 1: lender count, 2: county label, 3: state, 4: year */
+					_n( '%1$s lender in %2$s, %3$s · %4$d HMDA data', '%1$s lenders in %2$s, %3$s · %4$d HMDA data', $count, 'dos-best-lenders' ),
 					number_format_i18n( $count ),
 					$county,
 					$city['state'],
@@ -271,7 +309,7 @@ final class Render {
 <?php elseif ( ! empty( $city['reviewed_at'] ) ) : ?>
 <?php echo self::no_lenders( $city, $loc, $nearby ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside. ?>
 <?php else : ?>
-<p class="blnm-empty"><?php echo esc_html( sprintf( /* translators: %s: "<County> County" or "City, ST" */ __( "We're still checking reviews for lenders in %s.", 'dos-best-lenders' ), $loc ) ); ?></p>
+<p class="blnm-empty"><?php echo esc_html( sprintf( /* translators: %s: "<County label>" or "City, ST" */ __( "We're still checking reviews for lenders in %s.", 'dos-best-lenders' ), $loc ) ); ?></p>
 <?php endif; ?>
 
 <p class="blnm-disclosure"><?php echo esc_html( self::DISCLOSURE ); ?></p>
@@ -291,8 +329,8 @@ final class Render {
 		ob_start();
 		?>
 <div class="blnm-none">
-<h2 class="blnm-none-title"><?php echo esc_html( sprintf( /* translators: %s: "<County> County" */ __( 'No lender in %s made our list yet', 'dos-best-lenders' ), $loc ) ); ?></h2>
-<p><?php echo esc_html( sprintf( /* translators: 1: "<County> County", 2: "Month YYYY" */ __( 'We only list lenders that have a local branch in %1$s and a Google rating of 4.8 or higher from at least 10 reviews. When we last checked, in %2$s, none here met all three.', 'dos-best-lenders' ), $loc, $asof ) ); ?></p>
+<h2 class="blnm-none-title"><?php echo esc_html( sprintf( /* translators: %s: "<County label>" */ __( 'No lender in %s made our list yet', 'dos-best-lenders' ), $loc ) ); ?></h2>
+<p><?php echo esc_html( sprintf( /* translators: 1: "<County label>", 2: "Month YYYY" */ __( 'We only list lenders that have a local branch in %1$s and a Google rating of 4.8 or higher from at least 10 reviews. When we last checked, in %2$s, none here met all three.', 'dos-best-lenders' ), $loc, $asof ) ); ?></p>
 <?php if ( $nearby ) : ?>
 <p><?php echo esc_html( sprintf( /* translators: %s: city name */ __( 'Buyers in %s often work with a lender based in a nearby town. These are the closest places where qualifying lenders are listed:', 'dos-best-lenders' ), $name ) ); ?></p>
 <ul class="blnm-nearby">
@@ -302,7 +340,7 @@ final class Render {
 <span class="blnm-nearby-meta"><?php
 		$bits = array();
 		if ( $n['county'] ) {
-			$bits[] = sprintf( /* translators: %s: county */ __( '%s County', 'dos-best-lenders' ), $n['county'] );
+			$bits[] = self::county_label( $n['county'], (string) $n['state'] );
 		}
 		if ( null !== $n['distance_mi'] ) {
 			$bits[] = sprintf( /* translators: %d: miles */ _n( 'about %d mile away', 'about %d miles away', max( 1, $n['distance_mi'] ), 'dos-best-lenders' ), max( 1, $n['distance_mi'] ) );

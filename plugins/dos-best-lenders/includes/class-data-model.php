@@ -189,7 +189,6 @@ final class Data_Model {
 		return substr( preg_replace( '/\D/', '', (string) $v ), 0, 5 );
 	}
 
-	/** County name stored without the trailing word "County" (the header adds it). */
 	public static function sanitize_date( $v ) {
 		$v = (string) $v;
 		return preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $v, $m ) && checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ? $v : '';
@@ -244,6 +243,7 @@ final class Data_Model {
 		return self::sanitize_nearby( (string) get_post_meta( $post_id, 'blnm_nearby_json', true ) );
 	}
 
+	/** County name stored without a trailing " County" only; Parish, Borough, "Baltimore city" etc. are kept (Render::county_label adds "County" when none is present). */
 	public static function sanitize_county_name( $v ) {
 		return trim( preg_replace( '/\s+County$/i', '', sanitize_text_field( (string) $v ) ) );
 	}

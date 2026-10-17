@@ -5,6 +5,24 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.8.0
+
+County labels stop assuming every county-equivalent is a "County".
+
+- New `Render::county_label($name, $state)`. Why: the header hard-appended " County", so Carson City, NV read
+  "Carson City County" and the coming Louisiana (parishes), Virginia/Maryland/Missouri (independent cities),
+  Alaska (boroughs, census areas, municipalities), Connecticut (planning regions) and DC rows would all be wrong.
+  Rules: a name already ending Parish / Borough / Census Area / Municipality / Planning Region / City and Borough /
+  County is kept (suffix case normalized); "District of Columbia" kept; lowercase " city" (Census independent
+  city) becomes "City of X"; `Render::CONSOLIDATED` (state + name) lists consolidated city-counties, currently NV
+  Carson City, shown bare; anything else gets " County". Used by the city header, no-lender block, nearby
+  lines, hub cards, `Maps::alt()` and the wp-admin list.
+- `sanitize_county_name` strips only a trailing " County", so n8n can send the full Census NAME while existing bare
+  rows ("King") keep working. Stored "King County" still saves as "King".
+- Header sub-line printed `· 2025 home-purchase loans` with the year where a count belongs; now `· 2025 HMDA data`.
+- Hub stats line: one county (or none) reads "N cities"; DC reads "N cities in the District". Distinct counties are
+  counted after normalizing, so "King" and "King County" are not counted twice.
+
 ## 0.7.2
 
 The plugin purges the page cache itself after an update.

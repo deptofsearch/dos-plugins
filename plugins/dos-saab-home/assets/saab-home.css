@@ -1,0 +1,148 @@
+/*
+ * DoS Shot and a Beer Home. Colours and fonts come from the --saab-* variables the DoS SAAB Child theme sets on
+ * :root; the fallbacks here are the same values, so the homepage looks right under the plain Magazine theme too
+ * (fonts then fall back to Impact / system sans, as the plugin does not load web fonts itself).
+ */
+
+/* Theme tightening, scoped to the takeover. */
+body.home.saab-home-on .themify_builder_content:not(:has(.saab-home)) { display: none !important; } /* Builder output that slipped past the content filter. */
+body.home.saab-home-on #layout,
+body.home.saab-home-on #content,
+body.home.saab-home-on .page-content,
+body.home.saab-home-on .entry-content { padding-top: 0 !important; margin-top: 0 !important; }
+body.home.saab-home-on #content { width: 100%; max-width: none; float: none; }
+body.home.saab-home-on #sidebar,
+body.home.saab-home-on .page-title,
+body.home.saab-home-on .post-image { display: none !important; }
+
+.saab-home {
+	--_ink: var(--saab-ink, #111111);
+	--_muted: var(--saab-muted, #444444);
+	--_soft: var(--saab-soft, #f2f2f2);
+	--_card: var(--saab-card, #e9e9e9);
+	--_photo: var(--saab-photo, #d4d4d4);
+	--_line: var(--saab-line, rgba(0, 0, 0, .12));
+	--_bg: var(--saab-bg, #ffffff);
+	--_head: var(--saab-head, "Oswald", Impact, "Arial Narrow", sans-serif);
+	--_body: var(--saab-body, "Barlow", system-ui, sans-serif);
+	--_radius: var(--saab-radius, 12px);
+	color: var(--_ink);
+	font-family: var(--_body);
+	font-size: 17px;
+	line-height: 1.55;
+}
+.saab-home *, .saab-home *::before, .saab-home *::after { box-sizing: border-box; }
+.saab-home a { color: var(--_ink); }
+.saab-home a:hover { color: var(--_muted); }
+.saab-home a:focus-visible, .saab-home button:focus-visible, .saab-home input:focus-visible { outline: 2px solid var(--_ink); outline-offset: 2px; }
+.saab-home ul { list-style: none; margin: 0; padding: 0; }
+.saab-home li { margin: 0; }
+.saab-home img { border-radius: 0; box-shadow: none; }
+.saab-home h1, .saab-home h2 {
+	font-family: var(--_head); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--_ink); margin: 0;
+}
+.saab-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Hero + search ---------- */
+.saab-hero { background: var(--_soft); border-bottom: 1px solid var(--_line); margin: 0 calc(50% - 50vw); padding: 0 16px; }
+.saab-hero__in { max-width: 860px; margin: 0 auto; padding: 64px 0 56px; text-align: center; }
+.saab-eyebrow { margin: 0 0 10px; font-family: var(--_head); font-weight: 500; font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: #555555; }
+.saab-home .saab-hero__title { font-size: clamp(2.2rem, 1.4rem + 3vw, 3.8rem); line-height: 1.05; letter-spacing: .01em; }
+.saab-hero__intro { max-width: 640px; margin: 16px auto 0; font-size: 19px; color: var(--_muted); }
+
+.saab-scopes { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 30px; padding: 5px; background: var(--_bg); border: 1px solid var(--_line); border-radius: 999px; }
+.saab-scope {
+	min-height: 40px; padding: 8px 18px; border: 0; border-radius: 999px; cursor: pointer; background: transparent; color: var(--_ink);
+	font-family: var(--_head); font-size: 14px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; line-height: 1.2;
+}
+.saab-scope[aria-pressed="true"] { background: var(--_ink); color: var(--_bg); }
+
+.saab-search { position: relative; display: flex; max-width: 720px; margin: 16px auto 0; text-align: left; }
+.saab-search__input {
+	flex: 1; min-width: 0; height: 60px; margin: 0; padding: 0 22px; font: inherit; font-size: 19px; color: var(--_ink); background: var(--_bg);
+	border: 2px solid var(--_ink); border-right: 0; border-radius: 10px 0 0 10px; box-shadow: none;
+}
+.saab-search__go {
+	flex: none; width: 72px; height: 60px; margin: 0; padding: 0; border: 0; border-radius: 0 10px 10px 0; cursor: pointer;
+	background: var(--_ink); color: var(--_bg); display: flex; align-items: center; justify-content: center;
+}
+.saab-search__list {
+	position: absolute; left: 0; right: 0; top: 66px; z-index: 50; max-height: 340px; overflow-y: auto; padding: 6px 0;
+	background: var(--_bg); border: 1px solid rgba(0, 0, 0, .16); border-radius: 10px; box-shadow: 0 14px 34px rgba(0, 0, 0, .16);
+}
+.saab-search__list[hidden] { display: none; }
+.saab-search__group { padding: 10px 18px 2px; font-family: var(--_head); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #555555; }
+.saab-home .saab-search__opt { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; min-height: 44px; padding: 10px 18px; color: var(--_ink); text-decoration: none; }
+.saab-search__opt[aria-selected="true"], .saab-search__opt:hover { background: var(--_soft); }
+.saab-search__name { font-weight: 600; }
+.saab-search__sub { font-size: 15px; color: #595959; text-align: right; }
+.saab-search__empty { padding: 12px 18px; color: #595959; }
+
+/* ---------- Sections ---------- */
+.saab-sec { max-width: 1160px; margin: 56px auto 0; }
+.saab-sec__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+.saab-home .saab-sec__title { font-size: 30px; line-height: 1.15; }
+.saab-sec > .saab-sec__title { margin-bottom: 20px; }
+.saab-home .saab-sec__more { font-weight: 600; }
+
+/* Category cards */
+.saab-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+.saab-home .saab-cat {
+	position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 190px; height: 100%; padding: 18px;
+	border-radius: var(--_radius); overflow: hidden; text-decoration: none; color: var(--_ink); background: var(--_card); border: 1px solid rgba(0, 0, 0, .06);
+}
+.saab-cat__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.saab-cat--photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, .72), rgba(0, 0, 0, 0) 65%); }
+.saab-cat__text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; }
+.saab-cat__name { font-family: var(--_head); font-weight: 700; text-transform: uppercase; font-size: 22px; line-height: 1.15; letter-spacing: .02em; }
+.saab-cat__blurb { font-size: 15px; color: var(--_muted); }
+.saab-cat__count { font-size: 14px; color: var(--_muted); }
+.saab-home .saab-cat--photo, .saab-home .saab-cat--photo:hover { color: #ffffff; }
+.saab-cat--photo .saab-cat__blurb, .saab-cat--photo .saab-cat__count { color: rgba(255, 255, 255, .86); }
+.saab-home .saab-cat:hover .saab-cat__name { text-decoration: underline; }
+
+/* Latest reviews */
+.saab-latest { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.saab-home .saab-review { display: flex; gap: 16px; align-items: center; height: 100%; padding: 12px; background: var(--_card); border: 1px solid rgba(0, 0, 0, .06); border-radius: var(--_radius); text-decoration: none; color: var(--_ink); }
+.saab-review__media { flex: none; width: 104px; height: 104px; border-radius: 8px; overflow: hidden; background: var(--_photo); }
+.saab-review__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.saab-review__text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.saab-review__cat { font-family: var(--_head); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #555555; }
+.saab-review__title { font-size: 18px; font-weight: 600; line-height: 1.25; }
+.saab-review__place { font-size: 15px; color: var(--_muted); }
+.saab-home .saab-review:hover .saab-review__title { text-decoration: underline; }
+
+/* Cities */
+.saab-cities { max-width: 1160px; margin: 56px auto 64px; padding: 28px; background: var(--_card); border-radius: var(--_radius); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
+.saab-home .saab-cities__title { font-size: 22px; }
+.saab-cities__list { display: flex; flex-wrap: wrap; gap: 10px; }
+.saab-home .saab-city { display: inline-block; padding: 10px 18px; font-weight: 600; text-decoration: none; color: var(--_ink); background: var(--_bg); border: 1px solid rgba(0, 0, 0, .2); border-radius: 999px; }
+.saab-home .saab-city:hover { border-color: var(--_ink); color: var(--_ink); }
+
+/* ---------- Phones ---------- */
+@media (max-width: 600px) {
+	.saab-hero__in { padding: 36px 0 32px; }
+	.saab-home .saab-hero__title { font-size: 38px; }
+	.saab-hero__intro { font-size: 17px; }
+	.saab-scopes { display: flex; flex-wrap: nowrap; justify-content: flex-start; margin: 22px -16px 0; padding: 0 16px 4px; overflow-x: auto; background: none; border: 0; border-radius: 0; }
+	.saab-scope { flex: none; min-height: 44px; padding: 8px 16px; font-size: 13px; background: var(--_bg); border: 1px solid var(--_ink); }
+	.saab-search { margin-top: 12px; }
+	.saab-search__input { height: 54px; padding: 0 16px; font-size: 17px; }
+	.saab-search__go { width: 58px; height: 54px; }
+	.saab-search__list { top: 60px; max-height: 320px; }
+	.saab-home .saab-search__opt { flex-direction: column; align-items: flex-start; gap: 0; padding: 10px 14px; }
+	.saab-search__sub { font-size: 14px; text-align: left; }
+	.saab-sec { margin-top: 36px; }
+	.saab-home .saab-sec__title { font-size: 24px; }
+	.saab-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+	.saab-home .saab-cat { min-height: 140px; padding: 12px; }
+	.saab-cat__name { font-size: 17px; }
+	.saab-cat__blurb { display: none; }
+	.saab-latest { gap: 10px; }
+	.saab-home .saab-review { gap: 12px; padding: 10px; }
+	.saab-review__media { width: 84px; height: 84px; }
+	.saab-review__title { font-size: 17px; }
+	.saab-cities { margin: 40px auto 44px; padding: 20px 16px; display: block; }
+	.saab-home .saab-cities__title { font-size: 20px; margin-bottom: 12px; }
+	.saab-cities__list { gap: 8px; }
+}

@@ -1,0 +1,213 @@
+/*
+Theme Name: DoS SAAB Child
+Description: Shot and a Beer child theme for Themify Magazine. White page, black text, grey cards; Oswald headings over Barlow body (the "Taproom" homepage direction, 2026-10-18).
+Template: magazine
+Version: 0.1.0
+Author: Department of Search
+Text Domain: dos-saab-child
+*/
+
+/* The DoS Shot and a Beer Home plugin reads these same variables, so the homepage and the rest of the site match. */
+:root {
+	--saab-bg: #ffffff;
+	--saab-ink: #111111;
+	--saab-muted: #444444;
+	--saab-soft: #f2f2f2;
+	--saab-card: #e9e9e9;
+	--saab-photo: #d4d4d4;
+	--saab-line: rgba(0, 0, 0, .12);
+	--saab-radius: 12px;
+	--saab-head: "Oswald", Impact, "Arial Narrow", sans-serif;
+	--saab-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------- Base ---------- */
+body {
+	background: var(--saab-bg);
+	color: var(--saab-ink);
+	font-family: var(--saab-body);
+	font-size: 17px;
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+}
+#headerwrap,
+#footerwrap,
+#body,
+#layout {
+	background: var(--saab-bg);
+}
+h1, h2, h3, h4, h5, h6,
+.post-title,
+.page-title {
+	font-family: var(--saab-head);
+	color: var(--saab-ink);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .03em;
+	line-height: 1.12;
+}
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.2rem); }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); }
+h3 { font-size: 1.3rem; }
+p { color: var(--saab-ink); }
+a { color: var(--saab-ink); }
+a:hover { color: #555555; }
+::selection { background: var(--saab-card); }
+
+/* ---------- Header ---------- */
+#headerwrap {
+	border-bottom: 1px solid var(--saab-line);
+}
+#site-logo,
+#site-logo a {
+	font-family: var(--saab-head);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: var(--saab-ink);
+}
+#site-description {
+	font-family: var(--saab-body);
+	color: var(--saab-muted);
+	text-transform: none;
+}
+#main-nav a {
+	font-family: var(--saab-head);
+	font-weight: 500;
+	font-size: 15px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--saab-ink);
+	background: none;
+}
+#main-nav a:hover,
+#main-nav .current_page_item > a,
+#main-nav .current-menu-item > a {
+	color: #555555;
+	background: none;
+}
+#main-nav .sub-menu,
+#main-nav .children {
+	background: var(--saab-bg);
+	border: 1px solid var(--saab-line);
+	border-radius: 10px;
+	box-shadow: 0 14px 34px rgba(0, 0, 0, .12);
+}
+#mobile-menu {
+	background: var(--saab-bg);
+	color: var(--saab-ink);
+}
+#mobile-menu a {
+	color: var(--saab-ink);
+	font-family: var(--saab-head);
+	text-transform: uppercase;
+	letter-spacing: .1em;
+}
+#menu-icon,
+.menu-icon {
+	color: var(--saab-ink);
+}
+
+/* ---------- Post lists and archives: grey cards ---------- */
+.loops-wrapper .post,
+.related-posts .post {
+	background: var(--saab-card);
+	border: 1px solid rgba(0, 0, 0, .06);
+	border-radius: var(--saab-radius);
+	overflow: hidden;
+	box-shadow: none;
+}
+.loops-wrapper .post .post-content,
+.related-posts .post .post-content {
+	padding: 14px 16px 16px;
+}
+.loops-wrapper .post-image,
+.loops-wrapper .post-image img,
+.related-posts .post-image img {
+	margin: 0;
+	border-radius: 0;
+}
+.loops-wrapper .post-title a,
+.related-posts .post-title a {
+	color: var(--saab-ink);
+	text-decoration: none;
+}
+.loops-wrapper .post-title a:hover {
+	text-decoration: underline;
+}
+.post-category,
+.post-category a,
+.post-meta,
+.post-meta a,
+.post-date {
+	font-family: var(--saab-head);
+	font-size: 13px;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: #555555;
+	background: none;
+}
+
+/* ---------- Single review ---------- */
+.single .post-content,
+.single .entry-content {
+	font-size: 18px;
+}
+.single .entry-content h2 {
+	margin-top: 1.6em;
+}
+.single .post-image img {
+	border-radius: var(--saab-radius);
+}
+
+/* ---------- Buttons, forms, widgets ---------- */
+button,
+input[type="submit"],
+.more-link,
+.button {
+	background: var(--saab-ink);
+	color: var(--saab-bg);
+	border: 0;
+	border-radius: 999px;
+	font-family: var(--saab-head);
+	letter-spacing: .1em;
+	text-transform: uppercase;
+}
+button:hover,
+input[type="submit"]:hover,
+.more-link:hover,
+.button:hover {
+	background: #333333;
+	color: var(--saab-bg);
+}
+input[type="text"],
+input[type="search"],
+input[type="email"],
+textarea {
+	background: var(--saab-bg);
+	color: var(--saab-ink);
+	border: 2px solid var(--saab-ink);
+	border-radius: 10px;
+}
+.widget .widgettitle,
+.widget-title {
+	font-family: var(--saab-head);
+	text-transform: uppercase;
+	letter-spacing: .06em;
+	color: var(--saab-ink);
+	border-color: var(--saab-line);
+}
+
+/* ---------- Footer ---------- */
+#footerwrap {
+	border-top: 1px solid var(--saab-line);
+	color: #555555;
+}
+#footerwrap a {
+	color: var(--saab-ink);
+}
+.back-top a {
+	background: var(--saab-ink);
+	color: var(--saab-bg);
+	border-radius: 999px;
+}

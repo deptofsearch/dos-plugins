@@ -5,6 +5,20 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-home-v<version>`.
 
+## 0.1.2
+
+"Pick a category" folds behind a button. shotandabeer.com has 24 categories,
+which made the cards a long wall between the search and the latest reviews.
+The first 8 show (two rows on desktop, four on a phone), then a "Show all 24
+categories" button opens the rest and turns into "Show fewer".
+
+The number is a setting, **Category cards before "Show all"** (default 8;
+0 shows every card with no button). Every card is still in the markup: the
+script adds the fold and reveals the button, so search engines and visitors
+without JavaScript get every category link, and nothing is hidden that cannot
+be opened. Opening moves keyboard focus to the first card that appeared;
+closing scrolls back to the section if it has scrolled off the top.
+
 ## 0.1.1
 
 The takeover now swaps the front-page template instead of filtering the page's

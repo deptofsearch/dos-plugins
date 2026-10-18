@@ -169,8 +169,38 @@
 		} );
 	}
 
+	/* "Pick a category": fold the cards past the first few behind a Show all / Show fewer button. */
+	function foldCats( section ) {
+		var btn = section.querySelector( '.saab-fold' );
+		var label = btn && btn.querySelector( '.saab-fold__label' );
+		if ( ! btn || ! label ) {
+			return;
+		}
+		function set( open ) {
+			section.classList.toggle( 'is-folded', ! open );
+			btn.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+			label.textContent = btn.getAttribute( open ? 'data-less' : 'data-more' );
+		}
+		set( false );
+		btn.hidden = false;
+		btn.addEventListener( 'click', function () {
+			var open = btn.getAttribute( 'aria-expanded' ) !== 'true';
+			set( open );
+			if ( open ) {
+				// Move focus to the first card that just appeared, so keyboard users land on the new content.
+				var first = section.querySelector( '.saab-cats__extra a' );
+				if ( first ) {
+					first.focus( { preventScroll: true } );
+				}
+			} else if ( section.getBoundingClientRect().top < 0 ) {
+				section.scrollIntoView( { block: 'start' } );
+			}
+		} );
+	}
+
 	function boot() {
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-saab-search]' ), init );
+		Array.prototype.forEach.call( document.querySelectorAll( '[data-saab-fold]' ), foldCats );
 	}
 
 	if ( document.readyState === 'loading' ) {

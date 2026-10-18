@@ -3,7 +3,7 @@
  * Plugin Name: DoS Shot and a Beer Home
  * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: The shotandabeer.com homepage: a search box that suggests restaurants, cuisines, dishes and cities as you type, category cards, latest reviews and city links. Takes over the front page while switched on; switching it off restores the homepage as it was.
- * Version:     0.1.1
+ * Version:     0.1.2
  * Requires at least: 6.6
  * Requires PHP: 8.1
  * Author:      Department of Search
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_SAAB_HOME_VERSION', '0.1.1' );
+define( 'DOS_SAAB_HOME_VERSION', '0.1.2' );
 define( 'DOS_SAAB_HOME_FILE', __FILE__ );
 define( 'DOS_SAAB_HOME_URL', plugin_dir_url( __FILE__ ) );
 

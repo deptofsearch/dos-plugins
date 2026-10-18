@@ -100,6 +100,19 @@ body.saab-home-on .post-image { display: none !important; }
 .saab-cat--photo .saab-cat__blurb, .saab-cat--photo .saab-cat__count { color: rgba(255, 255, 255, .86); }
 .saab-home .saab-cat:hover .saab-cat__name { text-decoration: underline; }
 
+/* The fold: cards past the first few hide until "Show all" (the script adds .is-folded; without it every card shows). */
+.saab-catsec.is-folded .saab-cats__extra { display: none; }
+.saab-fold {
+	display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin: 16px 0 0; padding: 12px 20px;
+	background: var(--_bg); color: var(--_ink); border: 2px solid var(--_ink); border-radius: 999px; cursor: pointer;
+	font-family: var(--_head); font-size: 15px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; line-height: 1.2;
+}
+.saab-fold[hidden] { display: none; }
+.saab-fold:hover { background: var(--_ink); color: var(--_bg); }
+.saab-fold__icon { flex: none; transition: transform .2s ease; }
+.saab-fold[aria-expanded="true"] .saab-fold__icon { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .saab-fold__icon { transition: none; } }
+
 /* Latest reviews */
 .saab-latest { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; }
 .saab-home .saab-review { display: flex; gap: 16px; align-items: center; height: 100%; padding: 12px; background: var(--_card); border: 1px solid rgba(0, 0, 0, .06); border-radius: var(--_radius); text-decoration: none; color: var(--_ink); }

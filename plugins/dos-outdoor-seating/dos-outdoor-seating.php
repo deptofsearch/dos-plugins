@@ -3,7 +3,7 @@
  * Plugin Name:       DoS Outdoor Seating
  * Plugin URI:        https://github.com/deptofsearch/dos-plugins
  * Description:       Restaurant venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, featured venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in takeover of TablePress city tables, city neighborhoods, landmark zones with casino browse, and SEO titles/descriptions for DoS Toolkit for outdoorseatingnearme.com.
- * Version:           0.6.5
+ * Version:           0.6.6
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Department of Search
@@ -18,7 +18,7 @@ namespace OSN;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION     = '0.6.5';
+const VERSION     = '0.6.6';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/includes/class-fields.php';
@@ -43,6 +43,7 @@ require_once __DIR__ . '/includes/class-page-title.php';
 require_once __DIR__ . '/includes/class-image-redirects.php';
 require_once __DIR__ . '/includes/class-seo.php';
 require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-self-update.php';
 
 Data_Model::hooks();
 Assets::hooks();
@@ -64,7 +65,7 @@ Admin::hooks();
 // Not behind is_admin(): WP-Cron and the REST API run the update check too.
 require_once __DIR__ . '/includes/class-dos-github-updater.php';
 
-( new \DOS_GitHub_Updater(
+$updater = new \DOS_GitHub_Updater(
 	array(
 		'slug'        => 'dos-outdoor-seating',
 		'basename'    => plugin_basename( __FILE__ ),
@@ -72,7 +73,10 @@ require_once __DIR__ . '/includes/class-dos-github-updater.php';
 		'name'        => 'DoS Outdoor Seating',
 		'description' => 'Restaurant venue pages, searchable patio card grids and the n8n venue upsert for outdoorseatingnearme.com.',
 	)
-) )->boot();
+);
+$updater->boot();
+Self_Update::hooks( $updater );
+unset( $updater ); // Plugin files load in the global scope.
 
 register_activation_hook( __FILE__, array( Data_Model::class, 'activate' ) );
 register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );

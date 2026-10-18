@@ -2,7 +2,7 @@
 Theme Name: DoS SAAB Child
 Description: Shot and a Beer child theme for Themify Magazine. White page, black text, grey cards; Oswald headings over Barlow body (the "Taproom" homepage direction, 2026-10-18).
 Template: magazine
-Version: 0.1.0
+Version: 0.1.1
 Author: Department of Search
 Text Domain: dos-saab-child
 */
@@ -108,7 +108,20 @@ a:hover { color: #555555; }
 	color: var(--saab-ink);
 }
 
-/* ---------- Post lists and archives: grey cards ---------- */
+/* ---------- Images: rounded corners and drop shadow ----------
+ * Carried over from the site's Additional CSS under Magazine (2026-10-18). Additional CSS is stored per theme, so it
+ * would start empty under this child theme; keeping it here means switching themes does not lose it. */
+.themify_builder .module-slider .slide-image img,
+.post-image img,
+.archive .post-image img,
+.page .post-image img {
+	border-radius: 12px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, .15);
+}
+
+/* ---------- Post lists and archives: grey cards ----------
+ * A card already rounds its corners (overflow: hidden), so the photo inside it sits flush with no radius or shadow of
+ * its own; a shadowed photo inside a grey card reads as a card within a card. */
 .loops-wrapper .post,
 .related-posts .post {
 	background: var(--saab-card);
@@ -126,6 +139,7 @@ a:hover { color: #555555; }
 .related-posts .post-image img {
 	margin: 0;
 	border-radius: 0;
+	box-shadow: none;
 }
 .loops-wrapper .post-title a,
 .related-posts .post-title a {

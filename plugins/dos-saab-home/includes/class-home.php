@@ -1,0 +1,347 @@
+<?php
+/**
+ * Homepage takeover: while switched on, the front page's content is replaced by one fixed layout.
+ *
+ * Order: hero (eyebrow, H1, intro, search-type buttons, search box), category cards, latest reviews, city links.
+ * Nothing in the page is edited; switching the setting off restores the page as it was.
+ *
+ * Themify Builder: the front page on a Themify Magazine site is usually a Builder page, and Builder injects its layout
+ * through the_content. The same three layers as DoS Outdoor Seating's homepage keep it out, none of which needs
+ * Builder installed:
+ *  1. a get_post_metadata filter hides Builder's stored layout from the front-page main query, so it prints nothing;
+ *  2. a the_content filter at PHP_INT_MAX - 10 returns only this markup (it runs after Builder's own hook);
+ *  3. body.saab-home-on CSS hides any .themify_builder_content that does not contain .saab-home.
+ *
+ * @package DOS_SAAB
+ */
+
+namespace DOS_SAAB;
+
+defined( 'ABSPATH' ) || exit;
+
+final class Home {
+
+	const OPTION    = 'saab_home';
+	const IMAGE_KEY = 'saab_card_image';
+
+	/** Builder meta keys hidden from the front-page main query while the takeover is on. */
+	const BUILDER_META = array( '_themify_builder_settings_json', '_themify_builder_settings' );
+
+	public static function defaults() {
+		return array(
+			'on'      => false,
+			'eyebrow' => 'Tri-Cities food & drink reviews',
+			'h1'      => 'What are you hungry for?',
+			'intro'   => "Search a restaurant, a cuisine, or one specific dish. Every review says what we ordered and whether we'd get it again.",
+			'cats'    => '',
+			'latest'  => 6,
+			'cities'  => 8,
+		);
+	}
+
+	public static function settings() {
+		$s = get_option( self::OPTION, array() );
+		return array_merge( self::defaults(), is_array( $s ) ? $s : array() );
+	}
+
+	public static function hooks() {
+		add_filter( 'the_content', array( __CLASS__, 'content' ), PHP_INT_MAX - 10 );
+		add_filter( 'body_class', array( __CLASS__, 'body_class' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+		add_filter( 'get_post_metadata', array( __CLASS__, 'hide_builder_meta' ), 10, 4 );
+		add_action( 'template_redirect', array( __CLASS__, 'nocache_preview' ), 1 );
+	}
+
+	/* ---------------------------------------------------------------- state of the request */
+
+	/** True when the takeover renders on this request: the setting is on, or an admin is previewing. */
+	public static function active() {
+		if ( is_admin() || ! did_action( 'wp' ) || ! is_front_page() || ! is_page() ) {
+			return false;
+		}
+		if ( self::settings()['on'] ) {
+			return true;
+		}
+		return isset( $_GET['saab_home_preview'] ) && current_user_can( 'manage_options' ); // phpcs:ignore WordPress.Security.NonceVerification
+	}
+
+	public static function preview_url() {
+		return add_query_arg( 'saab_home_preview', '1', home_url( '/' ) );
+	}
+
+	/** An admin preview must never be stored by a page cache. */
+	public static function nocache_preview() {
+		if ( isset( $_GET['saab_home_preview'] ) && self::active() ) { // phpcs:ignore WordPress.Security.NonceVerification
+			nocache_headers();
+		}
+	}
+
+	public static function body_class( $classes ) {
+		if ( self::active() ) {
+			$classes[] = 'saab-home-on';
+		}
+		return $classes;
+	}
+
+	public static function enqueue() {
+		if ( ! self::active() ) {
+			return;
+		}
+		wp_enqueue_style( 'saab-home', DOS_SAAB_HOME_URL . 'assets/saab-home.css', array(), DOS_SAAB_HOME_VERSION );
+		wp_enqueue_script( 'saab-home', DOS_SAAB_HOME_URL . 'assets/saab-home.js', array(), DOS_SAAB_HOME_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
+	}
+
+	/** Layer 1: Builder sees no stored layout for the front page, so it prints nothing. */
+	public static function hide_builder_meta( $check, $post_id, $key, $single ) {
+		if ( null !== $check || ! in_array( $key, self::BUILDER_META, true ) || ! self::active() ) {
+			return $check;
+		}
+		if ( (int) $post_id !== (int) get_queried_object_id() || isset( $_GET['tb-id'], $_GET['tb-preview'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return $check;
+		}
+		return $single ? '' : array();
+	}
+
+	/** Layer 2: the whole page content becomes this markup, once, for the main front-page loop only. */
+	public static function content( $content ) {
+		global $wp_current_filter;
+		static $done = false;
+		if ( ! in_the_loop() || ! is_main_query() || doing_filter( 'get_the_excerpt' ) || ! self::active() ) {
+			return $content;
+		}
+		if ( (int) get_the_ID() !== (int) get_queried_object_id() ) {
+			return $content;
+		}
+		// Nested the_content calls (Builder modules, shortcodes) are not the page body.
+		if ( count( array_keys( (array) $wp_current_filter, 'the_content', true ) ) > 1 ) {
+			return $content;
+		}
+		if ( $done ) {
+			return '';
+		}
+		$done = true;
+		return self::render();
+	}
+
+	/* ---------------------------------------------------------------- data */
+
+	/**
+	 * Categories for the cards: the slugs listed in the setting, in that order; or, when it is empty, every category
+	 * with a published review, most reviews first, leaving out the default (Uncategorized) one.
+	 *
+	 * @return \WP_Term[]
+	 */
+	public static function categories() {
+		$slugs = array_filter( array_map( 'sanitize_title', preg_split( '/[\s,]+/', (string) self::settings()['cats'] ) ) );
+		if ( $slugs ) {
+			$out = array();
+			foreach ( $slugs as $slug ) {
+				$t = get_term_by( 'slug', $slug, 'category' );
+				if ( $t && ! is_wp_error( $t ) ) {
+					$out[] = $t;
+				}
+			}
+			return $out;
+		}
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'category',
+				'hide_empty' => true,
+				'orderby'    => 'count',
+				'order'      => 'DESC',
+				'exclude'    => array( (int) get_option( 'default_category' ) ),
+			)
+		);
+		return is_wp_error( $terms ) ? array() : $terms;
+	}
+
+	/**
+	 * A card's photo: the attachment set on the category (Posts → Categories → edit), else the featured image of the
+	 * category's newest review that has one, else none (the card shows a grey band).
+	 */
+	public static function category_image_id( \WP_Term $term ) {
+		$id = (int) get_term_meta( $term->term_id, self::IMAGE_KEY, true );
+		if ( $id && wp_attachment_is_image( $id ) ) {
+			return $id;
+		}
+		$ids = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'cat'            => $term->term_id,
+				'meta_key'       => '_thumbnail_id', // phpcs:ignore WordPress.DB.SlowDBQuery
+			)
+		);
+		return $ids ? (int) get_post_thumbnail_id( $ids[0] ) : 0;
+	}
+
+	/** First term name of $tax on a post, or ''. */
+	private static function term_name( $post_id, $tax ) {
+		if ( ! taxonomy_exists( $tax ) ) {
+			return '';
+		}
+		$t = get_the_terms( $post_id, $tax );
+		return ( $t && ! is_wp_error( $t ) ) ? html_entity_decode( $t[0]->name, ENT_QUOTES, 'UTF-8' ) : '';
+	}
+
+	/* ---------------------------------------------------------------- markup */
+
+	public static function render() {
+		$s = self::settings();
+		ob_start();
+		echo '<div class="saab-home">';
+		echo self::hero_html( $s ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo self::categories_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo self::latest_html( (int) $s['latest'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo self::cities_html( (int) $s['cities'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo '</div>';
+		return ob_get_clean();
+	}
+
+	private static function hero_html( array $s ) {
+		$groups = Search::groups();
+		$scopes = array( '' => __( 'Everything', 'dos-saab-home' ) ) + $groups;
+		$ph     = array(
+			''  => __( 'Restaurant, cuisine or dish', 'dos-saab-home' ),
+			'r' => __( 'Search restaurants', 'dos-saab-home' ),
+			'c' => __( 'Search cuisines', 'dos-saab-home' ),
+			'd' => __( 'Search dishes', 'dos-saab-home' ),
+			'x' => __( 'Search cities', 'dos-saab-home' ),
+		);
+		$data = array(
+			'index'  => Search::index(),
+			'groups' => $groups,
+			'ph'     => $ph,
+			'empty'  => __( 'Nothing matches “%s” yet.', 'dos-saab-home' ),
+		);
+
+		$o  = '<section class="saab-hero"><div class="saab-hero__in">';
+		if ( '' !== trim( $s['eyebrow'] ) ) {
+			$o .= '<p class="saab-eyebrow">' . esc_html( $s['eyebrow'] ) . '</p>';
+		}
+		$o .= '<h1 class="saab-hero__title">' . esc_html( $s['h1'] ) . '</h1>';
+		if ( '' !== trim( $s['intro'] ) ) {
+			$o .= '<p class="saab-hero__intro">' . esc_html( $s['intro'] ) . '</p>';
+		}
+		$o .= '<div class="saab-scopes" role="group" aria-label="' . esc_attr__( 'Search in', 'dos-saab-home' ) . '">';
+		foreach ( $scopes as $key => $label ) {
+			$o .= '<button type="button" class="saab-scope" data-scope="' . esc_attr( $key ) . '" aria-pressed="' . ( '' === $key ? 'true' : 'false' ) . '">' . esc_html( $label ) . '</button>';
+		}
+		$o .= '</div>';
+		$o .= '<form class="saab-search" role="search" method="get" action="' . esc_url( home_url( '/' ) ) . '" data-saab-search>';
+		$o .= '<label class="saab-sr" for="saab-q">' . esc_html__( 'Search restaurants, cuisines and dishes', 'dos-saab-home' ) . '</label>';
+		$o .= '<input id="saab-q" class="saab-search__input" type="search" name="s" autocomplete="off" placeholder="' . esc_attr( $ph[''] ) . '" role="combobox" aria-expanded="false" aria-controls="saab-list" aria-autocomplete="list">';
+		$o .= '<button type="submit" class="saab-search__go" aria-label="' . esc_attr__( 'Search', 'dos-saab-home' ) . '"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z M21 21l-5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>';
+		$o .= '<div id="saab-list" class="saab-search__list" role="listbox" aria-label="' . esc_attr__( 'Suggestions', 'dos-saab-home' ) . '" hidden></div>';
+		$o .= '<script type="application/json" class="saab-search__data">' . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . '</script>';
+		$o .= '</form>';
+		$o .= '</div></section>';
+		return $o;
+	}
+
+	private static function categories_html() {
+		$cats = self::categories();
+		if ( ! $cats ) {
+			return '';
+		}
+		$o = '<section class="saab-sec" aria-labelledby="saab-cats-h"><h2 id="saab-cats-h" class="saab-sec__title">' . esc_html__( 'Pick a category', 'dos-saab-home' ) . '</h2><ul class="saab-cats">';
+		foreach ( $cats as $t ) {
+			$img  = self::category_image_id( $t );
+			$html = $img ? wp_get_attachment_image(
+				$img,
+				'medium_large',
+				false,
+				array(
+					'class'    => 'saab-cat__img',
+					'alt'      => '',
+					'loading'  => 'lazy',
+					'decoding' => 'async',
+					'sizes'    => '(max-width: 600px) 50vw, 280px',
+				)
+			) : '';
+			$desc = trim( wp_strip_all_tags( term_description( $t ) ) );
+			$o   .= '<li><a class="saab-cat' . ( $html ? ' saab-cat--photo' : '' ) . '" href="' . esc_url( get_term_link( $t ) ) . '">'
+				. $html
+				. '<span class="saab-cat__text"><span class="saab-cat__name">' . esc_html( html_entity_decode( $t->name, ENT_QUOTES, 'UTF-8' ) ) . '</span>'
+				. ( '' !== $desc ? '<span class="saab-cat__blurb">' . esc_html( wp_trim_words( $desc, 8 ) ) . '</span>' : '' )
+				. '<span class="saab-cat__count">' . esc_html( Search::reviews( (int) $t->count ) ) . '</span></span></a></li>';
+		}
+		return $o . '</ul></section>';
+	}
+
+	private static function latest_html( $n ) {
+		if ( $n < 1 ) {
+			return '';
+		}
+		$posts = get_posts(
+			array(
+				'post_type'           => 'post',
+				'post_status'         => 'publish',
+				'posts_per_page'      => min( 24, $n ),
+				'ignore_sticky_posts' => true,
+				'no_found_rows'       => true,
+			)
+		);
+		if ( ! $posts ) {
+			return '';
+		}
+		$o  = '<section class="saab-sec" aria-labelledby="saab-latest-h"><div class="saab-sec__head"><h2 id="saab-latest-h" class="saab-sec__title">' . esc_html__( 'Fresh off the table', 'dos-saab-home' ) . '</h2>';
+		$pp = (int) get_option( 'page_for_posts' );
+		if ( $pp ) {
+			$o .= '<a class="saab-sec__more" href="' . esc_url( get_permalink( $pp ) ) . '">' . esc_html__( 'All reviews', 'dos-saab-home' ) . '</a>';
+		}
+		$o .= '</div><ul class="saab-latest">';
+		foreach ( $posts as $p ) {
+			$cats  = get_the_category( $p->ID );
+			$place = array_filter( array( self::term_name( $p->ID, 'saab_restaurant' ), self::term_name( $p->ID, 'saab_city' ) ) );
+			$thumb = get_the_post_thumbnail(
+				$p,
+				'thumbnail',
+				array(
+					'class'    => 'saab-review__img',
+					'alt'      => '',
+					'loading'  => 'lazy',
+					'decoding' => 'async',
+				)
+			);
+			$o .= '<li><a class="saab-review" href="' . esc_url( get_permalink( $p ) ) . '">'
+				. '<span class="saab-review__media">' . $thumb . '</span>'
+				. '<span class="saab-review__text">'
+				. ( $cats ? '<span class="saab-review__cat">' . esc_html( html_entity_decode( $cats[0]->name, ENT_QUOTES, 'UTF-8' ) ) . '</span>' : '' )
+				. '<span class="saab-review__title">' . esc_html( html_entity_decode( get_the_title( $p ), ENT_QUOTES, 'UTF-8' ) ) . '</span>'
+				. ( $place ? '<span class="saab-review__place">' . esc_html( implode( ' · ', $place ) ) . '</span>' : '' )
+				. '</span></a></li>';
+		}
+		return $o . '</ul></section>';
+	}
+
+	private static function cities_html( $n ) {
+		if ( $n < 1 || ! taxonomy_exists( 'saab_city' ) ) {
+			return '';
+		}
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'saab_city',
+				'hide_empty' => true,
+				'orderby'    => 'count',
+				'order'      => 'DESC',
+				'number'     => min( 30, $n ),
+			)
+		);
+		if ( is_wp_error( $terms ) || ! $terms ) {
+			return '';
+		}
+		$o = '<section class="saab-cities" aria-labelledby="saab-city-h"><h2 id="saab-city-h" class="saab-cities__title">' . esc_html__( 'Eat in', 'dos-saab-home' ) . '</h2><ul class="saab-cities__list">';
+		foreach ( $terms as $t ) {
+			$url = get_term_link( $t );
+			if ( is_wp_error( $url ) ) {
+				continue;
+			}
+			$o .= '<li><a class="saab-city" href="' . esc_url( $url ) . '">' . esc_html( html_entity_decode( $t->name, ENT_QUOTES, 'UTF-8' ) ) . '</a></li>';
+		}
+		return $o . '</ul></section>';
+	}
+}

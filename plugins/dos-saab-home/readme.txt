@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,9 @@ Colours and fonts follow the DoS SAAB Child theme's --saab-* CSS variables when 
 REST: GET /wp-json/saab/v1/search?q=birria&scope= (scope r, c, d, x or empty).
 
 == Changelog ==
+
+= 0.1.1 =
+* The homepage takeover now swaps the front-page template, so it works whether Settings → Reading shows a static page or your latest posts, and whatever Themify Builder holds for the page.
 
 = 0.1.0 =
 * Initial release.

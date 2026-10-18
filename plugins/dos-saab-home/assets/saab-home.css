@@ -5,15 +5,14 @@
  */
 
 /* Theme tightening, scoped to the takeover. */
-body.home.saab-home-on .themify_builder_content:not(:has(.saab-home)) { display: none !important; } /* Builder output that slipped past the content filter. */
-body.home.saab-home-on #layout,
-body.home.saab-home-on #content,
-body.home.saab-home-on .page-content,
-body.home.saab-home-on .entry-content { padding-top: 0 !important; margin-top: 0 !important; }
-body.home.saab-home-on #content { width: 100%; max-width: none; float: none; }
-body.home.saab-home-on #sidebar,
-body.home.saab-home-on .page-title,
-body.home.saab-home-on .post-image { display: none !important; }
+body.saab-home-on #layout,
+body.saab-home-on #content,
+body.saab-home-on .page-content,
+body.saab-home-on .entry-content { padding-top: 0 !important; margin-top: 0 !important; }
+body.saab-home-on #content { width: 100%; max-width: none; float: none; }
+body.saab-home-on #sidebar,
+body.saab-home-on .page-title,
+body.saab-home-on .post-image { display: none !important; }
 
 .saab-home {
 	--_ink: var(--saab-ink, #111111);

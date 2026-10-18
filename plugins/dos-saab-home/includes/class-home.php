@@ -1,16 +1,16 @@
 <?php
 /**
- * Homepage takeover: while switched on, the front page's content is replaced by one fixed layout.
+ * Homepage takeover: while switched on, the front page is drawn by this plugin's own template.
  *
  * Order: hero (eyebrow, H1, intro, search-type buttons, search box), category cards, latest reviews, city links.
- * Nothing in the page is edited; switching the setting off restores the page as it was.
+ * Nothing in the site is edited; switching the setting off restores the homepage as it was.
  *
- * Themify Builder: the front page on a Themify Magazine site is usually a Builder page, and Builder injects its layout
- * through the_content. The same three layers as DoS Outdoor Seating's homepage keep it out, none of which needs
- * Builder installed:
- *  1. a get_post_metadata filter hides Builder's stored layout from the front-page main query, so it prints nothing;
- *  2. a the_content filter at PHP_INT_MAX - 10 returns only this markup (it runs after Builder's own hook);
- *  3. body.saab-home-on CSS hides any .themify_builder_content that does not contain .saab-home.
+ * Why a template and not a the_content filter (0.1.0 used one, as DoS Outdoor Seating does): on shotandabeer.com the
+ * 0.1.0 takeover never showed. A content filter only works when the front page is a static page AND the theme runs it
+ * through the main loop's the_content; a front page set to "Your latest posts", or a Themify layout that builds the
+ * front page some other way, skips it. template_include swaps the whole template instead, so it works with either
+ * Reading setting and whatever Themify Builder holds for the page (the template never calls the_content, so Builder
+ * has nothing to print). The theme's header and footer still come from get_header() / get_footer().
  *
  * @package DOS_SAAB
  */
@@ -23,9 +23,6 @@ final class Home {
 
 	const OPTION    = 'saab_home';
 	const IMAGE_KEY = 'saab_card_image';
-
-	/** Builder meta keys hidden from the front-page main query while the takeover is on. */
-	const BUILDER_META = array( '_themify_builder_settings_json', '_themify_builder_settings' );
 
 	public static function defaults() {
 		return array(
@@ -45,18 +42,22 @@ final class Home {
 	}
 
 	public static function hooks() {
-		add_filter( 'the_content', array( __CLASS__, 'content' ), PHP_INT_MAX - 10 );
+		// Late, so a theme or Builder template swap at the default priority has already run and is overridden.
+		add_filter( 'template_include', array( __CLASS__, 'template' ), PHP_INT_MAX - 10 );
 		add_filter( 'body_class', array( __CLASS__, 'body_class' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
-		add_filter( 'get_post_metadata', array( __CLASS__, 'hide_builder_meta' ), 10, 4 );
 		add_action( 'template_redirect', array( __CLASS__, 'nocache_preview' ), 1 );
 	}
 
 	/* ---------------------------------------------------------------- state of the request */
 
-	/** True when the takeover renders on this request: the setting is on, or an admin is previewing. */
+	/**
+	 * True when the takeover renders on this request: the setting is on, or an admin is previewing. Any front page
+	 * counts, a static page or the latest-posts home, but not page 2 and later of a latest-posts home, which stays
+	 * the theme's post list.
+	 */
 	public static function active() {
-		if ( is_admin() || ! did_action( 'wp' ) || ! is_front_page() || ! is_page() ) {
+		if ( is_admin() || ! did_action( 'wp' ) || ! is_front_page() || is_paged() || is_feed() ) {
 			return false;
 		}
 		if ( self::settings()['on'] ) {
@@ -91,36 +92,13 @@ final class Home {
 		wp_enqueue_script( 'saab-home', DOS_SAAB_HOME_URL . 'assets/saab-home.js', array(), DOS_SAAB_HOME_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
 	}
 
-	/** Layer 1: Builder sees no stored layout for the front page, so it prints nothing. */
-	public static function hide_builder_meta( $check, $post_id, $key, $single ) {
-		if ( null !== $check || ! in_array( $key, self::BUILDER_META, true ) || ! self::active() ) {
-			return $check;
+	/** The front page is drawn by templates/front-page.php: the theme's header, this layout, the theme's footer. */
+	public static function template( $template ) {
+		if ( ! self::active() ) {
+			return $template;
 		}
-		if ( (int) $post_id !== (int) get_queried_object_id() || isset( $_GET['tb-id'], $_GET['tb-preview'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			return $check;
-		}
-		return $single ? '' : array();
-	}
-
-	/** Layer 2: the whole page content becomes this markup, once, for the main front-page loop only. */
-	public static function content( $content ) {
-		global $wp_current_filter;
-		static $done = false;
-		if ( ! in_the_loop() || ! is_main_query() || doing_filter( 'get_the_excerpt' ) || ! self::active() ) {
-			return $content;
-		}
-		if ( (int) get_the_ID() !== (int) get_queried_object_id() ) {
-			return $content;
-		}
-		// Nested the_content calls (Builder modules, shortcodes) are not the page body.
-		if ( count( array_keys( (array) $wp_current_filter, 'the_content', true ) ) > 1 ) {
-			return $content;
-		}
-		if ( $done ) {
-			return '';
-		}
-		$done = true;
-		return self::render();
+		$ours = dirname( DOS_SAAB_HOME_FILE ) . '/templates/front-page.php';
+		return is_readable( $ours ) ? $ours : $template;
 	}
 
 	/* ---------------------------------------------------------------- data */

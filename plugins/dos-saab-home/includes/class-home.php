@@ -31,6 +31,7 @@ final class Home {
 			'h1'      => 'What are you hungry for?',
 			'intro'   => "Search a restaurant, a cuisine, or one specific dish. Every review says what we ordered and whether we'd get it again.",
 			'cats'    => '',
+			'cats_shown' => 8,
 			'latest'  => 6,
 			'cities'  => 8,
 		);
@@ -172,7 +173,7 @@ final class Home {
 		ob_start();
 		echo '<div class="saab-home">';
 		echo self::hero_html( $s ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
-		echo self::categories_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo self::categories_html( (int) $s['cats_shown'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 		echo self::latest_html( (int) $s['latest'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 		echo self::cities_html( (int) $s['cities'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 		echo '</div>';
@@ -220,13 +221,20 @@ final class Home {
 		return $o;
 	}
 
-	private static function categories_html() {
+	/**
+	 * The category cards, folded: the first $shown show, the rest sit behind a "Show all" button (0 = no fold).
+	 *
+	 * Every card is in the markup either way, so search engines and visitors without JavaScript get them all; the
+	 * script folds the extras (adds .is-folded) and reveals the button, so nothing is hidden that cannot be opened.
+	 */
+	private static function categories_html( $shown ) {
 		$cats = self::categories();
 		if ( ! $cats ) {
 			return '';
 		}
-		$o = '<section class="saab-sec" aria-labelledby="saab-cats-h"><h2 id="saab-cats-h" class="saab-sec__title">' . esc_html__( 'Pick a category', 'dos-saab-home' ) . '</h2><ul class="saab-cats">';
-		foreach ( $cats as $t ) {
+		$extra = $shown > 0 ? max( 0, count( $cats ) - $shown ) : 0;
+		$o     = '<section class="saab-sec saab-catsec" aria-labelledby="saab-cats-h"' . ( $extra ? ' data-saab-fold' : '' ) . '><h2 id="saab-cats-h" class="saab-sec__title">' . esc_html__( 'Pick a category', 'dos-saab-home' ) . '</h2><ul id="saab-cats" class="saab-cats">';
+		foreach ( $cats as $i => $t ) {
 			$img  = self::category_image_id( $t );
 			$html = $img ? wp_get_attachment_image(
 				$img,
@@ -241,13 +249,22 @@ final class Home {
 				)
 			) : '';
 			$desc = trim( wp_strip_all_tags( term_description( $t ) ) );
-			$o   .= '<li><a class="saab-cat' . ( $html ? ' saab-cat--photo' : '' ) . '" href="' . esc_url( get_term_link( $t ) ) . '">'
+			$o   .= '<li' . ( $extra && $i >= $shown ? ' class="saab-cats__extra"' : '' ) . '><a class="saab-cat' . ( $html ? ' saab-cat--photo' : '' ) . '" href="' . esc_url( get_term_link( $t ) ) . '">'
 				. $html
 				. '<span class="saab-cat__text"><span class="saab-cat__name">' . esc_html( html_entity_decode( $t->name, ENT_QUOTES, 'UTF-8' ) ) . '</span>'
 				. ( '' !== $desc ? '<span class="saab-cat__blurb">' . esc_html( wp_trim_words( $desc, 8 ) ) . '</span>' : '' )
 				. '<span class="saab-cat__count">' . esc_html( Search::reviews( (int) $t->count ) ) . '</span></span></a></li>';
 		}
-		return $o . '</ul></section>';
+		$o .= '</ul>';
+		if ( $extra ) {
+			/* translators: %d: number of categories */
+			$all = sprintf( _n( 'Show all %d category', 'Show all %d categories', count( $cats ), 'dos-saab-home' ), count( $cats ) );
+			$o  .= '<button type="button" class="saab-fold" aria-controls="saab-cats" aria-expanded="false" data-more="' . esc_attr( $all ) . '" data-less="' . esc_attr__( 'Show fewer', 'dos-saab-home' ) . '" hidden>'
+				. '<span class="saab-fold__label">' . esc_html( $all ) . '</span>'
+				. '<svg class="saab-fold__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+				. '</button>';
+		}
+		return $o . '</section>';
 	}
 
 	private static function latest_html( $n ) {

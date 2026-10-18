@@ -51,6 +51,7 @@ final class Admin {
 			'h1'      => sanitize_text_field( $in['h1'] ?? '' ) ?: $def['h1'],
 			'intro'   => sanitize_textarea_field( $in['intro'] ?? $def['intro'] ),
 			'cats'    => implode( ', ', array_filter( array_map( 'sanitize_title', preg_split( '/[\s,]+/', (string) ( $in['cats'] ?? '' ) ) ) ) ),
+			'cats_shown' => max( 0, min( 60, (int) ( $in['cats_shown'] ?? $def['cats_shown'] ) ) ),
 			'latest'  => max( 0, min( 24, (int) ( $in['latest'] ?? $def['latest'] ) ) ),
 			'cities'  => max( 0, min( 30, (int) ( $in['cities'] ?? $def['cities'] ) ) ),
 		);
@@ -83,6 +84,9 @@ final class Admin {
 			<tr><th scope="row"><label for="saab-cats"><?php esc_html_e( 'Category cards', 'dos-saab-home' ); ?></label></th>
 				<td><input id="saab-cats" class="large-text" name="<?php echo esc_attr( $name ); ?>[cats]" value="<?php echo esc_attr( $s['cats'] ); ?>" placeholder="mexican-cuisine-in-tri-cities, road-trips">
 				<p class="description"><?php esc_html_e( 'Category slugs, comma-separated, in the order the cards appear. Empty: every category with a published review, most reviews first. A card uses the photo set on its category (Posts → Categories), else the newest review\'s featured image.', 'dos-saab-home' ); ?></p></td></tr>
+			<tr><th scope="row"><label for="saab-cats-shown"><?php esc_html_e( 'Category cards before "Show all"', 'dos-saab-home' ); ?></label></th>
+				<td><input id="saab-cats-shown" type="number" min="0" max="60" class="small-text" name="<?php echo esc_attr( $name ); ?>[cats_shown]" value="<?php echo esc_attr( (string) $s['cats_shown'] ); ?>">
+				<p class="description"><?php esc_html_e( 'The rest fold behind a "Show all categories" button. 0 shows every card with no button.', 'dos-saab-home' ); ?></p></td></tr>
 			<tr><th scope="row"><label for="saab-latest"><?php esc_html_e( 'Latest reviews shown', 'dos-saab-home' ); ?></label></th>
 				<td><input id="saab-latest" type="number" min="0" max="24" class="small-text" name="<?php echo esc_attr( $name ); ?>[latest]" value="<?php echo esc_attr( (string) $s['latest'] ); ?>"></td></tr>
 			<tr><th scope="row"><label for="saab-cities"><?php esc_html_e( 'City links shown', 'dos-saab-home' ); ?></label></th>

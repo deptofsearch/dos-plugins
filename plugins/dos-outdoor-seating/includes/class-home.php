@@ -40,9 +40,7 @@ final class Home {
 	const DEFAULT_SEO = '<h2>Outdoor Dining, City by City</h2>
 <p>Outdoor Seating Near Me lists more than 8,000 restaurants, bars, breweries, and coffee shops with outdoor tables in over 1,100 cities across the western United States. Every city page shows the places we know of with a patio, deck, rooftop, or sidewalk seating, along with hours, ratings, and directions.</p>
 <h3>Filter for What You Want</h3>
-<p>Looking for a dog-friendly patio, a rooftop for sunset drinks, or brunch in the sun? Filter any city by happy hour, dogs welcome, live music, brunch, cocktails, fire pits, and more, then open a restaurant to see its full details before you go.</p>
-<h3>Where We Cover</h3>
-<p>We cover <a href="/washington/">Washington</a>, <a href="/oregon/">Oregon</a>, <a href="/california/">California</a>, <a href="/idaho/">Idaho</a>, <a href="/arizona/">Arizona</a>, and <a href="/nevada/">Nevada</a>, and we add new cities and details regularly.</p>';
+<p>Looking for a dog-friendly patio, a rooftop for sunset drinks, or brunch in the sun? Filter any city by happy hour, dogs welcome, live music, brunch, cocktails, fire pits, and more, then open a restaurant to see its full details before you go.</p>';
 
 	/** Builder meta keys hidden from the front-page main query while the takeover is on. */
 	const BUILDER_META = array( '_themify_builder_settings_json', '_themify_builder_settings' );

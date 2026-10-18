@@ -7,6 +7,18 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.5
+
+The homepage's default SEO copy no longer ends with a "Where We Cover" list of
+state links.
+
+The "Browse by state" tiles further down the same page already link every
+state, so the paragraph repeated them in a sentence, and as a hand-kept list it
+fell behind whenever a state was added (the default still named six states
+when the site covered fourteen). The live copy, stored in `osn_home_seo_html`,
+had the section removed on 2026-10-18; this keeps it from coming back if that
+setting is ever cleared and the default shows again.
+
 ## 0.6.4
 
 Outdoor Seating now updates itself from this repository's releases, like the

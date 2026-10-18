@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.4
+Stable tag: 0.6.5
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -33,6 +33,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.5 =
+* Homepage default SEO copy drops the "Where We Cover" state list (the state tiles already link every state). See CHANGELOG.md.
 
 = 0.6.4 =
 * Updates itself from GitHub releases (shared DoS updater, `Update URI`). See CHANGELOG.md, which carries the history from here on.

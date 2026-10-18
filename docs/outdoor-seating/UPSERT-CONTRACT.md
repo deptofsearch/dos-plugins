@@ -180,6 +180,20 @@ Fixes attachments broken by the 0.3.6 optimizer (0-byte `.webp`, metadata width 
 - Response: `{ dry_run, broken, counts: {repaired, would_repair, ok, unrecoverable}, next_offset, results: [ { id, action: repaired|would_repair|ok|unrecoverable, reason, bytes, width, venues_relinked: [venue ids] } ] }`. `ok` = flagged but the file is actually healthy (flag cleared, venues relinked). Repaired rows leave the broken set, so `next_offset` only counts rows that stayed; repeat with it until it is `null`.
 
 
+## Self-update: `GET|POST /wp-json/osn/v1/self-update` (plugin 0.6.6+)
+
+Core's REST API cannot update a plugin, so this route lets n8n (workflow **ODSNM - Plugin self-update**) install
+a release without wp-admin. Needs `update_plugins` + `manage_options`.
+
+- `GET` (`?force=1` re-asks GitHub): `{ installed, latest, update, miss }`, the shared updater's `status()`.
+- `POST`: re-reads releases, then installs the newest when it is newer than the installed version
+  (`Plugin_Upgrader::bulk_upgrade` on this plugin only, from the package the updater already offers WordPress).
+  Returns `{ updated: true, from, to, active, log }`, or `{ updated: false, reason: "up to date", ... }`.
+  Since 0.6.7 an unreadable GitHub is a 502 `osn_github_unreachable` with the reason, not "up to date".
+- GitHub token: Tools -> Outdoor Seating -> Updates (option `osn_github_token`, 0.6.7+), handed to the shared
+  updater through `dos_github_updater_token`; a `DOS_GITHUB_TOKEN` constant still wins. On WordPress.com it is
+  required in practice: unauthenticated calls share a rate-limited IP (403), and `wp-config.php` can't be edited.
+
 ## SEO (plugin 0.3.6+)
 
 The site runs DoS Toolkit's SEO module (not All in One SEO). The plugin feeds it, and core sitemaps, as follows.

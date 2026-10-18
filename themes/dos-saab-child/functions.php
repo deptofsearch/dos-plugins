@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_SAAB_CHILD_VERSION', '0.1.0' );
+define( 'DOS_SAAB_CHILD_VERSION', '0.1.1' );
 
 function dos_saab_child_fonts() {
 	wp_enqueue_style(

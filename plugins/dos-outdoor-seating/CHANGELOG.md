@@ -7,6 +7,24 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.7
+
+A GitHub access token setting, under Tools -> Outdoor Seating -> Updates.
+
+On outdoorseatingnearme.com every release lookup was failing with GitHub's
+403 rate limit: unauthenticated API calls get 60 an hour per IP address, and
+on WordPress.com that address is shared with other sites. The shared updater
+already reads a `DOS_GITHUB_TOKEN` constant, but `wp-config.php` cannot be
+edited on WordPress.com, so there was nowhere to put one. The token is now
+an option, passed to the updater through its `dos_github_updater_token`
+filter, and every DoS plugin on the site uses it. A constant still wins where
+one is defined, and another filter's token is never overridden. Saving the
+token drops the cached failed lookup so it takes effect at once.
+
+`POST /osn/v1/self-update` also stops calling an unreachable GitHub "up to
+date": when no release could be read it returns a 502 with the reason, which
+is how the rate limit above was hiding.
+
 ## 0.6.6
 
 A REST route that updates this plugin: `GET /osn/v1/self-update` reports the

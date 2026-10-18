@@ -107,6 +107,17 @@ final class Admin {
 				'default'           => array(),
 			)
 		);
+		register_setting(
+			self::GROUP,
+			Self_Update::OPT_TOKEN,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => function ( $v ) {
+					return trim( sanitize_text_field( (string) $v ) );
+				},
+				'default'           => '',
+			)
+		);
 		foreach ( array( 'osn_accent_color', 'osn_ink_color' ) as $opt ) {
 			register_setting(
 				self::GROUP,
@@ -242,6 +253,13 @@ final class Admin {
 <tr>
 <th scope="row"><label for="osn-ink"><?php esc_html_e( 'Text color', 'dos-outdoor-seating' ); ?></label></th>
 <td><input id="osn-ink" type="text" name="osn_ink_color" value="<?php echo esc_attr( (string) get_option( 'osn_ink_color', '' ) ); ?>" placeholder="#2b2420" class="regular-text code"><p class="description"><?php esc_html_e( 'Hex values like #c2562b. Leave blank for the defaults.', 'dos-outdoor-seating' ); ?></p></td>
+</tr>
+</table>
+<h2><?php esc_html_e( 'Updates', 'dos-outdoor-seating' ); ?></h2>
+<table class="form-table" role="presentation">
+<tr>
+<th scope="row"><label for="osn-github-token"><?php esc_html_e( 'GitHub access token', 'dos-outdoor-seating' ); ?></label></th>
+<td><input id="osn-github-token" type="password" name="<?php echo esc_attr( Self_Update::OPT_TOKEN ); ?>" value="<?php echo esc_attr( (string) get_option( Self_Update::OPT_TOKEN, '' ) ); ?>" class="regular-text code" autocomplete="new-password"><p class="description"><?php esc_html_e( 'Lets this site look up plugin releases on GitHub. Without one, GitHub limits lookups to 60 an hour per server address, which is shared with other sites, so updates are often missed. A fine-grained token with read-only Contents access to deptofsearch/dos-plugins is enough. Every DoS plugin on this site uses it; DOS_GITHUB_TOKEN in wp-config.php, if defined, takes precedence.', 'dos-outdoor-seating' ); ?></p></td>
 </tr>
 </table>
 <?php submit_button(); ?>

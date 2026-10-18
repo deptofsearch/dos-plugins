@@ -10,6 +10,12 @@
  * GitHub afresh, so a release published minutes ago is seen. Only this plugin can be updated here, and only from the
  * package the shared updater already offers WordPress, so the route adds no new source of code.
  *
+ * It also holds the GitHub token setting (Tools -> Outdoor Seating -> Updates). Unauthenticated GitHub API calls are
+ * limited to 60 an hour per IP address, and on WordPress.com that address is shared with other sites, so lookups fail
+ * with 403 most of the time. The shared updater reads DOS_GITHUB_TOKEN from wp-config.php, but wp-config.php cannot
+ * be edited on WordPress.com, so the token is stored as an option and handed over through the updater's
+ * dos_github_updater_token filter. A constant, where one is defined, still wins.
+ *
  * @package OSN
  */
 
@@ -19,12 +25,33 @@ defined( 'ABSPATH' ) || exit;
 
 final class Self_Update {
 
+	const OPT_TOKEN = 'osn_github_token';
+
 	/** @var \DOS_GitHub_Updater|null */
 	private static $updater = null;
 
 	public static function hooks( $updater ) {
 		self::$updater = $updater;
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+		add_filter( 'dos_github_updater_token', array( __CLASS__, 'token' ) );
+		// A new token should be used straight away, not after the cached failed lookup expires.
+		add_action( 'update_option_' . self::OPT_TOKEN, array( __CLASS__, 'flush' ) );
+		add_action( 'add_option_' . self::OPT_TOKEN, array( __CLASS__, 'flush' ) );
+	}
+
+	/** Another filter's token is kept; ours only fills a blank. */
+	public static function token( $token ) {
+		if ( '' !== (string) $token ) {
+			return $token;
+		}
+		return trim( (string) get_option( self::OPT_TOKEN, '' ) );
+	}
+
+	public static function flush() {
+		if ( self::$updater ) {
+			self::$updater->flush();
+		}
+		delete_site_transient( 'update_plugins' );
 	}
 
 	public static function register_routes() {
@@ -68,6 +95,10 @@ final class Self_Update {
 		}
 
 		$status = self::$updater->status( true );
+		if ( '' === (string) $status['latest'] && ! empty( $status['miss'] ) ) {
+			$reason = is_array( $status['miss'] ) && ! empty( $status['miss']['reason'] ) ? $status['miss']['reason'] : 'unknown error';
+			return new \WP_Error( 'osn_github_unreachable', 'Could not read releases from GitHub: ' . $reason, array( 'status' => 502 ) + $status );
+		}
 		if ( empty( $status['update'] ) ) {
 			return rest_ensure_response( array( 'updated' => false, 'reason' => 'up to date' ) + $status );
 		}

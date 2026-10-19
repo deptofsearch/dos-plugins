@@ -18,6 +18,11 @@ defined( 'ABSPATH' ) || exit;
 
 final class Search {
 
+	/**
+	 * Cache keys carry the plugin version (key()), so an update never serves an index built by the previous version:
+	 * 0.1.4 changed restaurant links, and the site kept serving 0.1.3's cached /restaurant/ links for up to 12 hours.
+	 * The old version's entries simply expire.
+	 */
 	const TRANSIENT = 'saab_home_search_v1';
 	const NS        = 'saab/v1';
 
@@ -62,9 +67,14 @@ final class Search {
 		}
 	}
 
+	/** A cache key for this plugin version: 'saab_home_search_v1' becomes 'saab_home_search_v1_0.1.5'. */
+	public static function key( $base ) {
+		return $base . '_' . ( defined( 'DOS_SAAB_HOME_VERSION' ) ? DOS_SAAB_HOME_VERSION : '0' );
+	}
+
 	public static function flush() {
-		delete_transient( self::TRANSIENT );
-		delete_transient( self::TRANSIENT_REVIEWS );
+		delete_transient( self::key( self::TRANSIENT ) );
+		delete_transient( self::key( self::TRANSIENT_REVIEWS ) );
 	}
 
 	/** A review published, unpublished or edited while published changes counts or titles, so the index is rebuilt. */
@@ -89,7 +99,7 @@ final class Search {
 	 * @return array[] Each { n: name, g: group key, u: url, s: sub-line, k: review count }. Cached 12 hours.
 	 */
 	public static function index() {
-		$hit = get_transient( self::TRANSIENT );
+		$hit = get_transient( self::key( self::TRANSIENT ) );
 		if ( is_array( $hit ) ) {
 			return $hit;
 		}
@@ -134,7 +144,7 @@ final class Search {
 		foreach ( $out as $i => $e ) {
 			unset( $out[ $i ]['p'] ); // Places' linked-post lists are internal; also when the restaurant tag is gone.
 		}
-		set_transient( self::TRANSIENT, $out, 12 * HOUR_IN_SECONDS );
+		set_transient( self::key( self::TRANSIENT ), $out, 12 * HOUR_IN_SECONDS );
 		return $out;
 	}
 
@@ -263,7 +273,7 @@ final class Search {
 	 * @return array[] Same shape as index() entries, g = 'd', k = 0.
 	 */
 	public static function reviews_index() {
-		$hit = get_transient( self::TRANSIENT_REVIEWS );
+		$hit = get_transient( self::key( self::TRANSIENT_REVIEWS ) );
 		if ( is_array( $hit ) ) {
 			return $hit;
 		}
@@ -304,7 +314,7 @@ final class Search {
 				'k' => 0,
 			);
 		}
-		set_transient( self::TRANSIENT_REVIEWS, $out, 12 * HOUR_IN_SECONDS );
+		set_transient( self::key( self::TRANSIENT_REVIEWS ), $out, 12 * HOUR_IN_SECONDS );
 		return $out;
 	}
 

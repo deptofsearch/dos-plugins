@@ -9,6 +9,8 @@
 
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'HOUR_IN_SECONDS', 3600 );
+define( 'DOS_SAAB_HOME_VERSION', '9.9.9' );
+$GLOBALS['set'] = array();
 
 class WP_Term {
 	public $term_id; public $name; public $slug; public $count; public $taxonomy;
@@ -39,7 +41,7 @@ $GLOBALS['post_restaurant'] = array( 1 => 'Bangkok Thai Restaurant', 2 => 'Bangk
 $GLOBALS['other_terms'] = array( 'saab_cuisine' => array( new WP_Term( 20, 'saab_cuisine', 'Thai', 3 ) ) );
 
 function get_transient( $k ) { return false; }
-function set_transient( $k, $v, $t ) { return true; }
+function set_transient( $k, $v, $t ) { $GLOBALS['set'][] = $k; return true; }
 function taxonomy_exists( $t ) { return in_array( $t, array( 'saab_restaurant', 'saab_cuisine' ), true ); }
 function post_type_exists( $t ) { return 'saab_restaurant' === $t; }
 function is_wp_error( $x ) { return false; }
@@ -101,6 +103,8 @@ check( 'no entry links to /restaurant/<slug>/', ! $bad, json_encode( array_value
 check( 'other kinds still link to their archive', isset( $by['c:Thai'] ) && 'https://example.com/cuisine/thai/' === $by['c:Thai']['u'] );
 
 check( '"bangkok thai restaurant" finds the place', array( 'Bangkok Thai Cuisine' ) === array_column( Search::match( $index, 'bangkok thai restaurant' )[0]['items'] ?? array(), 'n' ) );
+
+check( 'the cache key carries the plugin version, so an update never serves the previous build', in_array( 'saab_home_search_v1_9.9.9', $GLOBALS['set'], true ), json_encode( $GLOBALS['set'] ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

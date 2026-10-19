@@ -194,7 +194,8 @@ final class Home {
 			// Terms only: small enough to ride in the page so suggestions start at once. The script swaps in the full
 			// index (terms plus every review's dish) from `full` the first time the box is used.
 			'index'    => Search::index(),
-			'full'     => rest_url( Search::NS . '/index' ),
+			// Versioned so a browser or CDN copy from the previous release is never reused (the response is cacheable).
+			'full'     => add_query_arg( 'v', DOS_SAAB_HOME_VERSION, rest_url( Search::NS . '/index' ) ),
 			'groups'   => $groups,
 			'ph'       => $ph,
 			'per'      => Search::PER_GROUP,

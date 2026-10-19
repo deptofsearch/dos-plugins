@@ -18,6 +18,7 @@ final class Admin {
 		add_action( 'admin_init', array( __CLASS__, 'register' ) );
 		add_action( 'category_edit_form_fields', array( __CLASS__, 'term_field' ) );
 		add_action( 'edited_category', array( __CLASS__, 'save_term' ) );
+		add_action( 'admin_post_saab_home_rebuild', array( __CLASS__, 'rebuild' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( DOS_SAAB_HOME_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
@@ -97,10 +98,34 @@ final class Admin {
 	<h2><?php esc_html_e( 'Search index', 'dos-saab-home' ); ?></h2>
 	<p><?php
 		/* translators: 1: number of entries, 2: list of groups */
-		printf( esc_html__( '%1$d entries from: %2$s. Rebuilt automatically when a review or one of its tags changes.', 'dos-saab-home' ), count( Search::full_index() ), esc_html( $tax ? implode( ', ', $tax ) : __( 'none — the restaurant, cuisine, dish and city taxonomies were not found', 'dos-saab-home' ) ) );
+		printf( esc_html__( '%1$d entries from: %2$s. Rebuilt automatically when a review, a restaurant page or one of their tags changes, and after every plugin update.', 'dos-saab-home' ), count( Search::full_index() ), esc_html( $tax ? implode( ', ', $tax ) : __( 'none — the restaurant, cuisine, dish and city taxonomies were not found', 'dos-saab-home' ) ) );
 	?></p>
+	<?php if ( isset( $_GET['saab_rebuilt'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+		<div class="notice notice-success inline"><p><?php
+			/* translators: %d: number of entries */
+			printf( esc_html__( 'Search index rebuilt: %d entries.', 'dos-saab-home' ), absint( $_GET['saab_rebuilt'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		?></p></div>
+	<?php endif; ?>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<input type="hidden" name="action" value="saab_home_rebuild">
+		<?php wp_nonce_field( 'saab_home_rebuild' ); ?>
+		<?php submit_button( __( 'Rebuild search index now', 'dos-saab-home' ), 'secondary', 'submit', false ); ?>
+		<p class="description"><?php esc_html_e( 'Use it if a search result still shows something you have already changed. Clear the page cache afterwards.', 'dos-saab-home' ); ?></p>
+	</form>
 </div>
 		<?php
+	}
+
+	/** "Rebuild search index now": drop the cached index and build it again, so a change shows without waiting. */
+	public static function rebuild() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'dos-saab-home' ), 403 );
+		}
+		check_admin_referer( 'saab_home_rebuild' );
+		Search::flush();
+		$n = count( Search::full_index() );
+		wp_safe_redirect( add_query_arg( array( 'page' => self::PAGE, 'saab_rebuilt' => $n ), admin_url( 'options-general.php' ) ) );
+		exit;
 	}
 
 	public static function term_field( $term ) {

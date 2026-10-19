@@ -128,9 +128,10 @@ final class Render {
 		return '<span class="blnm-builder" title="' . esc_attr__( 'Offered by a home builder to buyers of its new homes. Not an open-market lender, so its rate is left out of the score.', 'dos-best-lenders' ) . '">' . esc_html__( 'Builder lender: new homes only', 'dos-best-lenders' ) . '</span>';
 	}
 
-	/** Consolidated city-counties the Census names without "County", keyed "ST|name" (lowercase name). */
+	/** Consolidated city-counties the Census names without "County" (and the NYC five-borough pseudo-county, fips 36999, stored as "New York city"), keyed "ST|name" (lowercase name). */
 	const CONSOLIDATED = array(
-		'NV|carson city' => 'Carson City',
+		'NV|carson city'    => 'Carson City',
+		'NY|new york city'  => 'New York City (five boroughs)',
 	);
 
 	/** County-equivalent suffixes kept as the Census writes them (longest first so "City and Borough" beats "Borough"). */

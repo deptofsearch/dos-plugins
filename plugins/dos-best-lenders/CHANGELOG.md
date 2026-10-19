@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-best-lenders-v<version>`.
 
+## 0.8.1
+
+New York City gets its own county label.
+
+- `Render::CONSOLIDATED` gains `NY|new york city` => "New York City (five boroughs)". Why: NYC spans five counties, so
+  the pipeline stores it as pseudo-county 36999 named "New York city"; the generic lowercase-"city" rule turned that
+  into "City of New York", which hides that the figures cover all five boroughs. Name + state rule only, so it
+  needs no fips; the n8n City Builder / City Copy / Seed `countyLabel()` copies match (they also check fips 36999).
+
 ## 0.8.0
 
 County labels stop assuming every county-equivalent is a "County".

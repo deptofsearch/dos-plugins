@@ -1,0 +1,730 @@
+/**
+ * Front-end styling for the saab_restaurant singular page. Scoped under
+ * .saab-restaurant so it sits inside whatever the Themify theme wraps
+ * around it, rather than fighting it. Colors are ported from the approved
+ * full-width mockup as custom properties on .saab-restaurant; fonts are not
+ * ported — the theme supplies those.
+ */
+
+/*
+ * Themify "Magazine" puts a sidebar next to the content on every singular
+ * post. class-saab-restaurants.php removes it two other ways first — a
+ * get_post_metadata filter on Themify's own per-post `layout` option, and a
+ * body_class filter that drops the sidebar1/sidebar2 classes — but we can't
+ * read the theme's PHP to confirm either one is what this theme version
+ * actually checks, so this is a plain CSS backstop scoped to the body class
+ * both of those filters also add.
+ */
+body.saab-restaurant-page #sidebar {
+	display: none;
+}
+
+/* The theme's <h1> carries "Name – City, ST" (see filter_heading_title()). */
+body.saab-restaurant-page .post-title,
+body.saab-restaurant-page .entry-title {
+	font-weight: 700;
+}
+
+body.saab-restaurant-page #content {
+	width: 100%;
+	max-width: 100%;
+	float: none;
+}
+
+.saab-restaurant {
+	/* Neutral grays; the accent is a light gray that sits with black and
+	   gray rather than a hue. --saab-accent is the dark end (links, text on
+	   light fills); -soft and -fill are the light grays used for fills. */
+	--saab-ground: #f4f4f5;
+	--saab-surface: #ffffff;
+	--saab-sunk: #efeff0;
+	--saab-ink: #1e1f21;
+	--saab-muted: #5f6368;
+	--saab-line: #dddfe1;
+	--saab-accent: #45494e;
+	--saab-accent-soft: #eceeef;
+	--saab-accent-fill: #d9dcdf;
+	--saab-accent-ink: #1e1f21;
+	--saab-open: #2e7d4f;
+	--saab-closed: #b5412a;
+
+	max-width: 100%;
+	box-sizing: border-box;
+	color: var(--saab-ink);
+}
+
+/* No dark palette: the theme's page is always white, so dark-mode tokens
+   would put light text on a white page. */
+
+.saab-restaurant *,
+.saab-restaurant *::before,
+.saab-restaurant *::after {
+	box-sizing: border-box;
+}
+
+.saab-restaurant section {
+	margin: 0 0 2em;
+}
+
+.saab-restaurant h2 {
+	margin: 0 0 0.6em;
+}
+
+.saab-restaurant a {
+	color: var(--saab-accent);
+}
+
+/* Header */
+
+.saab-restaurant__header {
+	margin: 0 0 1.5em;
+}
+
+.saab-restaurant__region,
+.saab-restaurant__cuisines {
+	margin: 0 0 0.3em;
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+	align-items: center;
+	margin: 0.5em 0 0;
+}
+
+.saab-restaurant__badge {
+	display: inline-block;
+	padding: 0.2em 0.7em;
+	border-radius: 999px;
+	background: var(--saab-accent-fill);
+	color: var(--saab-accent-ink);
+	font-size: 0.85em;
+	font-weight: 600;
+}
+
+.saab-restaurant__rating {
+	font-size: 0.9em;
+	font-weight: 600;
+	padding: 0.2em 0.7em;
+	border-radius: 999px;
+	background: var(--saab-sunk);
+}
+
+.saab-restaurant__open-now {
+	font-size: 0.9em;
+	font-weight: 600;
+}
+
+.saab-restaurant__open-now[data-state="open"] {
+	color: var(--saab-open);
+}
+
+.saab-restaurant__open-now[data-state="closed"] {
+	color: var(--saab-closed);
+}
+
+/* Photo strip */
+
+.saab-restaurant__photo-strip {
+	display: grid;
+	gap: 8px;
+	margin: 0 0 1.5em;
+}
+
+.saab-restaurant__photo-strip--count-3 {
+	grid-template-columns: 2fr 1fr;
+	grid-template-rows: 1fr 1fr;
+}
+
+.saab-restaurant__photo-strip--count-3 .saab-restaurant__photo-strip-item:first-child {
+	grid-row: 1 / span 2;
+}
+
+.saab-restaurant__photo-strip--count-2 {
+	grid-template-columns: 1fr 1fr;
+}
+
+.saab-restaurant__photo-strip--count-1 {
+	grid-template-columns: 1fr;
+}
+
+.saab-restaurant__photo-strip-item {
+	position: relative;
+	border-radius: 10px;
+	overflow: hidden;
+	aspect-ratio: 4 / 3;
+}
+
+.saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
+	aspect-ratio: 16 / 9;
+}
+
+.saab-restaurant__photo-strip-link {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.saab-restaurant__photo-strip-link img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.saab-restaurant__photo-strip-more {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	padding: 0.4em 0.9em;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.65);
+	color: #fff;
+	font-size: 0.85em;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.saab-restaurant__photo-strip-more:hover,
+.saab-restaurant__photo-strip-more:focus-visible {
+	background: rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 600px) {
+	/* A horizontal scroll-snap row instead of the grid, so the strip
+	   doesn't push the dish board far down the page on small screens. The
+	   strip itself scrolls — the page never gains a horizontal scrollbar. */
+	.saab-restaurant__photo-strip {
+		display: flex;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		padding-bottom: 4px;
+	}
+
+	.saab-restaurant__photo-strip-item,
+	.saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
+		flex: 0 0 80%;
+		aspect-ratio: 4 / 3;
+		scroll-snap-align: start;
+	}
+
+	.saab-restaurant__menu-section ul,
+	.saab-restaurant__year ul {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Predicted pick */
+
+.saab-restaurant__predicted-pick {
+	border: 1px dashed var(--saab-line);
+	border-radius: 8px;
+	padding: 1em 1.2em;
+	margin: 0 0 1em;
+	background: var(--saab-sunk);
+}
+
+/* The dishes board */
+
+.saab-restaurant__dishes-sub {
+	color: var(--saab-muted);
+	font-size: 0.9em;
+	margin: 0 0 1em;
+}
+
+.saab-restaurant__board {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+	gap: 12px;
+}
+
+.saab-restaurant__card {
+	background: var(--saab-surface);
+	border: 1px solid var(--saab-line);
+	border-radius: 12px;
+	padding: 0;
+	display: grid;
+	align-content: start;
+	/* Clips the photo's square corners to the card's own radius. */
+	overflow: hidden;
+}
+
+.saab-restaurant__card-body {
+	padding: 14px;
+	display: grid;
+	gap: 8px;
+}
+
+.saab-restaurant__card-photo-link {
+	display: block;
+}
+
+.saab-restaurant__card-photo {
+	display: block;
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+}
+
+.saab-restaurant__card h3 {
+	margin: 0;
+	font-size: 1.02em;
+}
+
+.saab-restaurant__card--ate {
+	border-color: var(--saab-accent-fill);
+	background: var(--saab-accent-soft);
+}
+
+.saab-restaurant__card-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.saab-restaurant__tag {
+	font-size: 0.75em;
+	font-weight: 600;
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: var(--saab-sunk);
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__tag--ate {
+	background: var(--saab-accent-fill);
+	color: var(--saab-accent-ink);
+}
+
+.saab-restaurant__card-line {
+	font-size: 0.85em;
+	color: var(--saab-muted);
+	margin: 0;
+}
+
+/* Dish and feature chips */
+
+.saab-restaurant__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+	list-style: none;
+	margin: 0 0 1em;
+	padding: 0;
+}
+
+.saab-restaurant__chip {
+	display: inline-block;
+	padding: 0.25em 0.8em;
+	border-radius: 999px;
+	background: var(--saab-sunk);
+	font-size: 0.85em;
+}
+
+.saab-restaurant__all-details {
+	border: 1px solid var(--saab-line);
+	border-radius: 8px;
+	padding: 0.6em 1em;
+}
+
+.saab-restaurant__all-details summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.saab-restaurant__all-details .saab-restaurant__feature-group {
+	margin: 1em 0 0;
+}
+
+.saab-restaurant__all-details .saab-restaurant__feature-group h3 {
+	margin: 0 0 0.4em;
+	font-size: 0.8em;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--saab-muted);
+}
+
+/* Visit: one bordered panel, three columns that wrap */
+
+.saab-restaurant__visit-panel {
+	background: var(--saab-surface);
+	border: 1px solid var(--saab-line);
+	border-radius: 12px;
+	padding: 22px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 24px 32px;
+}
+
+.saab-restaurant__visit-col h3 {
+	margin: 0 0 0.6em;
+	font-size: 0.75em;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--saab-muted);
+	font-weight: 700;
+}
+
+.saab-restaurant__visit-col h3 + h3 {
+	margin-top: 1.2em;
+}
+
+.saab-restaurant__visit-status {
+	font-size: 1.05em;
+	margin: 0 0 0.6em;
+}
+
+.saab-restaurant__visit-status[data-state="open"] .saab-restaurant__visit-status-label {
+	color: var(--saab-open);
+	font-weight: 700;
+}
+
+.saab-restaurant__visit-status[data-state="closed"] .saab-restaurant__visit-status-label {
+	color: var(--saab-closed);
+	font-weight: 700;
+}
+
+.saab-restaurant__address {
+	margin: 0;
+}
+
+.saab-restaurant__address strong {
+	display: block;
+}
+
+/* Menu */
+
+.saab-restaurant__menu-search {
+	width: 100%;
+	max-width: 100%;
+	padding: 0.5em 0.8em;
+	margin: 0 0 1em;
+	border: 1px solid var(--saab-line);
+	border-radius: 8px;
+	background: var(--saab-surface);
+	color: var(--saab-ink);
+	font-size: 1em;
+}
+
+.saab-restaurant__menu-accordion {
+	border: 1px solid var(--saab-line);
+	border-radius: 10px;
+	background: var(--saab-surface);
+	overflow: hidden;
+}
+
+.saab-restaurant__menu-section {
+	margin: 0;
+}
+
+.saab-restaurant__menu-section + .saab-restaurant__menu-section {
+	border-top: 1px solid var(--saab-line);
+}
+
+.saab-restaurant__menu-section summary {
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 1.05em;
+	letter-spacing: 0.01em;
+	list-style: none;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	background: var(--saab-sunk);
+}
+
+/* Category band, then the items on the plain surface below it. */
+.saab-restaurant__menu-section[open] summary {
+	border-bottom: 1px solid var(--saab-line);
+}
+
+.saab-restaurant__menu-section summary::-webkit-details-marker {
+	display: none;
+}
+
+.saab-restaurant__menu-count {
+	font-weight: 400;
+	font-size: 0.8em;
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__menu-section ul {
+	margin: 0;
+	padding: 6px 16px 14px;
+	list-style: none;
+	/* Two columns at desktop width, one on phones (media query below). */
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 0 40px;
+}
+
+.saab-restaurant__menu-item {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0 1em;
+	padding: 0.5em 0;
+	border-bottom: 1px solid var(--saab-line);
+}
+
+.saab-restaurant__menu-item-name {
+	font-weight: 600;
+	font-size: 0.97em;
+	flex: 1 1 60%;
+}
+
+.saab-restaurant__menu-item-desc {
+	flex: 1 1 100%;
+	font-size: 0.9em;
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__menu-item[hidden] {
+	display: none;
+}
+
+.saab-restaurant__menu-meta {
+	font-size: 0.85em;
+	color: var(--saab-muted);
+}
+
+/* Visits */
+
+.saab-restaurant__years {
+	display: grid;
+	gap: 14px;
+}
+
+.saab-restaurant__year {
+	display: grid;
+	grid-template-columns: 4rem 1fr;
+	gap: 12px;
+}
+
+.saab-restaurant__year-label {
+	font-size: 1.2em;
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__year ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	/* Two columns at desktop width, one on phones (media query below). */
+	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+	gap: 10px 32px;
+}
+
+.saab-restaurant__visit-item a {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.saab-restaurant__visit-thumb,
+.saab-restaurant__visit-thumb-placeholder {
+	flex: 0 0 56px;
+	width: 56px;
+	height: 56px;
+	border-radius: 6px;
+	object-fit: cover;
+	background: var(--saab-sunk);
+}
+
+/* Locations */
+
+.saab-restaurant__location {
+	margin: 0 0 1.5em;
+	padding: 1em;
+	border: 1px solid var(--saab-line);
+	border-radius: 8px;
+}
+
+.saab-restaurant__locations-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.saab-restaurant__location-name {
+	margin: 0 0 0.5em;
+}
+
+.saab-restaurant__hours {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.5em 0;
+	font-size: 0.9em;
+}
+
+.saab-restaurant__hours th,
+.saab-restaurant__hours td {
+	text-align: left;
+	padding: 0.2em 0.5em 0.2em 0;
+	vertical-align: top;
+	border-bottom: 1px dashed var(--saab-line);
+}
+
+.saab-restaurant__hours tr[data-day].saab-restaurant__hours-row--today th,
+.saab-restaurant__hours tr[data-day].saab-restaurant__hours-row--today td {
+	font-weight: 700;
+	color: var(--saab-accent);
+}
+
+/* Similar spots */
+
+.saab-restaurant__similar ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+@media (max-width: 480px) {
+	.saab-restaurant__menu-item {
+		flex-direction: column;
+		gap: 0.2em;
+	}
+
+	.saab-restaurant__year {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+}
+
+/* Visits fold-out toggle */
+
+.saab-restaurant__visits-toggle {
+	justify-self: start;
+	margin-top: 0.75em;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--saab-accent, currentColor);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.saab-restaurant__visits-toggle:hover,
+.saab-restaurant__visits-toggle:focus-visible {
+	text-decoration: underline;
+}
+
+/* Author display rules (grid/flex) would otherwise override the hidden attribute. */
+
+.saab-restaurant [hidden] {
+	display: none !important;
+}
+
+/* Lightbox
+ *
+ * position: fixed lifts these out of .saab-restaurant's flow regardless of
+ * where the dialog sits in the DOM, so they're left unscoped; restaurants.js
+ * locks body scroll with the .saab-restaurant-lightbox-open class below.
+ */
+
+body.saab-restaurant-lightbox-open {
+	overflow: hidden;
+}
+
+.saab-restaurant__lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: grid;
+	place-items: center;
+	background: rgba(20, 21, 22, 0.92);
+	padding: 24px;
+}
+
+.saab-restaurant__lightbox[hidden] {
+	display: none;
+}
+
+.saab-restaurant__lightbox-figure {
+	max-width: min(90vw, 1200px);
+	max-height: 90vh;
+	margin: 0;
+	display: grid;
+	gap: 12px;
+	justify-items: center;
+}
+
+.saab-restaurant__lightbox-image {
+	max-width: 100%;
+	max-height: 70vh;
+	object-fit: contain;
+	border-radius: 8px;
+}
+
+.saab-restaurant__lightbox-caption {
+	color: #eceef0;
+	text-align: center;
+}
+
+.saab-restaurant__lightbox-caption a {
+	color: #eceef0;
+	text-decoration: underline;
+}
+
+.saab-restaurant__lightbox-close,
+.saab-restaurant__lightbox-prev,
+.saab-restaurant__lightbox-next {
+	position: absolute;
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	border: 0;
+	border-radius: 999px;
+	cursor: pointer;
+}
+
+.saab-restaurant__lightbox-close:hover,
+.saab-restaurant__lightbox-close:focus-visible,
+.saab-restaurant__lightbox-prev:hover,
+.saab-restaurant__lightbox-prev:focus-visible,
+.saab-restaurant__lightbox-next:hover,
+.saab-restaurant__lightbox-next:focus-visible {
+	background: rgba(255, 255, 255, 0.24);
+}
+
+.saab-restaurant__lightbox-close {
+	top: 16px;
+	right: 16px;
+	width: 40px;
+	height: 40px;
+	font-size: 1.2em;
+}
+
+.saab-restaurant__lightbox-prev,
+.saab-restaurant__lightbox-next {
+	top: 50%;
+	transform: translateY(-50%);
+	width: 48px;
+	height: 48px;
+	font-size: 1.4em;
+}
+
+.saab-restaurant__lightbox-prev {
+	left: 16px;
+}
+
+.saab-restaurant__lightbox-next {
+	right: 16px;
+}
+
+.saab-restaurant__lightbox-counter {
+	margin: 0;
+	color: #a1a5aa;
+	font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.saab-restaurant__lightbox-image {
+		transition: opacity 0.15s ease;
+	}
+}

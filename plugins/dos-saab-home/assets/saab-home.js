@@ -26,10 +26,19 @@
 			}
 			var n = fold( e.n );
 			var pos = n.indexOf( q );
+			var rank;
 			if ( pos < 0 ) {
-				return;
+				// Another name for the same place (its restaurant tag): found, but after every match on the name itself.
+				var alias = ( e.a || [] ).some( function ( a ) {
+					return fold( a ).indexOf( q ) >= 0;
+				} );
+				if ( ! alias ) {
+					return;
+				}
+				rank = 3;
+			} else {
+				rank = pos === 0 ? 0 : ( n.charAt( pos - 1 ) === ' ' ? 1 : 2 );
 			}
-			var rank = pos === 0 ? 0 : ( n.charAt( pos - 1 ) === ' ' ? 1 : 2 );
 			( by[ e.g ] = by[ e.g ] || [] ).push( { r: rank, e: e } );
 		} );
 		var out = [];

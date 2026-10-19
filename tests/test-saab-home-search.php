@@ -104,5 +104,16 @@ foreach ( $cases as $title => $want ) {
 }
 check( '"Pizza" finds the meaty pizza review dish', in_array( 'The Meaty Pizza', names( Search::match( array( e( 'The Meaty Pizza', 'd', 0 ), e( 'Pizza Speedway', 'r', 2 ) ), 'pizza', 'd' ), 'd' ), true ) );
 
+echo "--- aliases (a place found by its restaurant tag name) ---\n";
+$places = array(
+	array( 'n' => 'Bangkok Thai Cuisine', 'g' => 'r', 'u' => 'https://example.com/bangkok-thai-cuisine-kennewick-wa/', 's' => 'Kennewick · 13 reviews', 'k' => 13, 'a' => array( 'Bangkok Thai Restaurant', 'Bangkok Thai' ) ),
+	array( 'n' => 'Thai Elephant', 'g' => 'r', 'u' => 'https://example.com/thai-elephant-kennewick-wa/', 's' => 'Kennewick · 10 reviews', 'k' => 10 ),
+);
+check( 'the tag name "Bangkok Thai Restaurant" finds the place "Bangkok Thai Cuisine"', array( 'Bangkok Thai Cuisine' ) === names( Search::match( $places, 'bangkok thai restaurant' ), 'r' ) );
+check( 'the place links to its place page', 'https://example.com/bangkok-thai-cuisine-kennewick-wa/' === Search::match( $places, 'bangkok thai restaurant' )[0]['items'][0]['u'] );
+$g = names( Search::match( $places, 'thai' ), 'r' );
+check( 'a match on the name ranks above a match on an alias', array( 'Thai Elephant', 'Bangkok Thai Cuisine' ) === $g, json_encode( $g ) );
+check( 'an entry without aliases is unaffected', array() === Search::match( $places, 'restaurant', 'x' ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

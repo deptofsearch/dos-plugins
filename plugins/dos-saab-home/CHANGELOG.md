@@ -5,6 +5,32 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-home-v<version>`.
 
+## 0.1.4
+
+Restaurant results gave a 404. Searching "bangkok thai restaurant" and picking
+the restaurant opened `/restaurant/bangkok-thai-restaurant/`, which is "Page not
+found" on shotandabeer.com.
+
+The site registers two things named `saab_restaurant`: the restaurant tag on
+reviews, and a post type for the restaurant place pages (the "By Restaurant"
+directory, 112 places, e.g. `/bangkok-thai-cuisine-kennewick-wa/`). With the
+names clashing, WordPress cannot serve the tag's archive. Cuisine, dish and city
+archives are unaffected (checked live: `/cuisine/mexican/`, `/city/kennewick/`).
+
+When the place post type exists, Restaurants now come from the place pages:
+- each place links to its page, with its city (first `saab_locations` entry)
+  and its review count (`saab_linked_posts`) on the grey line;
+- the restaurant tag names on its reviews ride along as aliases (`a`), so the
+  tag's name finds the place ("Bangkok Thai Restaurant" → "Bangkok Thai
+  Cuisine"). Alias matches rank after every match on a name, in PHP and JS;
+- a restaurant tag none of whose reviews belong to a place (road trips: STK in
+  Las Vegas) still gets an entry, linking to its newest review.
+
+The index is rebuilt when a place is published, unpublished or edited, and when
+its `saab_linked_posts` or `saab_locations` meta changes (its sync writes those
+without a status change). New `tests/test-saab-home-index.php` builds the index
+from stubbed site data and checks that no entry links to `/restaurant/`.
+
 ## 0.1.3
 
 The search was leaving results out. Searching "pizza" on shotandabeer.com

@@ -29,6 +29,9 @@ final class Search {
 		'saab_city'       => array( 'x', 'Cities' ),
 	);
 
+	/** The site's restaurant place pages (the "By Restaurant" directory). Restaurant results link here; see places_index(). */
+	const PLACE_TYPE = 'saab_restaurant';
+
 	/** Reviews' dishes, read from their titles (see reviews_index()). Cached apart from the terms: it is the big part. */
 	const TRANSIENT_REVIEWS = 'saab_home_reviews_v1';
 
@@ -48,6 +51,15 @@ final class Search {
 		}
 		add_action( 'transition_post_status', array( __CLASS__, 'on_status' ), 10, 3 );
 		add_action( 'set_object_terms', array( __CLASS__, 'flush' ) );
+		// A place's reviews and city come from meta that its sync updates without a status change.
+		add_action( 'updated_post_meta', array( __CLASS__, 'on_meta' ), 10, 3 );
+		add_action( 'added_post_meta', array( __CLASS__, 'on_meta' ), 10, 3 );
+	}
+
+	public static function on_meta( $meta_id, $post_id, $key ) {
+		if ( in_array( $key, array( 'saab_linked_posts', 'saab_locations' ), true ) ) {
+			self::flush();
+		}
 	}
 
 	public static function flush() {
@@ -57,7 +69,7 @@ final class Search {
 
 	/** A review published, unpublished or edited while published changes counts or titles, so the index is rebuilt. */
 	public static function on_status( $new, $old, $post ) {
-		if ( $post && 'post' === $post->post_type && ( 'publish' === $new || 'publish' === $old ) ) {
+		if ( $post && in_array( $post->post_type, array( 'post', self::PLACE_TYPE ), true ) && ( 'publish' === $new || 'publish' === $old ) ) {
 			self::flush();
 		}
 	}
@@ -81,9 +93,18 @@ final class Search {
 		if ( is_array( $hit ) ) {
 			return $hit;
 		}
-		$out = array();
+		$out    = array();
+		$places = post_type_exists( self::PLACE_TYPE );
+		if ( $places ) {
+			$out = self::places_index();
+		}
 		foreach ( self::TAXONOMIES as $tax => $g ) {
 			if ( ! taxonomy_exists( $tax ) ) {
+				continue;
+			}
+			if ( 'saab_restaurant' === $tax && $places ) {
+				$orphans = self::orphan_restaurants( $out ); // Strips the places' 'p' lists from $out as it reads them.
+				$out     = array_merge( $out, $orphans );
 				continue;
 			}
 			$terms = get_terms(
@@ -110,7 +131,124 @@ final class Search {
 				);
 			}
 		}
+		foreach ( $out as $i => $e ) {
+			unset( $out[ $i ]['p'] ); // Places' linked-post lists are internal; also when the restaurant tag is gone.
+		}
 		set_transient( self::TRANSIENT, $out, 12 * HOUR_IN_SECONDS );
+		return $out;
+	}
+
+	/**
+	 * Restaurants are the site's place pages (post type saab_restaurant, the "By Restaurant" directory), not the
+	 * restaurant tag. The tag and the post type share the name saab_restaurant, so WordPress cannot serve the tag's
+	 * archive (/restaurant/<slug>/ is a 404 on shotandabeer.com, 2026-10-19). A place lists its reviews in the
+	 * saab_linked_posts meta; the restaurant tag names on those reviews ride along as aliases ('a'), so a search for
+	 * "Bangkok Thai Restaurant" (the tag) finds "Bangkok Thai Cuisine" (the place).
+	 *
+	 * @return array[] Entries with g = 'r', 'k' = linked review count, 'a' = alias names, and 'p' = linked post IDs
+	 *                 (used by orphan_restaurants(), stripped before the index is returned).
+	 */
+	private static function places_index() {
+		$posts = get_posts(
+			array(
+				'post_type'      => self::PLACE_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+			)
+		);
+		$out = array();
+		foreach ( $posts as $p ) {
+			$linked = json_decode( (string) get_post_meta( $p->ID, 'saab_linked_posts', true ), true );
+			$linked = is_array( $linked ) ? array_values( array_filter( array_map( 'intval', $linked ) ) ) : array();
+			$name   = html_entity_decode( get_the_title( $p ), ENT_QUOTES, 'UTF-8' );
+			$alias  = array();
+			if ( $linked && taxonomy_exists( 'saab_restaurant' ) ) {
+				$names = wp_get_object_terms( $linked, 'saab_restaurant', array( 'fields' => 'names' ) );
+				if ( ! is_wp_error( $names ) ) {
+					foreach ( array_unique( $names ) as $a ) {
+						$a = html_entity_decode( $a, ENT_QUOTES, 'UTF-8' );
+						if ( self::fold( $a ) !== self::fold( $name ) ) {
+							$alias[] = $a;
+						}
+					}
+				}
+			}
+			$city = self::place_city( $p->ID );
+			$out[] = array(
+				'n' => $name,
+				'g' => 'r',
+				'u' => get_permalink( $p ),
+				's' => implode( ' · ', array_filter( array( $city, $linked ? self::reviews( count( $linked ) ) : '' ) ) ),
+				'k' => count( $linked ),
+				'a' => $alias,
+				'p' => $linked,
+			);
+		}
+		return $out;
+	}
+
+	/** A place's city: the first location's city in saab_locations, else '' (the grey line then shows the count only). */
+	private static function place_city( $id ) {
+		$loc = json_decode( (string) get_post_meta( $id, 'saab_locations', true ), true );
+		return ( is_array( $loc ) && ! empty( $loc[0]['city'] ) ) ? (string) $loc[0]['city'] : '';
+	}
+
+	/**
+	 * Restaurant tags none of whose reviews belong to a place page (road trips: STK in Las Vegas, Blue Abode in
+	 * Bellingham). They link to their newest review, since their tag archive cannot be served (see places_index()).
+	 *
+	 * @param array[] $places Entries from places_index(), with their 'p' lists.
+	 */
+	private static function orphan_restaurants( array &$places ) {
+		$covered = array();
+		foreach ( $places as $i => $e ) {
+			foreach ( $e['p'] ?? array() as $id ) {
+				$covered[ $id ] = true;
+			}
+			unset( $places[ $i ]['p'] );
+		}
+		$terms = get_terms( array( 'taxonomy' => 'saab_restaurant', 'hide_empty' => true ) );
+		if ( is_wp_error( $terms ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $terms as $t ) {
+			$ids = get_posts(
+				array(
+					'post_type'      => 'post',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'orderby'        => 'date',
+					'order'          => 'DESC',
+					'no_found_rows'  => true,
+					'tax_query'      => array( array( 'taxonomy' => 'saab_restaurant', 'terms' => $t->term_id ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
+				)
+			);
+			if ( ! $ids ) {
+				continue;
+			}
+			$hit = false;
+			foreach ( $ids as $id ) {
+				if ( isset( $covered[ $id ] ) ) {
+					$hit = true;
+					break;
+				}
+			}
+			if ( $hit ) {
+				continue;
+			}
+			$out[] = array(
+				'n' => html_entity_decode( $t->name, ENT_QUOTES, 'UTF-8' ),
+				'g' => 'r',
+				'u' => get_permalink( $ids[0] ),
+				's' => self::reviews( count( $ids ) ),
+				'k' => count( $ids ),
+			);
+		}
 		return $out;
 	}
 
@@ -268,9 +406,21 @@ final class Search {
 			$n   = self::fold( $e['n'] );
 			$pos = strpos( $n, $q );
 			if ( false === $pos ) {
-				continue;
+				// Another name for the same place (its restaurant tag): found, but after every match on the name itself.
+				$alias = false;
+				foreach ( (array) ( $e['a'] ?? array() ) as $a ) {
+					if ( false !== strpos( self::fold( $a ), $q ) ) {
+						$alias = true;
+						break;
+					}
+				}
+				if ( ! $alias ) {
+					continue;
+				}
+				$rank = 3;
+			} else {
+				$rank = 0 === $pos ? 0 : ( ' ' === $n[ $pos - 1 ] ? 1 : 2 );
 			}
-			$rank = 0 === $pos ? 0 : ( ' ' === $n[ $pos - 1 ] ? 1 : 2 );
 			$by[ $e['g'] ][] = array( $rank, $e );
 		}
 		$labels = array();

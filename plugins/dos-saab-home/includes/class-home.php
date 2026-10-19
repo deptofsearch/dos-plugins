@@ -191,10 +191,17 @@ final class Home {
 			'x' => __( 'Search cities', 'dos-saab-home' ),
 		);
 		$data = array(
-			'index'  => Search::index(),
-			'groups' => $groups,
-			'ph'     => $ph,
-			'empty'  => __( 'Nothing matches “%s” yet.', 'dos-saab-home' ),
+			// Terms only: small enough to ride in the page so suggestions start at once. The script swaps in the full
+			// index (terms plus every review's dish) from `full` the first time the box is used.
+			'index'    => Search::index(),
+			'full'     => rest_url( Search::NS . '/index' ),
+			'groups'   => $groups,
+			'ph'       => $ph,
+			'per'      => Search::PER_GROUP,
+			'perScope' => Search::PER_SCOPE,
+			'empty'    => __( 'Nothing matches “%s” yet.', 'dos-saab-home' ),
+			/* translators: 1: number of matches, 2: kind in lower case, e.g. "dishes" */
+			'all'      => __( 'All %1$d %2$s', 'dos-saab-home' ),
 		);
 
 		$o  = '<section class="saab-hero"><div class="saab-hero__in">';

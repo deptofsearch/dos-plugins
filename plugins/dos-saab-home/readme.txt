@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,11 @@ Colours and fonts follow the DoS SAAB Child theme's --saab-* CSS variables when 
 REST: GET /wp-json/saab/v1/search?q=birria&scope= (scope r, c, d, x or empty).
 
 == Changelog ==
+
+= 0.1.3 =
+* Search finds every review's dish, read from its title ("The Meaty Pizza at Greek Islands…"), not only reviews with a dish tag.
+* Everything shows 5 per kind with an "All N dishes" row; a single kind lists every match (up to 60).
+* New endpoint: GET /wp-json/saab/v1/index.
 
 = 0.1.2 =
 * "Pick a category" folds: the first 8 cards show, the rest open with a "Show all categories" button. The number is a setting (0 = no fold).

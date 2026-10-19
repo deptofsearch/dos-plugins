@@ -5,6 +5,34 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-home-v<version>`.
 
+## 0.1.3
+
+The search was leaving results out. Searching "pizza" on shotandabeer.com
+showed four restaurants and one dish, while the site has more pizza places and
+about a dozen pizza reviews. Two causes:
+
+- **Every group stopped at 4,** even with a single kind picked (Dishes), so
+  Rocco's Pizza never showed among the restaurants. Everything now shows 5 per
+  kind, and when there are more, an "All N dishes →" row (mouse or Enter)
+  switches to that kind. A single kind lists every match, up to 60, in a list
+  that scrolls; the list is also taller now (up to 480px / 60% of the screen).
+- **Dishes only came from the `saab_dish` tag,** which was on 2 of the pizza
+  reviews. Review titles follow one pattern, "<dish> at <restaurant> – <date>",
+  so every published review now adds a Dishes entry with the dish read from its
+  title (`Search::dish_part()`), linking to the review, with its restaurant tag
+  (else the place from the title) underneath. A title that leads with the place,
+  "Breakfast at Hill's Restaurant — Pulled Pork Benedict", gives the part after
+  the dash. Tagged dish terms stay, linking to their archive.
+
+The review dishes are the large part of the index, so they do not ride in the
+homepage markup: the page still carries the terms (suggestions start at once)
+and the box loads everything from the new `GET /wp-json/saab/v1/index`
+(cacheable 15 minutes) the first time it is focused, typed in or scoped. Both
+halves are cached 12 hours and rebuilt when a review is published, unpublished
+or edited while published, or a tag changes. `saab/v1/search` matches the full
+index too, with 5 per kind for Everything and 60 for a single kind, and now
+reports each group's `total`.
+
 ## 0.1.2
 
 "Pick a category" folds behind a button. shotandabeer.com has 24 categories,

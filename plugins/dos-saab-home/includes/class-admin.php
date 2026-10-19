@@ -97,7 +97,7 @@ final class Admin {
 	<h2><?php esc_html_e( 'Search index', 'dos-saab-home' ); ?></h2>
 	<p><?php
 		/* translators: 1: number of entries, 2: list of groups */
-		printf( esc_html__( '%1$d entries from: %2$s. Rebuilt automatically when a review or one of its tags changes.', 'dos-saab-home' ), count( Search::index() ), esc_html( $tax ? implode( ', ', $tax ) : __( 'none — the restaurant, cuisine, dish and city taxonomies were not found', 'dos-saab-home' ) ) );
+		printf( esc_html__( '%1$d entries from: %2$s. Rebuilt automatically when a review or one of its tags changes.', 'dos-saab-home' ), count( Search::full_index() ), esc_html( $tax ? implode( ', ', $tax ) : __( 'none — the restaurant, cuisine, dish and city taxonomies were not found', 'dos-saab-home' ) ) );
 	?></p>
 </div>
 		<?php

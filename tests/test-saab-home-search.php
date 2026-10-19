@@ -78,5 +78,31 @@ check( 'each group is capped', 2 === count( names( $g, 'd' ) ) );
 $g = Search::match( $index, 'chicken', '', 0 );
 check( 'a cap under 1 still shows one', 1 === count( names( $g, 'd' ) ) );
 
+echo "--- totals ---\n";
+$g = Search::match( $index, 'chicken', '', 1 );
+check( 'total counts every match, items stop at the cap', 3 === $g[0]['total'] && 1 === count( $g[0]['items'] ), json_encode( $g[0] ) );
+$g = Search::match( $index, 'chicken' );
+check( 'the default cap is 5', Search::PER_GROUP === 5 && 3 === count( names( $g, 'd' ) ) );
+
+echo "--- dishes from review titles ---\n";
+$cases = array(
+	'The Meaty Pizza at Greek Islands in Richland – September 11, 2026'                          => array( 'The Meaty Pizza', 'Greek Islands in Richland' ),
+	'Personal Pizza Pepperoni & Sausage at Rocco’s Pizza – September 30, 2026'                   => array( 'Personal Pizza Pepperoni & Sausage', 'Rocco’s Pizza' ),
+	'Mashed Potatoes & Turkey Gravy – August 27, 2026'                                           => array( 'Mashed Potatoes & Turkey Gravy', '' ),
+	'Breakfast at Hill’s Restaurant — Pulled Pork Benedict – March 8, 2026'                      => array( 'Pulled Pork Benedict', 'Hill’s Restaurant' ),
+	'Lunch at Tomatillo Authentic Mexican Flavors in Kennewick - January 8 2023'                 => array( 'Lunch', 'Tomatillo Authentic Mexican Flavors in Kennewick' ),
+	'Saumon à la Crème de Fenouil at The Bradley in Richland – October 3, 2026'                  => array( 'Saumon à la Crème de Fenouil', 'The Bradley in Richland' ),
+	'Chicken Teriyaki and Loco Moco at Huli Huli ‘Ohana BBQ in Downtown Kennewick – August 6, 2026' => array( 'Chicken Teriyaki and Loco Moco', 'Huli Huli ‘Ohana BBQ in Downtown Kennewick' ),
+	'12oz Ribeye and Garlic Truffle Fries at STK - Nov 4, 2025'                                  => array( '12oz Ribeye and Garlic Truffle Fries', 'STK' ),
+	'A title with no date or place'                                                              => array( 'A title with no date or place', '' ),
+);
+foreach ( $cases as $title => $want ) {
+	$d = Search::dish_part( $title );
+	$p = Search::place_part( $title );
+	check( 'dish of "' . $title . '"', $want[0] === $d, json_encode( $d ) );
+	check( 'place of "' . $title . '"', $want[1] === $p, json_encode( $p ) );
+}
+check( '"Pizza" finds the meaty pizza review dish', in_array( 'The Meaty Pizza', names( Search::match( array( e( 'The Meaty Pizza', 'd', 0 ), e( 'Pizza Speedway', 'r', 2 ) ), 'pizza', 'd' ), 'd' ), true ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

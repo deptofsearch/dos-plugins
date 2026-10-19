@@ -3,7 +3,7 @@
 	'use strict';
 
 	var ORDER = [ 'r', 'c', 'd', 'x' ];
-	var PER_GROUP = 4;
+	var PER_GROUP = 5;
 
 	function fold( s ) {
 		s = String( s || '' ).replace( /[‘’`]/g, "'" );
@@ -13,7 +13,8 @@
 		return s.toLowerCase().replace( /\s+/g, ' ' ).trim();
 	}
 
-	function match( index, q, scope ) {
+	function match( index, q, scope, per ) {
+		per = Math.max( 1, per || PER_GROUP );
 		q = fold( q );
 		if ( q.length < 2 ) {
 			return [];
@@ -39,7 +40,7 @@
 			by[ g ].sort( function ( a, b ) {
 				return ( a.r - b.r ) || ( b.e.k - a.e.k ) || ( a.e.n < b.e.n ? -1 : a.e.n > b.e.n ? 1 : 0 );
 			} );
-			out.push( { key: g, items: by[ g ].slice( 0, PER_GROUP ).map( function ( x ) { return x.e; } ) } );
+			out.push( { key: g, total: by[ g ].length, items: by[ g ].slice( 0, per ).map( function ( x ) { return x.e; } ) } );
 		} );
 		return out;
 	}
@@ -75,6 +76,40 @@
 		var active = -1;
 		var root = form.closest( '.saab-hero' ) || document;
 		var scopes = root.querySelectorAll( '.saab-scope' );
+		var loading = false;
+
+		// The page carries the terms only; every review's dish comes from data.full the first time the box is used.
+		function loadFull() {
+			if ( loading || ! data.full || ! window.fetch ) {
+				return;
+			}
+			loading = true;
+			fetch( data.full, { credentials: 'same-origin' } )
+				.then( function ( r ) {
+					return r.ok ? r.json() : null;
+				} )
+				.then( function ( full ) {
+					if ( Array.isArray( full ) && full.length ) {
+						index = full;
+						if ( ! list.hidden ) {
+							render();
+						}
+					}
+				} )
+				.catch( function () {} );
+		}
+
+		function setScope( key ) {
+			scope = key || '';
+			Array.prototype.forEach.call( scopes, function ( o ) {
+				o.setAttribute( 'aria-pressed', ( o.getAttribute( 'data-scope' ) || '' ) === scope ? 'true' : 'false' );
+			} );
+			if ( data.ph && data.ph[ scope ] ) {
+				input.placeholder = data.ph[ scope ];
+			}
+			render();
+			input.focus();
+		}
 
 		function close() {
 			list.hidden = true;
@@ -103,7 +138,7 @@
 				close();
 				return;
 			}
-			var groups = match( index, q, scope );
+			var groups = match( index, q, scope, scope ? data.perScope : data.per );
 			groups.forEach( function ( g ) {
 				list.appendChild( el( 'div', 'saab-search__group', labels[ g.key ] || '' ) );
 				g.items.forEach( function ( e ) {
@@ -117,6 +152,22 @@
 					list.appendChild( a );
 					options.push( a );
 				} );
+				// More than fit under Everything: a row that switches to just this kind, which lists them all.
+				if ( ! scope && g.total > g.items.length ) {
+					var more = el( 'a', 'saab-search__opt saab-search__more' );
+					more.href = '#';
+					more.id = 'saab-opt-' + options.length;
+					more.setAttribute( 'role', 'option' );
+					more.setAttribute( 'aria-selected', 'false' );
+					more.setAttribute( 'data-scope', g.key );
+					more.appendChild( el( 'span', 'saab-search__name', String( data.all || '%1$d %2$s' ).replace( '%1$d', g.total ).replace( '%2$s', String( labels[ g.key ] || '' ).toLowerCase() ) + ' →' ) );
+					more.addEventListener( 'click', function ( ev ) {
+						ev.preventDefault();
+						setScope( g.key );
+					} );
+					list.appendChild( more );
+					options.push( more );
+				}
 			} );
 			if ( ! groups.length ) {
 				list.appendChild( el( 'div', 'saab-search__empty', String( data.empty || '' ).replace( '%s', q.trim() ) ) );
@@ -125,8 +176,12 @@
 			input.setAttribute( 'aria-expanded', 'true' );
 		}
 
-		input.addEventListener( 'input', render );
+		input.addEventListener( 'input', function () {
+			loadFull();
+			render();
+		} );
 		input.addEventListener( 'focus', function () {
+			loadFull();
 			if ( input.value ) {
 				render();
 			}
@@ -143,7 +198,11 @@
 				setActive( active <= 0 ? options.length - 1 : active - 1 );
 			} else if ( ev.key === 'Enter' && options[ active ] ) {
 				ev.preventDefault();
-				window.location.href = options[ active ].href;
+				if ( options[ active ].hasAttribute( 'data-scope' ) ) {
+					setScope( options[ active ].getAttribute( 'data-scope' ) );
+				} else {
+					window.location.href = options[ active ].href;
+				}
 			} else if ( ev.key === 'Escape' ) {
 				close();
 			}
@@ -156,15 +215,8 @@
 
 		Array.prototype.forEach.call( scopes, function ( b ) {
 			b.addEventListener( 'click', function () {
-				scope = b.getAttribute( 'data-scope' ) || '';
-				Array.prototype.forEach.call( scopes, function ( o ) {
-					o.setAttribute( 'aria-pressed', o === b ? 'true' : 'false' );
-				} );
-				if ( data.ph && data.ph[ scope ] ) {
-					input.placeholder = data.ph[ scope ];
-				}
-				render();
-				input.focus();
+				loadFull();
+				setScope( b.getAttribute( 'data-scope' ) );
 			} );
 		} );
 	}

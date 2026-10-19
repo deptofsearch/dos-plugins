@@ -253,10 +253,10 @@ final class Maps {
 		return '';
 	}
 
-	/** "Map of Spokane in Spokane County, Washington" (county part left out when unknown). */
-	public static function alt( $city, $county, $state_name ) {
-		$county = trim( (string) $county );
-		return 'Map of ' . $city . ( '' !== $county ? ' in ' . $county . ' County' : '' ) . ', ' . $state_name;
+	/** "Map of Spokane in Spokane County, Washington". $county is the stored name; labelled via Render::county_label, left out when empty. */
+	public static function alt( $city, $county, $state_name, $st = '' ) {
+		$county = Render::county_label( $county, $st );
+		return 'Map of ' . $city . ( '' !== $county ? ' in ' . $county : '' ) . ', ' . $state_name;
 	}
 
 	/* ---------- WordPress: storage, files, REST ---------- */
@@ -398,7 +398,7 @@ final class Maps {
 			return '';
 		}
 		$d    = self::dir( $st );
-		$alt  = $row['alt'] ?? self::alt( $row['n'], $row['county'], $row['state_name'] );
+		$alt  = $row['alt'] ?? self::alt( $row['n'], $row['county'], $row['state_name'], (string) ( $row['st'] ?? '' ) );
 		$name = self::tile_file( $row['slug'], $row['fips'], $row['lat'], $row['lng'], $alt );
 		if ( file_exists( $d['path'] . '/' . $name ) ) {
 			return $d['url'] . '/' . $name;
@@ -546,7 +546,7 @@ final class Maps {
 			if ( ! isset( $geo['counties'][ $fips ] ) ) {
 				++$out['no_county_match'];
 			}
-			$alt = self::alt( (string) get_post_meta( $id, 'blnm_city_name', true ), (string) get_post_meta( $id, 'blnm_county_name', true ), Rest::STATE_NAMES[ $st ] ?? $st );
+			$alt = self::alt( (string) get_post_meta( $id, 'blnm_city_name', true ), (string) get_post_meta( $id, 'blnm_county_name', true ), Rest::STATE_NAMES[ $st ] ?? $st, $st );
 			$svg = self::tile_svg( $geo, $fips, $lat, $lng, $alt, $st );
 			if ( self::write( $d['path'] . '/' . self::tile_file( $slug, $fips, $lat, $lng, $alt ), $svg ) ) {
 				++$out['written'];

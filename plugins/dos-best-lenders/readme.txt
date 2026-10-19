@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.7.2
+Stable tag: 0.8.0
 License: GPLv2 or later
 
 City pages of mortgage lenders built from public HMDA data, with filterable lender cards and a "BLNM Score".
@@ -28,6 +28,12 @@ Optional review fields (whitelisted and clamped): `google_rating` (0-5, 1 decima
 The same review fields plus `summary` are accepted by `POST /lenders/upsert` (stored as `blnm_review_json` and `blnm_summary`) and shown on the lender profile.
 
 == Changelog ==
+
+= 0.8.0 =
+* County labels follow the Census name instead of always adding "County": "Orleans Parish", "Anchorage Municipality", "Capitol Planning Region", "City of Baltimore" (independent cities), "District of Columbia", and "Carson City" (was "Carson City County"). Plain names such as "King" still read "King County". Applies to the city header line, no-lender block, nearby towns, state hub cards, map alt text and the wp-admin list.
+* City header line ends "2025 HMDA data" (it printed "2025 home-purchase loans" where a count belonged).
+* State hub stats line: one-county places read "N cities"; DC reads "N cities in the District".
+* `blnm_county_name` may now be sent as the full Census NAME; only a trailing " County" is stripped on save.
 
 = 0.7.2 =
 * The plugin now clears the server page cache (LiteSpeed) by itself once after each update, so city pages stop serving old HTML and old asset versions. Settings > DoS Best Lenders also has a "Clear BLNM page cache" button.

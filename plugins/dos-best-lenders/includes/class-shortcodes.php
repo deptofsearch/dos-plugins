@@ -147,7 +147,8 @@ final class Shortcodes {
 		$year     = 0;
 		foreach ( $rows as $r ) {
 			if ( '' !== $r['county'] ) {
-				$counties[ $r['county'] ] = ( $counties[ $r['county'] ] ?? 0 ) + 1;
+				$ck              = Data_Model::sanitize_county_name( $r['county'] );
+				$counties[ $ck ] = ( $counties[ $ck ] ?? 0 ) + 1;
 			}
 			$with += $r['lenders'] > 0 ? 1 : 0;
 			$year  = max( $year, (int) $r['yr'] );
@@ -168,12 +169,18 @@ final class Shortcodes {
 			$shown += $visible( $r ) ? 1 : 0;
 		}
 
-		$stats = sprintf(
-			/* translators: 1: cities, 2: counties */
-			_n( '%1$s city across %2$s counties', '%1$s cities across %2$s counties', count( $rows ), 'dos-best-lenders' ),
-			number_format_i18n( count( $rows ) ),
-			number_format_i18n( count( $counties ) )
-		);
+		if ( 'DC' === $state ) {
+			$stats = sprintf( /* translators: %s: number of cities */ _n( '%s city in the District', '%s cities in the District', count( $rows ), 'dos-best-lenders' ), number_format_i18n( count( $rows ) ) );
+		} elseif ( count( $counties ) <= 1 ) {
+			$stats = sprintf( /* translators: %s: number of cities */ _n( '%s city', '%s cities', count( $rows ), 'dos-best-lenders' ), number_format_i18n( count( $rows ) ) );
+		} else {
+			$stats = sprintf(
+				/* translators: 1: cities, 2: counties */
+				_n( '%1$s city across %2$s counties', '%1$s cities across %2$s counties', count( $rows ), 'dos-best-lenders' ),
+				number_format_i18n( count( $rows ) ),
+				number_format_i18n( count( $counties ) )
+			);
+		}
 		$stats .= ' · ' . sprintf( /* translators: %s: number of cities */ __( '%s with listed lenders', 'dos-best-lenders' ), number_format_i18n( $with ) );
 		if ( $year ) {
 			$stats .= ' · ' . sprintf( /* translators: %d: year */ __( '%d HMDA data', 'dos-best-lenders' ), $year );
@@ -204,7 +211,7 @@ final class Shortcodes {
 		<?php
 		foreach ( $rows as $r ) {
 			$lenders = (int) $r['lenders'];
-			$alt     = Maps::alt( $r['n'], $r['county'], $state_name );
+			$alt     = Maps::alt( $r['n'], $r['county'], $state_name, $state );
 			$tile    = Maps::tile_url( $r + array( 'st' => $state, 'state_name' => $state_name, 'alt' => $alt ) );
 			if ( $lenders > 1 ) {
 				/* translators: %s: number of lenders */
@@ -220,7 +227,7 @@ final class Shortcodes {
 <?php if ( '' !== $tile ) : ?><img class="blnm-hub-img" src="<?php echo esc_url( $tile, array( 'http', 'https', 'data' ) ); ?>" alt="<?php echo esc_attr( $alt ); ?>" width="300" height="200" loading="lazy" decoding="async"><?php endif; ?>
 <h3 class="blnm-hub-name"><?php echo esc_html( $r['n'] ); ?></h3>
 </a>
-<?php if ( '' !== $r['county'] ) : ?><p class="blnm-hub-county"><?php echo esc_html( $r['county'] . ' County' ); ?></p><?php endif; ?>
+<?php if ( '' !== $r['county'] ) : ?><p class="blnm-hub-county"><?php echo esc_html( Render::county_label( $r['county'], $state ) ); ?></p><?php endif; ?>
 <p class="blnm-hub-lenders"><?php echo esc_html( $line ); ?></p>
 <?php if ( $r['top'] ) : ?><p class="blnm-hub-top"><?php echo esc_html( sprintf( /* translators: %s: lender names */ __( 'Including %s', 'dos-best-lenders' ), Render::join_names( $r['topd'] ?? array_map( array( Render::class, 'display_name' ), $r['top'] ) ) ) ); ?></p><?php endif; ?>
 </li>

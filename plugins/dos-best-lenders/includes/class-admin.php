@@ -72,7 +72,7 @@ final class Admin {
 		} elseif ( 'blnm_area' === $col ) {
 			$county = (string) get_post_meta( $post_id, 'blnm_county_name', true );
 			$state  = (string) get_post_meta( $post_id, 'blnm_state', true );
-			echo esc_html( trim( ( '' !== $county ? $county . ' County' : '' ) . ( '' !== $state ? ', ' . $state : '' ), ', ' ) );
+			echo esc_html( trim( ( Render::county_label( $county, $state ) ) . ( '' !== $state ? ', ' . $state : '' ), ', ' ) );
 			if ( 0 === self::count_for( $post_id ) ) {
 				$bits = array();
 				foreach ( Data_Model::city_nearby( $post_id ) as $t ) {

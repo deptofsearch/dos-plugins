@@ -29,8 +29,15 @@ final class Search {
 		'saab_city'       => array( 'x', 'Cities' ),
 	);
 
-	/** Most entries shown per group, in the box and from REST. */
-	const PER_GROUP = 4;
+	/** Reviews' dishes, read from their titles (see reviews_index()). Cached apart from the terms: it is the big part. */
+	const TRANSIENT_REVIEWS = 'saab_home_reviews_v1';
+
+	/**
+	 * Entries shown per group. Everything shows a few of each kind, with an "All N dishes" row when there are more;
+	 * a single kind (a scope button) shows them all, up to PER_SCOPE, in a scrolling list.
+	 */
+	const PER_GROUP = 5;
+	const PER_SCOPE = 60;
 
 	public static function hooks() {
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
@@ -45,9 +52,10 @@ final class Search {
 
 	public static function flush() {
 		delete_transient( self::TRANSIENT );
+		delete_transient( self::TRANSIENT_REVIEWS );
 	}
 
-	/** A review published or unpublished changes term counts, so the index is rebuilt. */
+	/** A review published, unpublished or edited while published changes counts or titles, so the index is rebuilt. */
 	public static function on_status( $new, $old, $post ) {
 		if ( $post && 'post' === $post->post_type && ( 'publish' === $new || 'publish' === $old ) ) {
 			self::flush();
@@ -106,6 +114,99 @@ final class Search {
 		return $out;
 	}
 
+	/**
+	 * One Dishes entry per published review, the dish read from its title.
+	 *
+	 * The saab_dish taxonomy is sparse (on 2026-10-19 "Pizza" was on 2 reviews while a dozen reviews were about
+	 * pizza), but the titles follow one pattern, "<dish> at <restaurant> – <date>", so the dish is always there. Each
+	 * entry links to the review and names the restaurant underneath. Cached 12 hours; served by GET saab/v1/index and
+	 * loaded by the search box on first use, so the homepage markup stays small however many reviews there are.
+	 *
+	 * @return array[] Same shape as index() entries, g = 'd', k = 0.
+	 */
+	public static function reviews_index() {
+		$hit = get_transient( self::TRANSIENT_REVIEWS );
+		if ( is_array( $hit ) ) {
+			return $hit;
+		}
+		$posts = get_posts(
+			array(
+				'post_type'              => 'post',
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'orderby'                => 'date',
+				'order'                  => 'DESC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+			)
+		);
+		$has_r = taxonomy_exists( 'saab_restaurant' );
+		$out   = array();
+		foreach ( $posts as $p ) {
+			$title = html_entity_decode( get_the_title( $p ), ENT_QUOTES, 'UTF-8' );
+			$dish  = self::dish_part( $title );
+			if ( '' === $dish ) {
+				continue;
+			}
+			$sub = '';
+			if ( $has_r ) {
+				$r = get_the_terms( $p, 'saab_restaurant' );
+				if ( $r && ! is_wp_error( $r ) ) {
+					$sub = html_entity_decode( $r[0]->name, ENT_QUOTES, 'UTF-8' );
+				}
+			}
+			if ( '' === $sub ) {
+				$sub = self::place_part( $title );
+			}
+			$out[] = array(
+				'n' => $dish,
+				'g' => 'd',
+				'u' => get_permalink( $p ),
+				's' => $sub,
+				'k' => 0,
+			);
+		}
+		set_transient( self::TRANSIENT_REVIEWS, $out, 12 * HOUR_IN_SECONDS );
+		return $out;
+	}
+
+	/** Terms and review dishes together: what the search box matches against once it has loaded everything. */
+	public static function full_index() {
+		return array_merge( self::index(), self::reviews_index() );
+	}
+
+	/** A title without its trailing date: "X at Y – March 8, 2026" → "X at Y". */
+	private static function undated( $title ) {
+		$t = trim( preg_replace( '/\s+/u', ' ', (string) $title ) );
+		return trim( preg_replace( '/\s+[\x{2013}\x{2014}-]\s+[^\x{2013}\x{2014}]*\d{4}\s*$/u', '', $t ) );
+	}
+
+	/**
+	 * The dish in a review title: everything before the first " at ", with the date and a leading "Breakfast at …
+	 * — " style prefix handled. "The Meaty Pizza at Greek Islands in Richland – September 11, 2026" → "The Meaty
+	 * Pizza". A title with no " at " is all dish ("Mashed Potatoes & Turkey Gravy – August 27, 2026"). When the title
+	 * leads with the place ("Breakfast at Hill's Restaurant — Pulled Pork Benedict"), the part after the dash wins.
+	 */
+	public static function dish_part( $title ) {
+		$t = self::undated( $title );
+		if ( preg_match( '/^(.+?)\s+at\s+(.+?)\s+[\x{2013}\x{2014}]\s+(.+)$/iu', $t, $m ) ) {
+			return trim( $m[3] );
+		}
+		$parts = preg_split( '/\s+at\s+/i', $t, 2 );
+		return trim( $parts[0] );
+	}
+
+	/** The place in a review title, for the grey line when the review has no restaurant tag: "Greek Islands in Richland". */
+	public static function place_part( $title ) {
+		$t     = self::undated( $title );
+		$parts = preg_split( '/\s+at\s+/i', $t, 2 );
+		if ( count( $parts ) < 2 ) {
+			return '';
+		}
+		$place = preg_split( '/\s+[\x{2013}\x{2014}]\s+/u', $parts[1], 2 );
+		return trim( $place[0] );
+	}
+
 	/** The grey second line: a dish names its restaurant (when one review says it), everything else its review count. */
 	private static function sub_line( $tax, $term ) {
 		if ( 'saab_dish' === $tax && taxonomy_exists( 'saab_restaurant' ) ) {
@@ -151,7 +252,8 @@ final class Search {
 	 * @param string  $q     What was typed. Under 2 characters matches nothing.
 	 * @param string  $scope A group key (r, c, d, x) or '' for all.
 	 * @param int     $per   Most entries per group.
-	 * @return array[] Each { key, label, items[] }, groups in TAXONOMIES order, empty groups left out.
+	 * @return array[] Each { key, label, total, items[] } (total counts every match, items at most $per), groups in
+	 *                 TAXONOMIES order, empty groups left out.
 	 */
 	public static function match( array $index, $q, $scope = '', $per = self::PER_GROUP ) {
 		$q = self::fold( $q );
@@ -190,6 +292,7 @@ final class Search {
 			$out[] = array(
 				'key'   => $key,
 				'label' => $label,
+				'total' => count( $rows ),
 				'items' => array_column( array_slice( $rows, 0, max( 1, (int) $per ) ), 1 ),
 			);
 		}
@@ -210,13 +313,30 @@ final class Search {
 				'callback'            => array( __CLASS__, 'rest_search' ),
 			)
 		);
+		register_rest_route(
+			self::NS,
+			'/index',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true',
+				'callback'            => array( __CLASS__, 'rest_index' ),
+			)
+		);
+	}
+
+	/** Everything the search box matches against: terms plus review dishes. Loaded once, on first use of the box. */
+	public static function rest_index() {
+		$res = rest_ensure_response( self::full_index() );
+		$res->header( 'Cache-Control', 'public, max-age=900' );
+		return $res;
 	}
 
 	public static function rest_search( \WP_REST_Request $req ) {
 		$q      = sanitize_text_field( (string) $req['q'] );
-		$groups = self::match( self::index(), $q, (string) $req['scope'] );
+		$scope  = (string) $req['scope'];
+		$groups = self::match( self::full_index(), $q, $scope, '' === $scope ? self::PER_GROUP : self::PER_SCOPE );
 		$posts  = array();
-		if ( strlen( self::fold( $q ) ) >= 2 && '' === (string) $req['scope'] ) {
+		if ( strlen( self::fold( $q ) ) >= 2 && '' === $scope ) {
 			$found = get_posts(
 				array(
 					'post_type'      => 'post',

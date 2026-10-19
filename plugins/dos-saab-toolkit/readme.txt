@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.6.1 =
+* Fix: 0.6.0 never started (its "old plugin still active" check was always true), so restaurant pages were 404s. It now stands down only while the old SAAB Toolkit is actually loaded.
 
 = 0.6.0 =
 * Moved into deptofsearch/dos-plugins as DoS SAAB Toolkit, with updates from its releases.

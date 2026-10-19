@@ -3,7 +3,7 @@
  * Plugin Name: DoS SAAB Toolkit
  * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: SEO tags, responsive image markup and restaurant pages for shotandabeer.com. Modules are off by default and enabled one at a time.
- * Version:     0.6.0
+ * Version:     0.6.1
  * Requires at least: 6.6
  * Requires PHP: 8.1
  * Author:      Department of Search
@@ -21,8 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Classes, option names and meta keys are unchanged, so module settings and restaurant data carry straight over.
  * Both declare SAAB_Toolkit: while the old copy is still active, this one stands down and says so, instead of a
  * "cannot redeclare class" fatal.
+ *
+ * The test is "SAAB_Toolkit exists and was declared by a different file", never class_exists() alone: PHP declares
+ * this file's own SAAB_Toolkit before the file's first line runs (early binding), so class_exists() is always true
+ * here. 0.6.0 used it alone and stood down on every request, which took the restaurant pages offline.
  */
-if ( class_exists( 'SAAB_Toolkit', false ) ) {
+if ( class_exists( 'SAAB_Toolkit', false ) && ( new ReflectionClass( 'SAAB_Toolkit' ) )->getFileName() !== __FILE__ ) {
 	add_action(
 		'admin_notices',
 		function () {
@@ -34,7 +38,7 @@ if ( class_exists( 'SAAB_Toolkit', false ) ) {
 	return;
 }
 
-define( 'SAAB_TOOLKIT_VERSION', '0.6.0' );
+define( 'SAAB_TOOLKIT_VERSION', '0.6.1' );
 define( 'SAAB_TOOLKIT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SAAB_TOOLKIT_URL', plugin_dir_url( __FILE__ ) );
 

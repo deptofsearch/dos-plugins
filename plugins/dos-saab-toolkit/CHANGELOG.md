@@ -5,6 +5,29 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.6.1
+
+**0.6.0 took the restaurant pages offline.** Installed on shotandabeer.com with
+the old saab-toolkit deactivated, every restaurant page was a 404 and
+`/wp-json/wp/v2/types/saab_restaurant` said "Invalid post type": no module ran.
+
+The guard added in 0.6.0 to stand down while the old plugin is active was
+`class_exists( 'SAAB_Toolkit', false )`. PHP declares a file's top-level class
+before the file's first line runs (early binding), so that check is always true
+in the file that declares the class: the plugin showed its "waiting" notice and
+returned on every request, with or without the old copy. It is the same trap
+0.6.0's own changelog describes for `class-saab-restaurants.php`, missed here.
+
+The guard now stands down only when `SAAB_Toolkit` exists **and was declared
+by a different file** (`ReflectionClass::getFileName() !== __FILE__`), which is
+true only while the old plugin is loaded.
+
+New `tests/test-saab-toolkit-boot.php` loads the real main file in separate PHP
+processes: on its own it must hook `SAAB_Toolkit::boot` and define its version
+with no notice; with an old `SAAB_Toolkit` already declared it must stand down
+with the notice and no "cannot declare class" fatal. Run against 0.6.0's main
+file, the first case fails exactly as the site did (notice only, no boot).
+
 ## 0.6.0
 
 The SAAB Toolkit (`saab-toolkit/saab-toolkit.php` 0.5.6) moves into this

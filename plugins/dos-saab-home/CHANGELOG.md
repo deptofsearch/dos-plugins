@@ -5,6 +5,23 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-home-v<version>`.
 
+## 0.1.5
+
+0.1.4's restaurant fix did not show after updating: the live search still
+linked "Bangkok Thai Restaurant" to the 404 `/restaurant/` URL. The search
+index is cached for 12 hours under one key (`saab_home_search_v1`), and an
+update does not clear it, so the site kept serving the index 0.1.3 had built.
+
+- **Cache keys carry the plugin version** (`Search::key()`, e.g.
+  `saab_home_search_v1_0.1.5`), so the first request after any update builds a
+  fresh index; the previous version's entries expire on their own.
+- **The index URL the page loads carries `?v=<version>`**, since
+  `saab/v1/index` is cacheable for 15 minutes and a browser or CDN copy from
+  the previous release would otherwise be reused.
+- **Settings → SAAB Home → "Rebuild search index now"** (nonce-checked,
+  administrators only) clears and rebuilds the index and reports how many
+  entries it has, for any change that does not trigger a rebuild on its own.
+
 ## 0.1.4
 
 Restaurant results gave a 404. Searching "bangkok thai restaurant" and picking

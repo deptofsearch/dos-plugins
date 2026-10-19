@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,10 @@ Colours and fonts follow the DoS SAAB Child theme's --saab-* CSS variables when 
 REST: GET /wp-json/saab/v1/search?q=birria&scope= (scope r, c, d, x or empty).
 
 == Changelog ==
+
+= 0.1.5 =
+* Every update rebuilds the search index: the cache is keyed by plugin version, so 0.1.4's restaurant fix no longer waits up to 12 hours behind 0.1.3's cached links.
+* Settings → SAAB Home has a "Rebuild search index now" button.
 
 = 0.1.4 =
 * Restaurant results link to the restaurant's place page (the By Restaurant directory) instead of the restaurant tag archive, which is a 404 on this site. A place is also found by its reviews' restaurant tag names.

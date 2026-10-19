@@ -1,19 +1,55 @@
 <?php
 /**
- * Plugin Name: SAAB Toolkit
+ * Plugin Name: DoS SAAB Toolkit
+ * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: SEO tags, responsive image markup and restaurant pages for shotandabeer.com. Modules are off by default and enabled one at a time.
- * Version:     0.5.6
- * Author:      Shot And A Beer
+ * Version:     0.6.0
+ * Requires at least: 6.6
+ * Requires PHP: 8.1
+ * Author:      Department of Search
  * License:     GPL-2.0-or-later
+ * Text Domain: dos-saab-toolkit
+ * Update URI:  https://github.com/deptofsearch/dos-plugins
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAAB_TOOLKIT_VERSION', '0.5.6' );
+/*
+ * This is the old "SAAB Toolkit" (saab-toolkit/saab-toolkit.php, 0.5.6) moved into dos-plugins under the dos- name.
+ * Classes, option names and meta keys are unchanged, so module settings and restaurant data carry straight over.
+ * Both declare SAAB_Toolkit: while the old copy is still active, this one stands down and says so, instead of a
+ * "cannot redeclare class" fatal.
+ */
+if ( class_exists( 'SAAB_Toolkit', false ) ) {
+	add_action(
+		'admin_notices',
+		function () {
+			if ( current_user_can( 'activate_plugins' ) ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'DoS SAAB Toolkit is waiting: deactivate the old "SAAB Toolkit" plugin and this one takes over with the same settings.', 'dos-saab-toolkit' ) . '</p></div>';
+			}
+		}
+	);
+	return;
+}
+
+define( 'SAAB_TOOLKIT_VERSION', '0.6.0' );
 define( 'SAAB_TOOLKIT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SAAB_TOOLKIT_URL', plugin_dir_url( __FILE__ ) );
+
+// Not behind is_admin(): WP-Cron and the REST API run the update check too.
+require_once SAAB_TOOLKIT_DIR . 'includes/class-dos-github-updater.php';
+
+( new DOS_GitHub_Updater(
+	array(
+		'slug'        => 'dos-saab-toolkit',
+		'basename'    => plugin_basename( __FILE__ ),
+		'version'     => SAAB_TOOLKIT_VERSION,
+		'name'        => 'DoS SAAB Toolkit',
+		'description' => 'SEO tags, responsive image markup and restaurant pages for shotandabeer.com.',
+	)
+) )->boot();
 
 class SAAB_Toolkit {
 
@@ -94,13 +130,13 @@ class SAAB_Toolkit {
 	}
 
 	public static function add_settings_page() {
-		add_options_page( 'SAAB Toolkit', 'SAAB Toolkit', 'manage_options', 'saab-toolkit', array( __CLASS__, 'render_settings_page' ) );
+		add_options_page( 'DoS SAAB Toolkit', 'SAAB Toolkit', 'manage_options', 'saab-toolkit', array( __CLASS__, 'render_settings_page' ) );
 	}
 
 	public static function render_settings_page() {
 		?>
 		<div class="wrap">
-			<h1>SAAB Toolkit <span style="font-size:13px;color:#666">v<?php echo esc_html( SAAB_TOOLKIT_VERSION ); ?></span></h1>
+			<h1>DoS SAAB Toolkit <span style="font-size:13px;color:#666">v<?php echo esc_html( SAAB_TOOLKIT_VERSION ); ?></span></h1>
 
 			<form method="post" action="options.php">
 				<?php settings_fields( 'saab_toolkit' ); ?>

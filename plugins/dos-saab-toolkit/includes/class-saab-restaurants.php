@@ -14,6 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Before the guard below: PHP declares this file's class before its first line runs (early binding), so that
+// guard always returns and nothing after it executes.
+require_once __DIR__ . '/class-saab-dishes.php';
+
 if ( class_exists( 'SAAB_Restaurants', false ) ) {
 	return;
 }
@@ -695,6 +699,102 @@ class SAAB_Restaurants {
 	 * strip/pool, not a photo the card itself is already displaying.
 	 */
 	/**
+	 * Ryan's dishes as the page shows them: saab_ryan_dishes with near-duplicate names merged, visits counted
+	 * from the linked review titles, and a photo for every card that has one.
+	 *
+	 * The syncs match dishes by exact name and read each new post's title once, so on Hill's "Pulled Pork Eggs
+	 * Benedict" (2021) and "Pulled Pork Benedict" (2025) were two cards, and "Breakfast at Hill's Restaurant —
+	 * Pulled Pork Benedict" (March 2026) was linked to the page but on neither card. Here:
+	 * - names that are the same dish (SAAB_Dishes::same()) share one card, under the most-eaten name;
+	 * - a linked post whose title names the dish counts as a visit: the card shows the larger of the synced count
+	 *   and the number of such posts, and "Last time" is the newest of them;
+	 * - the photo is the first photo the sync verified for any merged name, newest visit first. When the sync found
+	 *   none (photo_id 0), a visit whose title names only this dish lends its featured image: the title says the
+	 *   photo is of this dish. A post titled "Spring Rolls and Beef Pho" still lends nothing to "Spring Rolls".
+	 *
+	 * @return array[] Each { name, post_id, posts, photo_id }, most visits first.
+	 */
+	public static function get_ryan_dishes( $post_id ) {
+		static $cache = array();
+		if ( isset( $cache[ $post_id ] ) ) {
+			return $cache[ $post_id ];
+		}
+		$raw = array();
+		foreach ( self::get_json_meta( $post_id, 'saab_ryan_dishes' ) as $dish ) {
+			if ( ! is_array( $dish ) || empty( $dish['name'] ) || empty( $dish['post_id'] ) ) {
+				continue;
+			}
+			$dish['date'] = (string) get_post_field( 'post_date', (int) $dish['post_id'] );
+			$raw[]        = $dish;
+		}
+		$linked = self::get_linked_posts_newest_first( $post_id );
+		$titles = array();
+		foreach ( $linked as $p ) {
+			$titles[ $p->ID ] = SAAB_Dishes::from_title( $p->post_title );
+		}
+
+		$out = array();
+		foreach ( SAAB_Dishes::merge( $raw ) as $g ) {
+			$names = $g['names'];
+			$named = function ( $title_dish ) use ( $names ) {
+				foreach ( $names as $n ) {
+					if ( SAAB_Dishes::same( $n, $title_dish ) ) {
+						return true;
+					}
+				}
+				return false;
+			};
+
+			// Visits: linked posts whose title names this dish (newest first, as $linked is).
+			$visits = array();
+			foreach ( $linked as $p ) {
+				if ( $named( $titles[ $p->ID ] ) ) {
+					$visits[] = $p;
+				}
+			}
+			$card = array(
+				'name'     => $g['name'],
+				'post_id'  => $g['post_id'],
+				'posts'    => max( (int) $g['posts'], count( $visits ) ),
+				'photo_id' => 0,
+			);
+			if ( $visits && strcmp( $visits[0]->post_date, $g['date'] ) > 0 ) {
+				$card['post_id'] = (int) $visits[0]->ID;
+			}
+
+			foreach ( $g['photo_ids'] as $id ) {
+				if ( $id ) {
+					$card['photo_id'] = $id;
+					break;
+				}
+			}
+			if ( ! $card['photo_id'] ) {
+				$candidates = $visits;
+				$seen       = array_flip( wp_list_pluck( $visits, 'ID' ) );
+				foreach ( $g['post_ids'] as $id ) {
+					$p = isset( $seen[ $id ] ) ? null : get_post( $id );
+					if ( $p ) {
+						$candidates[] = $p;
+					}
+				}
+				foreach ( $candidates as $p ) {
+					$thumb = (int) get_post_thumbnail_id( $p );
+					if ( $thumb && $named( SAAB_Dishes::from_title( $p->post_title ) ) ) {
+						$card['photo_id'] = $thumb;
+						break;
+					}
+				}
+			}
+			$out[] = $card;
+		}
+		usort( $out, function ( $a, $b ) {
+			return $b['posts'] <=> $a['posts'];
+		} );
+		$cache[ $post_id ] = $out;
+		return $out;
+	}
+
+	/**
 	 * The photo for a dish card. The sync sets `photo_id` on a dish after
 	 * checking the image actually shows that dish: an attachment ID to use,
 	 * or 0 for "this post has no photo of this dish" (a post titled
@@ -715,11 +815,8 @@ class SAAB_Restaurants {
 		}
 
 		$prepend = array();
-		foreach ( self::get_json_meta( $post_id, 'saab_ryan_dishes' ) as $dish ) {
-			if ( empty( $dish['post_id'] ) ) {
-				continue;
-			}
-			$thumb_id = self::dish_photo_id( $dish );
+		foreach ( self::get_ryan_dishes( $post_id ) as $dish ) {
+			$thumb_id = (int) $dish['photo_id'];
 			if ( ! $thumb_id || isset( $known[ $thumb_id ] ) ) {
 				continue;
 			}
@@ -1079,20 +1176,17 @@ class SAAB_Restaurants {
 	 * that Google reviewers also mention gets a single card with both tags.
 	 */
 	private static function render_dishes_board( $post_id, $photo_index = array() ) {
-		$ryan_dishes    = self::get_json_meta( $post_id, 'saab_ryan_dishes' );
 		$popular_dishes = self::get_json_meta( $post_id, 'saab_popular_dishes' );
 
 		$cards = array(); // Keyed by lowercase name so both sources land on one card.
 
-		foreach ( $ryan_dishes as $dish ) {
-			if ( empty( $dish['name'] ) || empty( $dish['post_id'] ) ) {
-				continue;
-			}
+		// Ryan's dishes come merged and with their photos resolved (see get_ryan_dishes()).
+		foreach ( self::get_ryan_dishes( $post_id ) as $dish ) {
 			$cards[ strtolower( $dish['name'] ) ] = array(
 				'name'     => $dish['name'],
 				'post_id'  => (int) $dish['post_id'],
-				'posts'    => ! empty( $dish['posts'] ) ? (int) $dish['posts'] : 1,
-				'photo_id' => self::dish_photo_id( $dish ),
+				'posts'    => (int) $dish['posts'],
+				'photo_id' => (int) $dish['photo_id'],
 				'mentions' => null,
 				'source'   => null,
 			);
@@ -1102,7 +1196,15 @@ class SAAB_Restaurants {
 			if ( empty( $dish['name'] ) ) {
 				continue;
 			}
-			$key      = strtolower( $dish['name'] );
+			$key = strtolower( $dish['name'] );
+			if ( ! isset( $cards[ $key ] ) ) {
+				foreach ( $cards as $k => $c ) {
+					if ( null !== $c['post_id'] && SAAB_Dishes::same( $c['name'], $dish['name'] ) ) {
+						$key = $k;
+						break;
+					}
+				}
+			}
 			$mentions = ! empty( $dish['mentions'] ) ? (int) $dish['mentions'] : null;
 			$source   = isset( $dish['source'] ) ? $dish['source'] : null;
 

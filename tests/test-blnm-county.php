@@ -42,6 +42,10 @@ $cases = array(
 	array( 'Carson City', 'NV', 'Carson City' ),
 	array( 'Carson City', 'nv', 'Carson City' ),
 	array( 'Carson City', '', 'Carson City County' ),
+	array( 'New York city', 'NY', 'New York City (five boroughs)' ),
+	array( 'New York City', 'ny', 'New York City (five boroughs)' ),
+	array( 'New York', 'NY', 'New York County' ),
+	array( 'Kings', 'NY', 'Kings County' ),
 	array( '', 'WA', '' ),
 	array( '  ', 'WA', '' ),
 );
@@ -67,6 +71,7 @@ foreach ( array( 'King', 'King County', 'Orleans Parish', 'Baltimore city', 'Car
 	check( "round-trip '$n' stable", Data_Model::sanitize_county_name( $st ) === $st );
 }
 check( 'stored King renders King County', 'King County' === Render::county_label( Data_Model::sanitize_county_name( 'King County' ), 'WA' ) );
+check( 'stored NYC pseudo-county renders five boroughs', 'New York City (five boroughs)' === Render::county_label( Data_Model::sanitize_county_name( 'New York city' ), 'NY' ) );
 check( 'stored Orleans Parish renders as-is', 'Orleans Parish' === Render::county_label( Data_Model::sanitize_county_name( 'Orleans Parish' ), 'LA' ) );
 
 $l = array( array( 'name' => 'A Lender', 'type' => 'mortgage_company', 'loans_2025' => 10, 'score' => 80 ) );

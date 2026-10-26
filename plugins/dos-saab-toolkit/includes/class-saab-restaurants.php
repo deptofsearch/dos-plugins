@@ -110,6 +110,9 @@ class SAAB_Restaurants {
 
 		require_once __DIR__ . '/class-saab-bestof.php';
 		SAAB_Bestof::init();
+
+		require_once __DIR__ . '/class-saab-bestof-hub.php';
+		SAAB_Bestof_Hub::init();
 	}
 
 	/* ---------------------------------------------------------------------

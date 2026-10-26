@@ -22,6 +22,8 @@ body.saab-bestof-page #content {
 	--saab-line: #dddfe1;
 	--saab-accent: #45494e;
 	--saab-accent-fill: #d9dcdf;
+	--saab-on-photo: #ffffff;
+	--saab-photo-shade: rgba(0, 0, 0, 0.72);
 
 	max-width: 100%;
 	box-sizing: border-box;
@@ -340,6 +342,109 @@ body.saab-bestof-page #content {
 
 .saab-bestof__table tr:last-child td {
 	border-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * The hub (/best-in-tri-cities/): one linked tile per Best-Of page.
+ * --saab-hub-scale sizes every tile, its label and its padding together:
+ * 1 is the original size, 0.9 is 10% smaller. Change only that number.
+ * ------------------------------------------------------------------- */
+
+.saab-bestof--hub {
+	--saab-hub-scale: 0.9;
+	--saab-hub-tile: calc(260px * var(--saab-hub-scale));
+	gap: 28px;
+}
+
+.saab-hub__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--saab-hub-tile)), 1fr));
+	gap: calc(16px * var(--saab-hub-scale));
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.saab-hub__grid li {
+	margin: 0;
+}
+
+.saab-bestof .saab-hub__tile {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	aspect-ratio: 16 / 9;
+	height: 100%;
+	padding: calc(16px * var(--saab-hub-scale));
+	overflow: hidden;
+	border-radius: 10px;
+	border: 1px solid var(--saab-line);
+	background: var(--saab-accent-fill);
+	color: var(--saab-ink);
+	text-decoration: none;
+}
+
+.saab-bestof .saab-hub__img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.25s ease;
+}
+
+.saab-hub__tile--photo::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, var(--saab-photo-shade), transparent 60%);
+}
+
+.saab-hub__text {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	gap: 2px;
+}
+
+.saab-hub__eyebrow {
+	font-size: calc(0.75rem * var(--saab-hub-scale));
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	opacity: 0.85;
+}
+
+.saab-hub__label {
+	font-size: calc(1.35rem * var(--saab-hub-scale));
+	font-weight: 700;
+	line-height: 1.15;
+	text-wrap: balance;
+}
+
+.saab-bestof .saab-hub__tile--photo,
+.saab-bestof .saab-hub__tile--photo:hover {
+	color: var(--saab-on-photo);
+}
+
+.saab-bestof .saab-hub__tile:hover .saab-hub__label {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.saab-bestof .saab-hub__tile:hover .saab-hub__img {
+	transform: scale(1.03);
+}
+
+.saab-bestof .saab-hub__tile:focus-visible {
+	outline: 2px solid var(--saab-ink);
+	outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.saab-bestof .saab-hub__img {
+		transition: none;
+	}
 }
 
 @media (max-width: 760px) {

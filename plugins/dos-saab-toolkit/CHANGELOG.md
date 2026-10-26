@@ -5,6 +5,38 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.7.0
+
+**The Best in Tri-Cities hub moves into the plugin.** `/best-in-tri-cities/`
+is the most-linked page on the site (it is in the main menu), but as a Themify
+Builder page it was a grid of 20 hand-placed 1920×1080 PNG tiles: only 2 of
+them linked anywhere, the page weighed 10.3 MB and had no H1 (SEO audit,
+September 2026). Ryan also wants the tiles smaller, and Builder styling can't be
+tuned from code.
+
+- New `SAAB_Bestof_Hub` (`includes/class-saab-bestof-hub.php`, template
+  `templates/bestof-hub.php`). On the hub page it renders the page title as the
+  H1, an intro, and **one linked tile per Best-Of page**.
+- The tiles build themselves: every published page whose slug is
+  `best-…-tri-cities`, or that has a `saab_bestof` config. A new Best-Of page
+  appears on the hub with no edit to the hub. Labels drop "Best" and "in
+  Tri-Cities" (the H1 says it); the image is the Best-Of hero, else the
+  featured image, served at `medium_large` with a srcset, so the tiles are tens
+  of KB, not 500 KB each. The first four load eagerly, the rest lazily.
+- Opt-in and reversible, like the Best-Of pages: a "Best in Tri-Cities Hub" box
+  on that page only, with an on/off switch, the intro (prefilled from the
+  page's current text on first open), and a tick list to leave a page off.
+  Off, or never saved, and the Builder page shows as before; its content is
+  never changed. Stored as `saab_bestof_hub` page meta (JSON: `on`, `intro`,
+  `hide`).
+- Tile size is one CSS variable, `--saab-hub-scale` in `assets/bestof.css`,
+  which scales the tile width, gaps, padding and label together. It ships at
+  `0.9`: 10% smaller than the base size (260 px minimum tile width, 1.35rem
+  label). The next size change is that one number.
+
+New `tests/test-saab-bestof-hub.php`: which pages get a tile, labels, hero over
+featured image, hidden pages left off, one H1 and one link per tile.
+
 ## 0.6.1
 
 **0.6.0 took the restaurant pages offline.** Installed on shotandabeer.com with

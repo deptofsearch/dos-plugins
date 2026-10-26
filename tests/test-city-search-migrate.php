@@ -71,6 +71,17 @@ check( 'nothing is read from or written to the old option', ! isset( $GLOBALS['o
 $n = count( $GLOBALS['writes'] );
 check( 're-running writes nothing', false === dos_city_search_maybe_migrate() && $n === count( $GLOBALS['writes'] ) );
 
+echo "\n--- (c) fresh install on an Open Houses In site (2.0.1) ---\n";
+cs_reset();
+$GLOBALS['cs']['taxonomies'] = array( 'ohi_city' );
+check( 'reports that it wrote', true === dos_city_search_maybe_migrate() );
+$o = $GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ];
+check( 'gets the open-house wording', 'Find Open Houses by City' === $o['heading'] && 'Start typing a city' === $o['placeholder'] && 'Start typing a city and pick it from the list to see every open house scheduled there.' === $o['intro'] && 'Search' === $o['button_label'], json_encode( $o ) );
+check( 'and the Open Houses In behaviour: City taxonomy, every city on focus, no cap, by-city browse', 'taxonomy' === $o['source'] && 1 === $o['show_all_on_focus'] && 0 === $o['max_results'] && 'by-city' === $o['browse_slug'] );
+check( 'keeps the neutral colours and adds no classes, at schema 2, not marked as migrated', '#eaf2fc' === $o['bg_color'] && '#1a5fb4' === $o['accent_color'] && '' === $o['section_class'] && 2 === $o['schema'] && ! isset( $o['migrated_from'] ), json_encode( $o ) );
+$n = count( $GLOBALS['writes'] );
+check( 're-running writes nothing', false === dos_city_search_maybe_migrate() && $n === count( $GLOBALS['writes'] ) );
+
 echo "\n--- precedence ---\n";
 cs_reset();
 $GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ] = array_merge( dos_city_search_defaults(), array( 'heading' => 'Mine', 'source' => 'taxonomy' ) );
@@ -210,5 +221,32 @@ check( 'no missing-taxonomy notice while the taxonomy exists', false === strpos(
 $GLOBALS['cs']['taxonomies'] = array();
 dos_city_search_flush();
 check( 'the notice appears when the taxonomy source is set but the taxonomy is missing', false !== strpos( cs_page_html(), 'isn’t registered' ) );
+
+echo "\n--- (d) repair: an Open Houses In site left with the REVNM wording by 2.0.0 ---\n";
+cs_reset();
+$GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ] = array_merge( dos_city_search_defaults(), array( 'bg_color' => '#eef3f6' ) ); // what 2.0.0 wrote, colour since edited
+$GLOBALS['cs']['taxonomies'] = array( 'ohi_city' );
+check( 'reports that it wrote', true === dos_city_search_maybe_migrate() );
+$o = $GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ];
+check( 'swaps in the open-house wording', 'Find Open Houses by City' === $o['heading'] && 'Start typing a city' === $o['placeholder'], json_encode( $o ) );
+check( 'leaves every other setting as it was', '#eef3f6' === $o['bg_color'] && 'auto' === $o['source'] && 8 === $o['max_results'] && 2 === $o['schema'] );
+$n = count( $GLOBALS['writes'] );
+check( 're-running writes nothing', false === dos_city_search_maybe_migrate() && $n === count( $GLOBALS['writes'] ) );
+
+cs_reset();
+$GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ] = array_merge( dos_city_search_defaults(), array( 'heading' => 'Search Open Houses' ) );
+$GLOBALS['cs']['taxonomies'] = array( 'ohi_city' );
+check( 'edited copy on an Open Houses In site is never touched', false === dos_city_search_maybe_migrate() && array() === $GLOBALS['writes'] );
+cs_reset();
+$GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ] = dos_city_search_defaults();
+check( 'a REVNM site on the stock wording is left alone', false === dos_city_search_maybe_migrate() && array() === $GLOBALS['writes'] );
+cs_reset();
+$GLOBALS['options'][ DOS_CITY_SEARCH_OPTION ] = array_merge( dos_city_search_defaults(), array( 'section_class' => 'rv-sec rv-city-search' ) );
+$GLOBALS['cs']['taxonomies'] = array( 'ohi_city' );
+check( 'migrated REVNM settings (rv- classes) are never treated as a fresh install', false === dos_city_search_maybe_migrate() );
+
+cs_reset();
+define( 'OHI\VERSION', '0.7.0' ); // DoS Open Houses In Core loaded, before the taxonomy is registered at init
+check( 'DoS Open Houses In Core alone marks an Open Houses In site', true === dos_city_search_is_ohi_site() );
 
 finish();

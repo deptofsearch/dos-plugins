@@ -6,6 +6,29 @@ later change quietly undoing a deliberate decision.
 Versions are the plugin's, tagged `dos-city-search-v<version>`. There is no 1.2.0:
 the updater work planned for it shipped inside 2.0.0.
 
+## 2.0.1
+
+A fresh install on an Open Houses In site now gets the open-house wording.
+2.0.0 gave every fresh install the Real Estate Values Near Me copy ("Search
+Home Values by City", "City, State (e.g. Kennewick, WA)"), and only sites
+moving over from `dos-ohi-city-search` got the Open Houses In copy. The first
+Open Houses In market installed fresh, openhousesinbayarea.com (2026-10-26),
+showed the home-values box on its homepage.
+
+- **Fresh install.** On a site running DoS Open Houses In Core (its
+  `OHI\VERSION` constant is defined by `plugins_loaded`, before the City
+  taxonomy registers at `init`) or with `ohi_city` already registered, the
+  defaults take the Open Houses In heading, intro, placeholder and button, and
+  its behaviour: City taxonomy source, every city on focus, no cap. The colours
+  stay this plugin's neutral blue rather than the old plugin's orange: each
+  market picks its own.
+- **Repair.** A site 2.0.0 already set up that way (current settings, no
+  `migrated_from`, no rv- classes, and the REVNM heading, intro and placeholder
+  exactly as shipped) gets the open-house wording swapped in on its next load,
+  and nothing else changes. Copy anyone has edited is never touched, and REVNM
+  sites never match, because the check needs DoS Open Houses In Core or the
+  City taxonomy.
+
 ## 2.0.0
 
 One City Search for both market sites. Real Estate Values Near Me and Open

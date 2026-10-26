@@ -5,6 +5,14 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.7.1
+
+**Hub tiles another 10% smaller.** Ryan saw 0.7.0 live and asked for the tiles
+to come down another 10%. `--saab-hub-scale` goes from `0.9` to `0.81`, 10%
+under the 0.7.0 size, not 20% under the base: each round is relative to what is
+on the page. Tile minimum width is now about 211 px (was 234 px), label
+about 1.09rem.
+
 ## 0.7.0
 
 **The Best in Tri-Cities hub moves into the plugin.** `/best-in-tri-cities/`

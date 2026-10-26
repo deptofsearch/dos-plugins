@@ -3,7 +3,7 @@
  * Plugin Name: DoS - City Search
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: City search box for a market site. Autocompletes from the site's published city pages (by URL ending in a state code, or by a City taxonomy) and jumps straight to the chosen page. Auto-inserted on the homepage; also available as [dos_city_search]. Settings and index status under Tools → City Search.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: Department of Search
  * Text Domain: dos-city-search
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_CITY_SEARCH_VERSION', '2.0.0' );
+define( 'DOS_CITY_SEARCH_VERSION', '2.0.1' );
 // The index changed shape in 2.0.0 (objects, not "label|slug" strings), so it gets a new key.
 // The old revnm_city_index_v1 transient is never read: it holds strings.
 define( 'DOS_CITY_SEARCH_TRANSIENT', 'dos_city_search_index_v2' );
@@ -93,6 +93,45 @@ function dos_city_search_ohi_defaults() {
 }
 
 /**
+ * Whether this is an Open Houses In site: DoS Open Houses In Core is loaded (its namespaced VERSION
+ * constant exists by plugins_loaded), or the City taxonomy is already registered.
+ */
+function dos_city_search_is_ohi_site() {
+	return defined( 'OHI\\VERSION' ) || taxonomy_exists( 'ohi_city' );
+}
+
+/**
+ * Defaults for a fresh install on an Open Houses In site: the open-house wording and the behaviour the
+ * Open Houses In box always had (City taxonomy, every city on focus, no cap). Colours stay this plugin's
+ * neutral defaults; each market sets its own under Tools → City Search.
+ */
+function dos_city_search_fresh_ohi_defaults() {
+	$ohi = dos_city_search_ohi_defaults();
+	$new = dos_city_search_defaults();
+	foreach ( array( 'heading', 'intro', 'placeholder', 'button_label' ) as $k ) {
+		$new[ $k ] = $ohi[ $k ];
+	}
+	$new['source']            = 'taxonomy';
+	$new['max_results']       = 0;
+	$new['show_all_on_focus'] = 1;
+	return $new;
+}
+
+/**
+ * Whether these settings still hold the REVNM wording a fresh 2.0.0 install wrote on every site, never
+ * edited. On an Open Houses In site that copy is wrong (openhousesinbayarea.com shipped with it).
+ */
+function dos_city_search_has_untouched_revnm_copy( $cur ) {
+	$d = dos_city_search_defaults();
+	foreach ( array( 'heading', 'intro', 'placeholder' ) as $k ) {
+		if ( ! isset( $cur[ $k ] ) || $cur[ $k ] !== $d[ $k ] ) {
+			return false;
+		}
+	}
+	return empty( $cur['migrated_from'] ) && ( $cur['section_class'] ?? '' ) === '';
+}
+
+/**
  * Whether the index meta is the one 1.x wrote: fallback counts, and no `source` key (2.0.0 adds one
  * to every build). Evidence that a REVNM site ran 1.x on its defaults and never saved a setting.
  */
@@ -109,7 +148,9 @@ function dos_city_search_has_1x_footprint() {
  *    classes and placement the site's own CSS was built around, so the box renders as before.
  * b) Open Houses In move: no settings here, but the old plugin's exist (or it left an index behind). Carry them over.
  *    Its options are left alone, so the old plugin can be reactivated for a rollback.
- * c) Fresh install: defaults.
+ * c) Fresh install: defaults, with the open-house wording on an Open Houses In site.
+ * d) Already current, but an Open Houses In site still showing the untouched REVNM wording a fresh 2.0.0
+ *    install gave it: swap in the open-house wording. Nothing else changes, and edited copy is never touched.
  *
  * @return bool Whether anything was written.
  */
@@ -117,7 +158,15 @@ function dos_city_search_maybe_migrate() {
 	$cur = get_option( DOS_CITY_SEARCH_OPTION, false );
 
 	if ( is_array( $cur ) && isset( $cur['schema'] ) && (int) $cur['schema'] >= 2 ) {
-		return false;
+		if ( ! dos_city_search_has_untouched_revnm_copy( $cur ) || ! dos_city_search_is_ohi_site() ) {
+			return false;
+		}
+		$ohi = dos_city_search_fresh_ohi_defaults();
+		foreach ( array( 'heading', 'intro', 'placeholder', 'button_label' ) as $k ) {
+			$cur[ $k ] = $ohi[ $k ];
+		}
+		update_option( DOS_CITY_SEARCH_OPTION, $cur );
+		return true;
 	}
 
 	$old = is_array( $cur ) ? false : get_option( DOS_CITY_SEARCH_OLD_OPTION, false );
@@ -156,7 +205,7 @@ function dos_city_search_maybe_migrate() {
 		$new['schema']            = 2;
 		$new['migrated_from']     = 'dos-ohi-city-search';
 	} else {
-		$new = dos_city_search_defaults();
+		$new = dos_city_search_is_ohi_site() ? dos_city_search_fresh_ohi_defaults() : dos_city_search_defaults();
 	}
 
 	update_option( DOS_CITY_SEARCH_OPTION, $new );

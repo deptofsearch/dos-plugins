@@ -5,6 +5,26 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.7.2
+
+**The size setting now actually changes the tile size.** Ryan saw no
+reduction after 0.7.0. The grid was `repeat(auto-fill, minmax(<tile>, 1fr))`:
+`--saab-hub-scale` only lowered the *minimum* tile width, and the `1fr` then
+stretched the tiles back out to fill the row. The scale changed how many
+tiles fit per row, and only at some screen widths. Measured on a 1160 px
+content area, tiles were 278 px wide at scale 1 and 279 px at 0.9: no change.
+0.81 happened to fit a fifth column (222 px), so 0.7.1 would have shown a
+jump of about 20% at that one width, and still nothing at others.
+
+The tile width is now a fixed share of the row that does not stretch:
+`--saab-hub-cols` tiles across at full size (4 on desktop, 3 under 1000 px,
+2 under 760 px), times `--saab-hub-scale`. At scale 1 that is the size the
+0.7.0 tiles had on a full desktop row (278 px at 1160 px), so the scale is
+measured against what Ryan saw first. At the shipped `0.81`, desktop tiles
+are 225 px: the two 10% steps he asked for. The room a smaller scale frees up
+stays at the end of each row, not spread back into the tiles. Phones (one
+tile per row, under 480 px) stay full width with the scale not applied.
+
 ## 0.7.1
 
 **Hub tiles another 10% smaller.** Ryan saw 0.7.0 live and asked for the tiles

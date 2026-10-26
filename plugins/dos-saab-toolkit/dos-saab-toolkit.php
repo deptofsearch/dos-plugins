@@ -3,7 +3,7 @@
  * Plugin Name: DoS SAAB Toolkit
  * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: SEO tags, responsive image markup and restaurant pages for shotandabeer.com. Modules are off by default and enabled one at a time.
- * Version:     0.7.1
+ * Version:     0.7.2
  * Requires at least: 6.6
  * Requires PHP: 8.1
  * Author:      Department of Search
@@ -38,7 +38,7 @@ if ( class_exists( 'SAAB_Toolkit', false ) && ( new ReflectionClass( 'SAAB_Toolk
 	return;
 }
 
-define( 'SAAB_TOOLKIT_VERSION', '0.7.1' );
+define( 'SAAB_TOOLKIT_VERSION', '0.7.2' );
 define( 'SAAB_TOOLKIT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SAAB_TOOLKIT_URL', plugin_dir_url( __FILE__ ) );
 

@@ -346,24 +346,50 @@ body.saab-bestof-page #content {
 
 /* ---------------------------------------------------------------------
  * The hub (/best-in-tri-cities/): one linked tile per Best-Of page.
- * --saab-hub-scale sizes every tile, its label and its padding together:
- * 1 is the original size; each "10% smaller" multiplies it by 0.9
- * (0.9, then 0.81). Change only that number.
+ *
+ * Tile width is a fixed share of the row: --saab-hub-cols tiles across at
+ * full size (4 on desktop, fewer on narrower screens), times
+ * --saab-hub-scale. The tiles do not stretch to fill the row, so each change
+ * of the scale shows at every width; a smaller scale leaves room at the end
+ * of the row instead of widening the tiles back out. Label and padding
+ * scale with it. 1 is full size; each "10% smaller" multiplies by 0.9
+ * (0.9, 0.81, ...). Change only that number.
+ *
+ * Phones (one tile per row) stay full width: the scale is not applied there.
  * ------------------------------------------------------------------- */
 
 .saab-bestof--hub {
 	--saab-hub-scale: 0.81;
-	--saab-hub-tile: calc(260px * var(--saab-hub-scale));
+	--saab-hub-cols: 4;
+	--saab-hub-gap: 16px;
 	gap: 28px;
 }
 
 .saab-hub__grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--saab-hub-tile)), 1fr));
-	gap: calc(16px * var(--saab-hub-scale));
+	grid-template-columns: repeat(auto-fill, calc((100% - (var(--saab-hub-cols) - 1) * var(--saab-hub-gap)) / var(--saab-hub-cols) * var(--saab-hub-scale)));
+	gap: var(--saab-hub-gap);
 	margin: 0;
 	padding: 0;
 	list-style: none;
+}
+
+@media (max-width: 1000px) {
+	.saab-bestof--hub {
+		--saab-hub-cols: 3;
+	}
+}
+
+@media (max-width: 760px) {
+	.saab-bestof--hub {
+		--saab-hub-cols: 2;
+	}
+}
+
+@media (max-width: 480px) {
+	.saab-hub__grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 .saab-hub__grid li {

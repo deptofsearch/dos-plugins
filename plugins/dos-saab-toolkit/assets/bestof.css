@@ -347,11 +347,12 @@ body.saab-bestof-page #content {
 /* ---------------------------------------------------------------------
  * The hub (/best-in-tri-cities/): one linked tile per Best-Of page.
  * --saab-hub-scale sizes every tile, its label and its padding together:
- * 1 is the original size, 0.9 is 10% smaller. Change only that number.
+ * 1 is the original size; each "10% smaller" multiplies it by 0.9
+ * (0.9, then 0.81). Change only that number.
  * ------------------------------------------------------------------- */
 
 .saab-bestof--hub {
-	--saab-hub-scale: 0.9;
+	--saab-hub-scale: 0.81;
 	--saab-hub-tile: calc(260px * var(--saab-hub-scale));
 	gap: 28px;
 }

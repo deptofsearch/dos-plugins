@@ -1,0 +1,122 @@
+/*
+ * DoS - Agents: the site-wide brand layer for bestrealestateagentsnearme.com over the Themify Magazine theme.
+ * Libre Franklin, white page, gray rules, near-black ink, royal blue as the only accent. Light only.
+ * Everything is scoped under body.breanm-brand so it cannot reach wp-admin or a site without the class;
+ * the colors are defined once, here, as --breanm- tokens (breanm-home.css falls back to the same values).
+ * Bump DOS_AGENTS_VERSION whenever this file changes (the CDN caches ?ver= URLs for years).
+ */
+@font-face { font-family: "Libre Franklin"; font-weight: 400; font-style: normal; font-display: swap; src: url(fonts/libre-franklin-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Libre Franklin"; font-weight: 500; font-style: normal; font-display: swap; src: url(fonts/libre-franklin-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Libre Franklin"; font-weight: 600; font-style: normal; font-display: swap; src: url(fonts/libre-franklin-latin-600-normal.woff2) format("woff2"); }
+
+body.breanm-brand {
+	--breanm-paper: #FFFFFF;
+	--breanm-paper-raised: #FFFFFF;
+	--breanm-tint: #F5F6F8;
+	--breanm-sunk: #F0F2F5;
+	--breanm-ink: #0F1115;
+	--breanm-ink-muted: #5A606B;
+	--breanm-rule: #E1E4E9;
+	--breanm-graphite: #B4BAC4;
+	--breanm-blue: #2B55D6;
+	--breanm-blue-ink: #2147C2;
+	--breanm-blue-tint: #EEF2FD;
+	--breanm-on-blue: #FFFFFF;
+	--breanm-radius: 12px;
+	--breanm-shadow: 0 6px 18px rgba(15, 17, 21, .10);
+	--breanm-font: "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	--breanm-wrap: 1120px;
+	color-scheme: light;
+	background: var(--breanm-paper);
+	color: var(--breanm-ink);
+	font-family: var(--breanm-font);
+	font-size: 17px;
+	line-height: 1.65;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Headings: the theme sets weight 400 and its own margins; the page keeps only weight and tracking. */
+/* Headings carrying a breanm- class (card titles, home section titles) are left to the stylesheets that own them. */
+body.breanm-brand :is(h1, h2, h3):not([class*="breanm-"]) {
+	font-family: var(--breanm-font); font-weight: 600; letter-spacing: -.02em; text-wrap: balance;
+}
+/* The theme paints every link in its accent color, which is white here; page-content links get the brand blue.
+   Links that carry a class (theme buttons) and links inside the plugin widgets keep their own colors. */
+body.breanm-brand .entry-content a:where(:not([class]):not(.breanm-home *, .breanm-agents *)) { color: var(--breanm-blue-ink); }
+body.breanm-brand :focus-visible { outline: 2px solid var(--breanm-blue); outline-offset: 2px; }
+
+/* Brand header, injected inside the theme's #site-logo: the wordmark and tagline replace the logo image. */
+body.breanm-brand .breanm-brand__head { display: block; min-width: 0; }
+/* #site-logo a (theme: white, 2px tracking, hover white) has an id in it, so this selector carries one too. */
+body.breanm-brand #site-logo .breanm-brand__link,
+body.breanm-brand #site-logo .breanm-brand__link:hover,
+body.breanm-brand #site-logo .breanm-brand__link:focus {
+	display: flex; flex-direction: column; gap: 3px; min-width: 0;
+	font: 400 17px/1.65 var(--breanm-font); letter-spacing: normal; text-transform: none;
+	text-decoration: none; color: var(--breanm-ink);
+}
+/* Plain inline text, not flex: the wordmark has to wrap as one phrase on a narrow screen. */
+body.breanm-brand .breanm-brand__name { font-weight: 600; font-size: 19px; line-height: 1.15; letter-spacing: -.01em; }
+body.breanm-brand .breanm-brand__name b { font-weight: 600; }
+body.breanm-brand .breanm-brand__name i { font-style: normal; font-weight: 400; color: var(--breanm-ink-muted); }
+body.breanm-brand .breanm-brand__mark { color: var(--breanm-blue); vertical-align: -4px; margin-right: 7px; }
+body.breanm-brand .breanm-brand__tag { font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--breanm-ink-muted); padding-left: 27px; }
+
+/* Hero and prose. The theme's own elements are styled, so page content needs no classes.
+   The :where() guard (specificity 0) keeps these rules out of the plugin widgets, which style themselves. */
+body.breanm-brand .entry-content h1:where(:not(.breanm-home *, .breanm-agents *)) { font-weight: 600; font-size: clamp(32px, 5.2vw, 52px); line-height: 1.05; margin: 0; }
+body.breanm-brand .breanm-dek,
+body.breanm-brand .entry-content .breanm-dek { max-width: 62ch; margin: 18px 0 0; color: var(--breanm-ink-muted); font-size: 19px; }
+
+/*
+ * The lead row: the intro copy on the left, the city box on the right, half the width each. The
+ * same arrangement Outdoor Seating Near Me uses, and the order matters more than the columns do:
+ * the box is pulled right with `order` rather than markup order, so on a phone, where the row
+ * becomes one column, the box can go FIRST and the copy below it. Someone on a phone wants to
+ * search, not to read.
+ */
+body.breanm-brand .breanm-home__lead {
+	display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 32px; align-items: center; margin: 32px 0 40px;
+}
+body.breanm-brand .breanm-home__lead > .breanm-home__search { order: 2; margin: 0; }
+body.breanm-brand .breanm-home__lead > .breanm-home__lead-copy { order: 1; }
+/* The dek sets the row's height; its own top margin would push the columns out of line. */
+body.breanm-brand .breanm-home__lead .breanm-dek { margin: 0; max-width: none; }
+body.breanm-brand .entry-content h2:where(:not(.breanm-home *, .breanm-agents *)) { font-size: 27px; font-weight: 600; margin: 0 0 14px; }
+body.breanm-brand .entry-content p:where(:not(.breanm-home *, .breanm-agents *)) { margin: 0 0 16px; max-width: 72ch; color: var(--breanm-ink-muted); }
+body.breanm-brand .entry-content p:where(:not(.breanm-home *, .breanm-agents *)):last-child { margin-bottom: 0; }
+body.breanm-brand .entry-content strong:where(:not(.breanm-home *, .breanm-agents *)) { color: var(--breanm-ink); font-weight: 600; }
+body.breanm-brand .entry-content ul:where(:not(.breanm-home *, .breanm-agents *)) { margin: 0 0 16px; padding-left: 22px; max-width: 72ch; color: var(--breanm-ink-muted); }
+body.breanm-brand .entry-content li:where(:not(.breanm-home *, .breanm-agents *)) { margin-bottom: 7px; }
+
+body.breanm-brand .breanm-disclosure { padding-block: 28px 56px; border-top: 1px solid var(--breanm-rule); color: var(--breanm-ink-muted); font-size: 14px; max-width: 80ch; }
+/* Same look when the disclosure is written as paragraphs: the prose paragraph limits would otherwise narrow it. */
+body.breanm-brand .breanm-disclosure p { max-width: none; margin: 0; }
+
+/* City pages: the sidebar goes and the content column runs the full width of the page. */
+/* In the theme's markup #sidebar is a sibling of #contentwrap (which holds main#content), and #contentwrap is the
+   floated 67.64% column; #sidebar is the floated 28.28% one. !important beats the theme's concatenated and skin CSS. */
+/* State hubs: the h1 the plugin adds, and the old table heading, which carries an inline
+   font-family and colour. Inline styles beat a stylesheet, so this is the one place !important is
+   the only tool that works; it is scoped to hub pages so nothing else is touched. */
+body.breanm-brand .breanm-hub-title { font-weight: 600; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.07; letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance; }
+body.breanm-brand.breanm-hub-page .entry-content h3[style] {
+	font-family: var(--breanm-font) !important; color: var(--breanm-ink) !important;
+	font-size: 21px !important; font-weight: 600 !important; letter-spacing: -.01em !important;
+	margin: 36px 0 14px !important;
+}
+
+body.breanm-agents-page #sidebar { display: none !important; }
+body.breanm-agents-page #contentwrap { float: none; width: 100%; }
+
+@media (max-width: 640px) {
+	body.breanm-brand { font-size: 16px; }
+	body.breanm-brand .breanm-brand__name { font-size: 16px; }
+	body.breanm-brand .breanm-brand__tag { font-size: 9px; letter-spacing: .12em; padding-left: 25px; }
+	body.breanm-brand .breanm-dek,
+	body.breanm-brand .entry-content .breanm-dek { font-size: 17px; }
+	body.breanm-brand .breanm-home__lead { grid-template-columns: minmax(0, 1fr); gap: 24px; margin: 24px 0 32px; }
+	body.breanm-brand .breanm-home__lead > .breanm-home__search { order: 0; }
+	body.breanm-brand .entry-content h2:where(:not(.breanm-home *, .breanm-agents *)) { font-size: 23px; }
+}

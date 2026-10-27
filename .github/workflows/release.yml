@@ -131,6 +131,8 @@ jobs:
           # directory, so it has to be the slug and nothing else.
           mkdir -p build
           cp -R "plugins/${SLUG}" "build/${SLUG}"
+          # Test fixtures and local build output are for the repository, not a site.
+          rm -rf "build/${SLUG}/tests" "build/${SLUG}/dist"
           find build -name '.DS_Store' -delete
           ( cd build && zip -rq "../${SLUG}.zip" "${SLUG}" )
           unzip -l "${SLUG}.zip"

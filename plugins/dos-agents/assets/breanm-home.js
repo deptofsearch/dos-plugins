@@ -250,6 +250,52 @@
 		});
 	}
 
+	/*
+	 * The by-state grid's filter. Matches the start of the state's name, the start of any later word
+	 * in it ("mexico" finds New Mexico), or the postal code, so "new", "mexico", "nm" and "NM" all
+	 * land on the same card. Cards are hidden rather than removed, so clearing the box is instant
+	 * and nothing has to be re-rendered.
+	 */
+	function setupStateFilter(root) {
+		var bar = root.querySelector('.breanm-home__filter'),
+			input = bar && bar.querySelector('.breanm-home__input'),
+			count = bar && bar.querySelector('.breanm-home__count'),
+			cards = [].slice.call(root.querySelectorAll('.breanm-home__sc'));
+
+		if (!bar || !input || !cards.length) { return; }
+		bar.hidden = false;
+
+		var total = cards.length,
+			tAll = bar.getAttribute('data-label-all') || '',
+			tSome = bar.getAttribute('data-label-some') || '',
+			tNone = bar.getAttribute('data-label-none') || '';
+
+		function label(n) {
+			if (!n) { return tNone; }
+			return (n === total ? tAll : tSome).replace('{n}', n).replace('{total}', total);
+		}
+
+		function hit(card, q) {
+			var name = card.getAttribute('data-name') || '',
+				code = card.getAttribute('data-code') || '';
+			return name.indexOf(q) === 0 || name.indexOf(' ' + q) !== -1 || code.indexOf(q) === 0;
+		}
+
+		function apply() {
+			var q = norm(input.value), shown = 0;
+			cards.forEach(function (c) {
+				var on = !q || hit(c, q);
+				c.hidden = !on;
+				if (on) { shown++; }
+			});
+			if (count) { count.textContent = q ? label(shown) : ''; }
+		}
+
+		input.addEventListener('input', apply);
+		input.addEventListener('search', apply);   // the native clear button on type=search
+		apply();
+	}
+
 	function setupCarousel(root) {
 		var track = root.querySelector('.breanm-home__car');
 		if (!track) { return; }
@@ -267,6 +313,7 @@
 	function init() {
 		document.querySelectorAll('.breanm-home__search').forEach(setupSearch);
 		document.querySelectorAll('[data-breanm-carousel]').forEach(setupCarousel);
+		document.querySelectorAll('[data-breanm-state-filter]').forEach(setupStateFilter);
 	}
 
 	if (document.readyState === 'loading') {

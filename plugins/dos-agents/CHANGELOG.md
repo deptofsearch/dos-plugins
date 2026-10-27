@@ -5,6 +5,13 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.2.4
+
+### Added
+- **A filter on the by-state grid.** 51 cards is more than anyone wants to read through to find one state, so `[breanm_state_index layout="grid"]` now carries a box above it. It matches the start of the state's name, the start of any later word in it, or the postal code — so "new", "mexico", "nm" and "NM" all land on New Mexico, and "carolina" finds both. A live count reads "Showing 4 of 51 states", and an empty result says so rather than leaving a blank page.
+- The box ships `hidden` and `breanm-home.js` reveals it: a filter that cannot filter should not be on the page, and without the script every state is visible anyway. Cards are hidden rather than removed, so clearing the box is instant and nothing is re-rendered. The count wording is handed over in `data-label-*` attributes so it stays translatable.
+- Every state card now carries `data-name` (normalised the same way the city search normalises) and `data-code`. Harmless on the carousel, which gets no filter.
+
 ## 0.2.3
 
 ### Fixed

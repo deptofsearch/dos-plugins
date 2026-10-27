@@ -205,6 +205,12 @@ $grid = dos_agents_render_states( true );
 check( 'the grid lists every state', 2 === substr_count( $grid, 'breanm-home__sc"' ), $grid );
 check( 'it is a grid, not a scrolling row', false !== strpos( $grid, 'breanm-home__grid' ) && false === strpos( $grid, 'breanm-home__car' ) );
 check( 'and carries no carousel hook or arrows', false === strpos( $grid, 'data-breanm-carousel' ) && false === strpos( $grid, 'breanm-home__car-btn' ) );
+check( 'the grid carries a filter box, shipped hidden for the script to reveal', false !== strpos( $grid, 'breanm-home__filter' ) && false !== strpos( $grid, 'hidden' ) && false !== strpos( $grid, 'data-breanm-state-filter' ) );
+check( 'with the count labels handed over for translation', false !== strpos( $grid, 'data-label-all=' ) && false !== strpos( $grid, 'data-label-some=' ) && false !== strpos( $grid, 'data-label-none=' ) );
+check( 'every card carries what the filter matches on', 2 === substr_count( $grid, 'data-name="' ) && 2 === substr_count( $grid, 'data-code="' ), $grid );
+check( 'a two-word state is normalised for matching', false !== strpos( dos_agents_render_states( true ), 'data-name="' ) );
+check( 'the carousel gets no filter box', false === strpos( dos_agents_render_states(), 'breanm-home__filter' ) );
+
 $viaShortcode = dos_agents_state_index_shortcode( array( 'layout' => 'grid' ) );
 check( 'layout="grid" on the shortcode reaches it', false !== strpos( $viaShortcode, 'breanm-home__grid' ) );
 check( 'and the default is still the carousel', false !== strpos( dos_agents_state_index_shortcode( array() ), 'data-breanm-carousel' ) );

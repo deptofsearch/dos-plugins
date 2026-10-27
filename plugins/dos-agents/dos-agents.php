@@ -3,7 +3,7 @@
  * Plugin Name: DoS - Agents
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Filterable real-estate agent cards for a city page on Best Real Estate Agents Near Me, plus the homepage city search and "Browse by state" carousel and the site's brand layer. Agent data is pushed to a REST endpoint and stored per city; [breanm_agents city="boise-id"] renders the cards, search, filters and sort.
- * Version: 0.2.3
+ * Version: 0.2.4
  * Author: Department of Search
  * Text Domain: dos-agents
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_AGENTS_VERSION', '0.2.3' );
+define( 'DOS_AGENTS_VERSION', '0.2.4' );
 define( 'DOS_AGENTS_FILE', __FILE__ );
 // One option per city, never autoloaded: a city holds up to 500 agents and only its own page reads it.
 define( 'DOS_AGENTS_OPTION_PREFIX', 'breanm_agents_' );

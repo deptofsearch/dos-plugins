@@ -57,6 +57,7 @@ $cities = dos_agents_index_rebuild();
 
 $search   = call_user_func( $GLOBALS['shortcodes']['breanm_city_search'], array() );
 $carousel = call_user_func( $GLOBALS['shortcodes']['breanm_state_index'], array() );
+$grid     = call_user_func( $GLOBALS['shortcodes']['breanm_state_index'], array( 'layout' => 'grid' ) );
 $hub      = call_user_func( $GLOBALS['shortcodes']['breanm_state_index'], array( 'state' => $sample[0]['s'] ) );
 
 $ver  = rawurlencode( DOS_AGENTS_VERSION );
@@ -88,6 +89,8 @@ body { margin: 0; }
 <h2>What you will find here</h2>
 <p>Each city page lists the agents with recorded sales there, drawn from their public profiles. Every card shows where the agent&rsquo;s office is, which areas they say they serve, how long they have been licensed, and what recent clients mentioned in their reviews.</p>
 {$carousel}
+<h2>Browse by state, as a filterable grid (the by-state page)</h2>
+{$grid}
 <h2>One state&rsquo;s hub block</h2>
 <p>This is what sits at the top of a state page, so the count on the card above leads somewhere that matches it.</p>
 {$hub}

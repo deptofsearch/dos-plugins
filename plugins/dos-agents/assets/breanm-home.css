@@ -108,6 +108,12 @@
 .breanm-home__sc-name { font-weight: 600; font-size: 16px; line-height: 1.25; }
 .breanm-home__sc-meta { font-size: 14px; color: var(--breanm-ink-muted, #5A606B); }
 
+/* The grid's state filter. Same small-caps label and 48px box as the agent-card filters. */
+.breanm-home__filter { display: grid; gap: 8px; margin: 0 0 20px; max-width: 420px; }
+.breanm-home__flabel { margin: 0; font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: .14em; text-transform: uppercase; color: var(--breanm-ink-muted, #5A606B); }
+.breanm-home .breanm-home__filter .breanm-home__input { height: 48px; font-size: 16px; }
+.breanm-home__count { margin: 0; font-size: 14px; line-height: 1.4; color: var(--breanm-ink-muted, #5A606B); min-height: 1.4em; }
+
 /* Browse-by-state as a grid, for the by-state page: the same cards, laid out instead of scrolled. */
 .breanm-home__states--grid { padding-block: 8px 48px; border-top: 0; }
 .breanm-home__grid {

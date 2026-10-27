@@ -152,10 +152,12 @@ function dos_agents_render_states( $grid = false ) {
 			/* translators: %s: number of cities */
 			. esc_html( sprintf( _n( '%s city', '%s cities', $n, 'dos-agents' ), number_format_i18n( $n ) ) )
 			. '</span>';
+		// data-name and data-code are what the grid's filter matches on; harmless in the carousel.
+		$attrs = ' data-name="' . esc_attr( dos_agents_search_norm( $name ) ) . '" data-code="' . esc_attr( strtolower( $code ) ) . '"';
 		// A state whose hub page is missing still gets a card: the count is true either way.
 		$cards .= null === $page
-			? '<li class="breanm-home__sc"><div class="breanm-home__sc-link">' . $body . '</div></li>'
-			: '<li class="breanm-home__sc"><a class="breanm-home__sc-link" href="' . esc_url( get_permalink( $page ) ) . '">' . $body . '</a></li>';
+			? '<li class="breanm-home__sc"' . $attrs . '><div class="breanm-home__sc-link">' . $body . '</div></li>'
+			: '<li class="breanm-home__sc"' . $attrs . '><a class="breanm-home__sc-link" href="' . esc_url( get_permalink( $page ) ) . '">' . $body . '</a></li>';
 	}
 
 	$cities = array_sum( $counts );
@@ -172,9 +174,24 @@ function dos_agents_render_states( $grid = false ) {
 	);
 
 	// A grid is a plain list with no scroll affordances, so it carries no carousel hook and no arrows.
+	// It does get a filter: 51 cards is more than anyone wants to read through to find one state.
+	// The box ships hidden and breanm-home.js reveals it — a filter that cannot filter should not
+	// be on the page at all, and without the script every state is visible anyway, which is fine.
 	if ( $grid ) {
-		return '<section class="breanm-home breanm-home__states breanm-home__states--grid">'
+		static $f = 0;
+		++$f;
+		$id = 'breanm-sf-' . $f;
+		return '<section class="breanm-home breanm-home__states breanm-home__states--grid" data-breanm-state-filter>'
 			. '<p class="breanm-home__states-note">' . esc_html( $note ) . '</p>'
+			. '<div class="breanm-home__filter" hidden'
+			. ' data-label-all="' . esc_attr__( 'Showing all {total} states', 'dos-agents' ) . '"'
+			. ' data-label-some="' . esc_attr__( 'Showing {n} of {total} states', 'dos-agents' ) . '"'
+			. ' data-label-none="' . esc_attr__( 'No state matches that. Clear the box to see them all.', 'dos-agents' ) . '">'
+			. '<label class="breanm-home__flabel" for="' . esc_attr( $id ) . '">' . esc_html__( 'Find a state', 'dos-agents' ) . '</label>'
+			. '<input id="' . esc_attr( $id ) . '" class="breanm-home__input" type="search" autocomplete="off" spellcheck="false"'
+			. ' placeholder="' . esc_attr__( 'Type a state (for example Texas or TX)', 'dos-agents' ) . '">'
+			. '<p class="breanm-home__count" role="status" aria-live="polite"></p>'
+			. '</div>'
 			. '<ul class="breanm-home__grid" aria-label="' . esc_attr__( 'States', 'dos-agents' ) . '">' . $cards . '</ul>'
 			. '</section>';
 	}

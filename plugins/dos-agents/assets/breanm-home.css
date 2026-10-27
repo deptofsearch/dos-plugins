@@ -1,0 +1,153 @@
+/*
+ * DoS - Agents: homepage components - the city search, the "browse by state" carousel and the state hub.
+ * White page, gray borders, near-black text, royal blue as the only accent. Light only.
+ * Everything is scoped under .breanm-home. The colors live in breanm-brand.css as --breanm- tokens; every
+ * reference here carries the same value as a fallback so this file stands on its own if the brand layer is off.
+ * Bump DOS_AGENTS_VERSION whenever this file changes (the CDN caches ?ver= URLs for years).
+ */
+.breanm-home {
+	font-family: var(--breanm-font, "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+	font-size: 17px;
+	line-height: 1.65;
+	color: var(--breanm-ink, #0F1115);
+	margin: 0;
+	min-width: 0;
+	max-width: 100%;
+}
+.breanm-home *, .breanm-home *::before, .breanm-home *::after { box-sizing: border-box; }
+/* A theme's display rules on buttons and lists would otherwise beat the hidden attribute (the carousel buttons
+   ship hidden and a script reveals them; the suggestion list starts hidden). */
+.breanm-home [hidden], .breanm-home .breanm-home__car-btn[hidden] { display: none !important; }
+/* :where() keeps these resets at zero specificity so the component rules below can set their own spacing. */
+.breanm-home :where(ul, li) { margin: 0; padding: 0; list-style: none; }
+.breanm-home li::before { content: none; display: none; }
+.breanm-home :where(p) { margin: 0; }
+
+.breanm-home__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* City search */
+.breanm-home__search {
+	/* The bottom margin is the box's own: whatever the page puts next is theme content with no top margin. */
+	margin: 34px 0 40px; padding: 26px; background: var(--breanm-sunk, #F0F2F5);
+	border: 1px solid var(--breanm-rule, #E1E4E9); border-radius: var(--breanm-radius, 12px);
+}
+.breanm-home .breanm-home__search-heading {
+	margin: 0 0 14px; padding: 0; font-family: inherit; font-size: 21px; font-weight: 600; line-height: inherit;
+	letter-spacing: -.02em; text-wrap: balance; color: var(--breanm-ink, #0F1115);
+}
+.breanm-home__search-form { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; margin: 0; }
+.breanm-home__search-wrap { position: relative; flex: 1 1 320px; min-width: 0; }
+.breanm-home .breanm-home__input {
+	display: block; width: 100%; height: 52px; margin: 0; padding: 10px 16px;
+	font: 400 17px/1.2 var(--breanm-font, "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+	color: var(--breanm-ink, #0F1115); background: var(--breanm-paper, #FFFFFF);
+	border: 1px solid var(--breanm-graphite, #B4BAC4); border-radius: var(--breanm-radius, 12px); box-shadow: none;
+}
+/* The theme grays a focused text input and removes its outline; the field keeps its white and the blue ring. */
+.breanm-home .breanm-home__input:focus { background: var(--breanm-paper, #FFFFFF); }
+.breanm-home .breanm-home__input:focus-visible, .breanm-home .breanm-home__btn:focus-visible,
+.breanm-home .breanm-home__car-btn:focus-visible, .breanm-home .breanm-home__sc-link:focus-visible,
+.breanm-home .breanm-home__hub-link:focus-visible { outline: 2px solid var(--breanm-blue, #2B55D6); outline-offset: 2px; }
+.breanm-home .breanm-home__btn {
+	flex: none; height: 52px; margin: 0; padding: 0 26px;
+	font: 600 16px/1 var(--breanm-font, "Libre Franklin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+	color: var(--breanm-on-blue, #FFFFFF); background: var(--breanm-blue, #2B55D6);
+	border: 1px solid var(--breanm-blue, #2B55D6); border-radius: var(--breanm-radius, 12px); cursor: pointer; box-shadow: none;
+}
+.breanm-home .breanm-home__btn:hover, .breanm-home .breanm-home__btn:focus {
+	color: var(--breanm-on-blue, #FFFFFF); background: var(--breanm-blue-ink, #2147C2); border-color: var(--breanm-blue-ink, #2147C2);
+}
+.breanm-home__list {
+	position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none;
+	max-height: 300px; overflow: auto; background: var(--breanm-paper, #FFFFFF);
+	border: 1px solid var(--breanm-rule, #E1E4E9); border-radius: var(--breanm-radius, 12px); box-shadow: var(--breanm-shadow, 0 6px 18px rgba(15, 17, 21, .10));
+}
+/* The suggestion rows are <b>City</b> <span>ST</span>. */
+.breanm-home__opt { display: flex; gap: 8px; align-items: baseline; margin: 0; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+.breanm-home__opt[aria-selected="true"], .breanm-home__opt:hover { background: var(--breanm-blue-tint, #EEF2FD); color: var(--breanm-blue-ink, #2147C2); }
+.breanm-home__opt b { font-weight: 600; }
+.breanm-home__opt span { color: var(--breanm-ink-muted, #5A606B); font-size: 14px; }
+.breanm-home__msg { margin: 12px 0 0; min-height: 1.6em; font-size: 15px; color: var(--breanm-ink-muted, #5A606B); }
+
+/* Browse by state */
+.breanm-home__states { padding-block: 40px 64px; border-top: 1px solid var(--breanm-rule, #E1E4E9); }
+.breanm-home__states-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+.breanm-home .breanm-home__states-title {
+	margin: 0 auto 0 0; padding: 0; font-family: inherit; font-size: 27px; font-weight: 600; line-height: inherit;
+	letter-spacing: -.02em; text-wrap: balance; color: var(--breanm-ink, #0F1115);
+}
+.breanm-home__car-nav { display: flex; gap: 8px; }
+.breanm-home .breanm-home__car-btn {
+	width: 40px; height: 40px; margin: 0; padding: 0; font-size: 20px; line-height: 1;
+	color: var(--breanm-ink, #0F1115); background: var(--breanm-paper, #FFFFFF);
+	border: 1px solid var(--breanm-graphite, #B4BAC4); border-radius: 999px; cursor: pointer; box-shadow: none;
+}
+.breanm-home .breanm-home__car-btn:hover, .breanm-home .breanm-home__car-btn:focus {
+	color: var(--breanm-blue-ink, #2147C2); background: var(--breanm-paper, #FFFFFF); border-color: var(--breanm-blue-ink, #2147C2);
+}
+.breanm-home__states-note { margin: 0 0 20px; color: var(--breanm-ink-muted, #5A606B); max-width: 72ch; }
+.breanm-home__car {
+	display: flex; gap: 16px; list-style: none; margin: 0; padding: 4px; overflow-x: auto;
+	scroll-snap-type: x mandatory; scrollbar-width: thin;
+}
+.breanm-home__sc { flex: 0 0 196px; margin: 0; padding: 0; list-style: none; scroll-snap-align: start; }
+.breanm-home .breanm-home__sc-link {
+	display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 14px 14px 16px; text-decoration: none;
+	color: var(--breanm-ink, #0F1115); background: var(--breanm-paper, #FFFFFF);
+	border: 1px solid var(--breanm-rule, #E1E4E9); border-radius: var(--breanm-radius, 12px);
+}
+.breanm-home .breanm-home__sc-link:hover {
+	color: var(--breanm-ink, #0F1115); text-decoration: none;
+	border-color: var(--breanm-blue, #2B55D6); box-shadow: var(--breanm-shadow, 0 6px 18px rgba(15, 17, 21, .10));
+}
+.breanm-home__sc-img {
+	display: block; width: 100%; height: auto; margin-bottom: 8px;
+	fill: var(--breanm-sunk, #F0F2F5); stroke: var(--breanm-graphite, #B4BAC4); stroke-width: 1.2; stroke-linejoin: round;
+}
+.breanm-home .breanm-home__sc-link:hover .breanm-home__sc-img { fill: var(--breanm-blue-tint, #EEF2FD); stroke: var(--breanm-blue, #2B55D6); }
+.breanm-home__sc-name { font-weight: 600; font-size: 16px; line-height: 1.25; }
+.breanm-home__sc-meta { font-size: 14px; color: var(--breanm-ink-muted, #5A606B); }
+
+/* Browse-by-state as a grid, for the by-state page: the same cards, laid out instead of scrolled. */
+.breanm-home__states--grid { padding-block: 8px 48px; border-top: 0; }
+.breanm-home__grid {
+	display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+	gap: 16px; list-style: none; margin: 0; padding: 0;
+}
+.breanm-home__grid > .breanm-home__sc { flex: none; }
+
+/* State hub: the cities of one state, as cards in the same language as the state carousel. */
+.breanm-home__hub { padding-block: 40px 64px; border-top: 1px solid var(--breanm-rule, #E1E4E9); }
+.breanm-home .breanm-home__hub-title {
+	margin: 0 0 20px; padding: 0; font-family: inherit; font-size: 27px; font-weight: 600; line-height: inherit;
+	letter-spacing: -.02em; text-wrap: balance; color: var(--breanm-ink, #0F1115);
+}
+.breanm-home__hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+.breanm-home__hub-card { margin: 0; padding: 0; list-style: none; min-width: 0; }
+.breanm-home .breanm-home__hub-link {
+	display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 12px 14px; text-decoration: none;
+	color: var(--breanm-ink, #0F1115); background: var(--breanm-paper, #FFFFFF);
+	border: 1px solid var(--breanm-rule, #E1E4E9); border-radius: var(--breanm-radius, 12px);
+}
+.breanm-home .breanm-home__hub-link:hover {
+	color: var(--breanm-ink, #0F1115); text-decoration: none;
+	border-color: var(--breanm-blue, #2B55D6); box-shadow: var(--breanm-shadow, 0 6px 18px rgba(15, 17, 21, .10));
+}
+.breanm-home__hub-city { font-weight: 600; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.breanm-home__hub-meta { font-size: 14px; color: var(--breanm-ink-muted, #5A606B); }
+.breanm-home__hub-empty { margin: 0; color: var(--breanm-ink-muted, #5A606B); max-width: 72ch; }
+
+/* Theme reset: themes such as Themify give every button and input uppercase text, wide letter spacing and their
+   own font. Inside the widget they keep the page font in sentence case. */
+.breanm-home button, .breanm-home input {
+	font-family: inherit !important; text-transform: none !important; letter-spacing: normal !important;
+}
+.breanm-home input::placeholder { text-transform: none !important; letter-spacing: normal !important; }
+
+@media (max-width: 640px) {
+	.breanm-home { font-size: 16px; }
+	.breanm-home .breanm-home__states-title, .breanm-home .breanm-home__hub-title { font-size: 23px; }
+	.breanm-home__search { padding: 18px; }
+	.breanm-home .breanm-home__btn { width: 100%; }
+	.breanm-home__sc { flex-basis: 160px; }
+}

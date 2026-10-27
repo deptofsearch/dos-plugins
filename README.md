@@ -11,6 +11,7 @@ plugins/
   dos-outdoor-seating/ Venue pages and city cards (Outdoor Seating Near Me)
   dos-works/          Works post type (departmentofsearch.com)
   dos-best-lenders/   Lender city pages and profiles (Best Lenders Near Me)
+  dos-agents/         Agent cards, homepage and brand layer (Best Real Estate Agents Near Me)
   dos-saab-home/      Homepage search and category cards (Shot and a Beer)
   dos-saab-toolkit/   SEO, images and restaurant pages (Shot and a Beer)
 themes/               Site themes, kept here for source control (not released)
@@ -29,6 +30,7 @@ tests/                Stubbed-WordPress tests, run on every release
 | DoS Outdoor Seating | `plugins/dos-outdoor-seating` | `dos-outdoor-seating-v<version>` | Outdoor Seating Near Me: venue post type, `osn/v1` REST upsert, venue pages, city cards that take over TablePress. Plan and REST contract in `docs/outdoor-seating/`. |
 | DoS Works | `plugins/dos-works` | `dos-works-v<version>` | departmentofsearch.com: the Works (portfolio) post type and its meta box. |
 | DoS Best Lenders | `plugins/dos-best-lenders` | `dos-best-lenders-v<version>` | Best Lenders Near Me: `blnm_city` and `blnm_lender` post types, `blnm/v1` REST upserts for n8n, filterable lender cards, city search and state index. |
+| DoS - Agents | `plugins/dos-agents` | `dos-agents-v<version>` | Best Real Estate Agents Near Me: filterable agent cards (`[breanm_agents]`) fed by `breanm/v1` REST upserts from n8n, the homepage city search and state carousel (`[breanm_city_search]`, `[breanm_state_index]`), the block the 49 state hubs get through a content filter, and the site's brand layer. Local build script `tools/dos-agents/build-zip.sh`. |
 | DoS Shot and a Beer Home | `plugins/dos-saab-home` | `dos-saab-home-v<version>` | shotandabeer.com homepage: search that suggests restaurants, cuisines, dishes and cities from the review taxonomies, category cards, latest reviews. A front-page takeover; off restores the page. |
 | DoS SAAB Toolkit | `plugins/dos-saab-toolkit` | `dos-saab-toolkit-v<version>` | shotandabeer.com: SEO tags, responsive images, and the restaurant pages (`saab_restaurant`) the n8n syncs fill, with their dish board. Formerly `saab-toolkit`; the copy under `legacy/` is the older SEO/Images-only version the DoS Toolkit absorbed. |
 | `themes/` | `themes/*` | not released | departmentofsearch.com themes: `dos-department` (block theme) and `dos-magazine-child`. shotandabeer.com: `dos-saab-child` (Themify Magazine child, white/black/grey). |

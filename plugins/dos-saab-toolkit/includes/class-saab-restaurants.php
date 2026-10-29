@@ -1305,7 +1305,7 @@ class SAAB_Restaurants {
 									</span>
 								<?php endif; ?>
 								<?php if ( $card['mentions'] ) : ?>
-									<span class="saab-restaurant__tag"><?php echo esc_html( $card['mentions'] . ' reviews mention it' ); ?></span>
+									<span class="saab-restaurant__tag"><?php echo esc_html( 1 === $card['mentions'] ? '1 review mentions it' : $card['mentions'] . ' reviews mention it' ); ?></span>
 								<?php elseif ( 'google_tag' === $card['source'] ) : ?>
 									<span class="saab-restaurant__tag">Popular on Google</span>
 								<?php endif; ?>

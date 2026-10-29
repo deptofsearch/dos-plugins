@@ -24,6 +24,10 @@ tag that is the same dish as one already listed is dropped. Once Ryan eats
 there, the page goes back to the full board with his dishes shaded, so nothing
 else changes for reviewed places.
 
+Google's review feed now gives the sync only about 15-20 reviews per place, so
+a dish one reviewer praised can make the list (when it is on the menu); its tag
+reads "1 review mentions it", not "1 reviews mention it".
+
 ## 0.7.3
 
 **No more site-wide crash while the old SAAB Toolkit is still active.** On

@@ -5,6 +5,29 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.8.0
+
+**A hit list on pages Ryan hasn't eaten at.** The restaurant directory is
+growing from places Ryan has reviewed to every non-chain restaurant, bar,
+brewery and taproom in Kennewick, Richland, Pasco, West Richland, Prosser,
+Benton City and Walla Walla. Most of those pages will have no visits, so Ryan
+asked for "a short hit list of menu items to eat based on other people's
+reviews on Google".
+
+The sync already stores what reviewers order (`saab_popular_dishes`: dishes
+named in two or more of ~100 Google reviews, plus Google's photo tags), and the
+board showed all of it as "The Dishes". On a page with no dishes of Ryan's it is
+now **The Hit List**: at most five dishes, numbered, review dishes first by
+mentions, then photo tags only to fill the list
+(`SAAB_Dishes::hit_list()`, pinned in `tests/test-saab-toolkit-dishes.php`). A
+tag that is the same dish as one already listed is dropped. Once Ryan eats
+there, the page goes back to the full board with his dishes shaded, so nothing
+else changes for reviewed places.
+
+Google's review feed now gives the sync only about 15-20 reviews per place, so
+a dish one reviewer praised can make the list (when it is on the menu); its tag
+reads "1 review mentions it", not "1 reviews mention it".
+
 ## 0.7.3
 
 **No more site-wide crash while the old SAAB Toolkit is still active.** On

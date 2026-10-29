@@ -1177,14 +1177,24 @@ class SAAB_Restaurants {
 	 * "The dishes" board: saab_ryan_dishes and saab_popular_dishes merged
 	 * into one grid, matched case-insensitively by name so a dish Ryan ate
 	 * that Google reviewers also mention gets a single card with both tags.
+	 * Where Ryan hasn't eaten (no dishes of his), it is "The Hit List"
+	 * instead: the top few review dishes, numbered (SAAB_Dishes::hit_list()).
 	 */
 	private static function render_dishes_board( $post_id, $photo_index = array() ) {
 		$popular_dishes = self::get_json_meta( $post_id, 'saab_popular_dishes' );
 
+		// Ryan's dishes come merged and with their photos resolved (see get_ryan_dishes()).
+		$ryan_dishes = self::get_ryan_dishes( $post_id );
+
+		// Somewhere Ryan hasn't eaten: the board becomes a short hit list of what Google reviewers order.
+		$is_hit_list = ! $ryan_dishes;
+		if ( $is_hit_list ) {
+			$popular_dishes = SAAB_Dishes::hit_list( $popular_dishes );
+		}
+
 		$cards = array(); // Keyed by lowercase name so both sources land on one card.
 
-		// Ryan's dishes come merged and with their photos resolved (see get_ryan_dishes()).
-		foreach ( self::get_ryan_dishes( $post_id ) as $dish ) {
+		foreach ( $ryan_dishes as $dish ) {
 			$cards[ strtolower( $dish['name'] ) ] = array(
 				'name'     => $dish['name'],
 				'post_id'  => (int) $dish['post_id'],
@@ -1245,15 +1255,22 @@ class SAAB_Restaurants {
 
 		ob_start();
 		?>
-		<section class="saab-restaurant__dishes">
-			<h2>The Dishes</h2>
-			<p class="saab-restaurant__dishes-sub">
-				<?php if ( $has_ryan_dishes ) : ?>
-					Dishes I've ordered, plus what Google reviewers mention most. Shaded cards are dishes I've had.
-				<?php else : ?>
-					What Google reviewers mention most.
-				<?php endif; ?>
-			</p>
+		<section class="saab-restaurant__dishes<?php echo $is_hit_list ? ' saab-restaurant__dishes--hit-list' : ''; ?>">
+			<?php if ( $is_hit_list ) : ?>
+				<h2>The Hit List</h2>
+				<p class="saab-restaurant__dishes-sub">
+					I haven't eaten here yet, so here's what Google reviewers say to order.
+				</p>
+			<?php else : ?>
+				<h2>The Dishes</h2>
+				<p class="saab-restaurant__dishes-sub">
+					<?php if ( $has_ryan_dishes ) : ?>
+						Dishes I've ordered, plus what Google reviewers mention most. Shaded cards are dishes I've had.
+					<?php else : ?>
+						What Google reviewers mention most.
+					<?php endif; ?>
+				</p>
+			<?php endif; ?>
 			<div class="saab-restaurant__board">
 				<?php foreach ( $cards as $card ) : ?>
 					<?php $is_ryan_dish = null !== $card['post_id']; ?>

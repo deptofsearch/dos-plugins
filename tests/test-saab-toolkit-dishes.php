@@ -110,5 +110,22 @@ check( 'Spring Rolls gets no photo from "Spring Rolls and Beef Pho"', 0 === ( $b
 check( 'Beef Pho keeps its verified photo', 501 === ( $by['Beef Pho']['photo_id'] ?? 0 ) );
 check( 'the two dishes of one post stay two cards', 2 === count( $by ) );
 
+echo "--- the hit list on a page Ryan hasn't eaten at ---\n";
+$popular = array(
+	array( 'name' => 'Pad Thai', 'mentions' => 4, 'source' => 'reviews' ),
+	array( 'name' => 'Green Curry', 'mentions' => 9, 'source' => 'reviews' ),
+	array( 'name' => 'Spring Rolls', 'mentions' => 2, 'source' => 'reviews' ),
+	array( 'name' => 'Pad Thai', 'mentions' => null, 'source' => 'google_tag' ),
+	array( 'name' => 'Mango Sticky Rice', 'mentions' => null, 'source' => 'google_tag' ),
+	array( 'name' => 'Tom Yum', 'mentions' => null, 'source' => 'google_tag' ),
+	array( 'name' => 'Larb', 'mentions' => null, 'source' => 'google_tag' ),
+	array( 'name' => '', 'mentions' => 7, 'source' => 'reviews' ),
+);
+$names = array_column( SAAB_Dishes::hit_list( $popular ), 'name' );
+check( 'review dishes first, most mentions first', array( 'Green Curry', 'Pad Thai', 'Spring Rolls' ) === array_slice( $names, 0, 3 ), json_encode( $names ) );
+check( 'Google photo tags fill it to five, minus the Pad Thai already on it', array( 'Mango Sticky Rice', 'Tom Yum' ) === array_slice( $names, 3 ), json_encode( $names ) );
+check( 'five at most', 5 === count( $names ) );
+check( 'an empty list stays empty', array() === SAAB_Dishes::hit_list( array() ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

@@ -304,6 +304,18 @@ body.saab-restaurant-page #content {
 	margin: 0;
 }
 
+/* The hit list (a place Ryan hasn't eaten at): the same cards, numbered in order. */
+
+.saab-restaurant__dishes--hit-list .saab-restaurant__board {
+	counter-reset: saab-hit;
+}
+
+.saab-restaurant__dishes--hit-list .saab-restaurant__card h3::before {
+	counter-increment: saab-hit;
+	content: counter(saab-hit) ". ";
+	color: var(--saab-muted);
+}
+
 /* Dish and feature chips */
 
 .saab-restaurant__chips {

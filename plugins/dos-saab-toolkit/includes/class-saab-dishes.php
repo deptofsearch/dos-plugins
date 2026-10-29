@@ -105,6 +105,51 @@ class SAAB_Dishes {
 	}
 
 	/**
+	 * The hit list on a page Ryan hasn't eaten at: what to order, going by Google reviews.
+	 *
+	 * Dishes counted in reviews come first, most mentions first; Google's own photo tags ("Pad Thai" on a photo)
+	 * only fill the list when reviews name fewer than $limit dishes. A tag that is the same dish as one already on
+	 * the list (see same()) is dropped rather than shown twice.
+	 *
+	 * @param array[] $popular saab_popular_dishes: each { name, mentions (int|null), source ('reviews'|'google_tag') }.
+	 * @return array[] At most $limit of those entries, in hit-list order.
+	 */
+	public static function hit_list( array $popular, $limit = 5 ) {
+		$reviews = array();
+		$tags    = array();
+		foreach ( $popular as $d ) {
+			if ( empty( $d['name'] ) ) {
+				continue;
+			}
+			if ( ! empty( $d['mentions'] ) ) {
+				$reviews[] = $d;
+			} elseif ( isset( $d['source'] ) && 'google_tag' === $d['source'] ) {
+				$tags[] = $d;
+			}
+		}
+		usort(
+			$reviews,
+			function ( $a, $b ) {
+				return (int) $b['mentions'] <=> (int) $a['mentions'];
+			}
+		);
+
+		$out = array();
+		foreach ( array_merge( $reviews, $tags ) as $d ) {
+			if ( count( $out ) >= $limit ) {
+				break;
+			}
+			foreach ( $out as $kept ) {
+				if ( self::same( $kept['name'], $d['name'] ) ) {
+					continue 2;
+				}
+			}
+			$out[] = $d;
+		}
+		return $out;
+	}
+
+	/**
 	 * Groups a dish list so each dish appears once.
 	 *
 	 * @param array[] $dishes Each { name, post_id, posts, photo_id?, date? } (date: the post's date, for "newest").

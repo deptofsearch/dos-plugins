@@ -5,6 +5,33 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.7.3
+
+**No more site-wide crash while the old SAAB Toolkit is still active.** On
+2026-10-29 shotandabeer.com went down after a round of plugin updates, and came
+back when the old `saab-toolkit` folder was renamed. Both plugins declare
+`SAAB_Toolkit`. The 0.6.1 check stood this one down only if the old copy had
+*already* declared the class, and that is true only during the click on
+Activate, because WordPress loads the plugin being activated last. On every
+request after that, plugins load in alphabetical order: `dos-saab-toolkit`
+first, which declared the class, then `saab-toolkit`, which died with "Cannot
+declare class SAAB_Toolkit". That fatal takes down the whole site, front end
+and wp-admin alike.
+
+The main file now also stands down when the old copy is listed in
+`active_plugins` (or network-active) and its file is there, so whichever order
+the two load in, only one declares the class. It matches on the file name
+`saab-toolkit.php`, not the folder, since folders get renamed on the way onto
+a site. A listed copy whose file is gone does not count, because WordPress
+skips it too: renaming the folder is the quick way back up, and it must not
+leave this plugin stood down with the restaurant pages offline (0.6.0's
+mistake).
+
+The class moved from the main file to `includes/class-saab-toolkit.php`. A
+class written in the main file is declared when the file is compiled, before
+any check in it runs, so there it could never be held back. Settings, option
+names and data are unchanged.
+
 ## 0.7.2
 
 **The size setting now actually changes the tile size.** Ryan saw no

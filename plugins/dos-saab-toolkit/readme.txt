@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.7.2
+Stable tag: 0.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.7.3 =
+* Fix: with the old SAAB Toolkit still active, the site went down with "Cannot declare class SAAB_Toolkit" on every page after the click on Activate. This plugin now stands down whenever the old one is active, whichever loads first.
 
 = 0.7.2 =
 * Fix: the hub tile size setting had no visible effect at most screen widths (tiles stretched to fill the row). Tiles are now a fixed size: 19% smaller than the 0.7.0 tiles on desktop.

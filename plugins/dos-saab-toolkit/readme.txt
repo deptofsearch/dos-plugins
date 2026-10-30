@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.8.1
+Stable tag: 0.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.8.2 =
+* A page Ryan hasn't eaten at no longer says "I haven't eaten here yet" twice: when The Hit List shows, the empty Ryan's Take box above it is left out.
 
 = 0.8.1 =
 * Fix: a visit whose title leads with the place ("Breakfast at Hill's Restaurant — Pulled Pork Benedict - March 8, 2026") wasn't counted, so Hill's showed Pulled Pork Benedict 4× with December 2025 as the last time instead of 5× and March 2026.

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.8.0
+Stable tag: 0.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,10 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.8.1 =
+* Fix: a visit whose title leads with the place ("Breakfast at Hill's Restaurant — Pulled Pork Benedict - March 8, 2026") wasn't counted, so Hill's showed Pulled Pork Benedict 4× with December 2025 as the last time instead of 5× and March 2026.
+* Dishes from Google reviews that are one generic word ("Eggs", "Bacon", "Coffee") or a kind of food ("Indian Food") no longer show on the dish board or the hit list.
 
 = 0.8.0 =
 * Restaurant pages for places Ryan hasn't eaten at show "The Hit List": up to five numbered dishes Google reviewers mention most, in place of the full dish board.

@@ -16,16 +16,17 @@ $GLOBALS['meta'] = array(
 	),
 );
 $GLOBALS['posts'] = array(
-	16759 => array( '2026-03-08 08:20:24', 'Breakfast at Hill’s Restaurant — Pulled Pork Benedict – March 8, 2026', 16696 ),
-	16658 => array( '2025-12-28 22:34:49', 'Pulled Pork Benedict at Hills Restaurant &amp; Lounge in Kennewick – December 28, 2025', 16655 ),
-	16025 => array( '2025-09-23 10:38:26', 'Eggs Benedict at Hills Restaurant – September 23, 2025', 15934 ),
-	15930 => array( '2025-09-23 09:24:49', 'French Dip at Hills Restaurant in Kennewick – September 23, 2025', 15936 ),
-	12938 => array( '2021-03-28 12:39:17', 'Pulled Pork Eggs Benedict at Hills Restaurant and Lounge in Kennewick – March 28 2021', 12921 ),
-	11999 => array( '2020-10-24 19:32:46', 'Pulled Pork Benedict at Hills Restaurant in Kennewick – October 24 2020', 11885 ),
-	12205 => array( '2020-09-25 17:13:00', 'Lunch at Hills Restaurant in Kennewick – September 25 2020', 11439 ),
-	12410 => array( '2019-03-09 12:00:35', 'Breakfast at Hills Restaurant in Kennewick – March 9 2019', 9820 ),
-	12015 => array( '2019-01-05 19:57:08', 'Bacon Cheeseburger at Hills Restaurant in Kennewick – January 5 2019', 9470 ),
-	4658  => array( '2015-10-17 08:41:42', 'Pulled Pork Eggs Benedict at Hills Restaurant – October 17 2015', 1832 ),
+	// post_title as WordPress stores it (context=edit, 2026-10-30): plain hyphens, which it only shows as "–".
+	16759 => array( '2026-03-08 08:20:24', "Breakfast at Hill's Restaurant — Pulled Pork Benedict - March 8, 2026", 16696 ),
+	16658 => array( '2025-12-28 22:34:49', 'Pulled Pork Benedict at Hills Restaurant & Lounge in Kennewick - December 28, 2025', 16655 ),
+	16025 => array( '2025-09-23 10:38:26', 'Eggs Benedict at Hills Restaurant - September 23, 2025', 15934 ),
+	15930 => array( '2025-09-23 09:24:49', 'French Dip at Hills Restaurant in Kennewick - September 23, 2025', 15936 ),
+	12938 => array( '2021-03-28 12:39:17', 'Pulled Pork Eggs Benedict at Hills Restaurant and Lounge in Kennewick - March 28 2021', 12921 ),
+	11999 => array( '2020-10-24 19:32:46', 'Pulled Pork Benedict at Hills Restaurant in Kennewick - October 24 2020', 11885 ),
+	12205 => array( '2020-09-25 17:13:00', 'Lunch at Hills Restaurant in Kennewick - September 25 2020', 11439 ),
+	12410 => array( '2019-03-09 12:00:35', 'Breakfast at Hills Restaurant in Kennewick - March 9 2019', 9820 ),
+	12015 => array( '2019-01-05 19:57:08', 'Bacon Cheeseburger at Hills Restaurant in Kennewick - January 5 2019', 9470 ),
+	4658  => array( '2015-10-17 08:41:42', 'Pulled Pork Eggs Benedict at Hills Restaurant - October 17 2015', 1832 ),
 	// A two-dish post whose only photo is the pho: its photo must not land on the spring rolls.
 	500   => array( '2024-01-01 12:00:00', 'Spring Rolls and Beef Pho at Pho Place – January 1, 2024', 501 ),
 );
@@ -81,6 +82,11 @@ $titles = array(
 	'Pulled Pork Eggs Benedict at Hills Restaurant – October 17 2015'                    => 'Pulled Pork Eggs Benedict',
 	'Takeaway Lunch from Bangkok Thai in Kennewick – October 27 2020'                    => 'Takeaway Lunch',
 	'Mashed Potatoes &amp; Turkey Gravy – August 27, 2026'                               => 'Mashed Potatoes & Turkey Gravy',
+	// As stored: plain hyphens.
+	"Breakfast at Hill's Restaurant — Pulled Pork Benedict - March 8, 2026"              => 'Pulled Pork Benedict',
+	'Pulled Pork Benedict at Hills Restaurant & Lounge in Kennewick - December 28, 2025' => 'Pulled Pork Benedict',
+	'Lunch at Hills Restaurant in Kennewick - September 25 2020'                         => 'Lunch',
+	'Breakfast at Hills Restaurant - Pulled Pork Benedict - March 8, 2026'               => 'Pulled Pork Benedict',
 );
 foreach ( $titles as $t => $want ) {
 	$got = SAAB_Dishes::from_title( $t );
@@ -126,6 +132,17 @@ check( 'review dishes first, most mentions first', array( 'Green Curry', 'Pad Th
 check( 'Google photo tags fill it to five, minus the Pad Thai already on it', array( 'Mango Sticky Rice', 'Tom Yum' ) === array_slice( $names, 3 ), json_encode( $names ) );
 check( 'five at most', 5 === count( $names ) );
 check( 'an empty list stays empty', array() === SAAB_Dishes::hit_list( array() ) );
+
+echo "--- generic review dishes ---\n";
+foreach ( array( 'Eggs', 'Bacon', 'Coffee', 'Indian Food', 'Mexican Cuisine', 'Potatoes', 'Drinks' ) as $g ) {
+	check( "\"$g\" is generic", SAAB_Dishes::is_generic( $g ) );
+}
+foreach ( array( 'Biscuits And Gravy', 'Hash Browns', 'Chicken Fried Steak', 'Steak', 'Pho', 'Seafood Chowder', 'Fish and Chips' ) as $g ) {
+	check( "\"$g\" is a dish", ! SAAB_Dishes::is_generic( $g ) );
+}
+// Hill's saab_popular_dishes as synced 2026-09-27.
+$hills = json_decode( '[{"name":"Coffee","mentions":7,"source":"reviews"},{"name":"Biscuits And Gravy","mentions":6,"source":"reviews"},{"name":"Eggs","mentions":6,"source":"reviews"},{"name":"Hash Browns","mentions":4,"source":"reviews"},{"name":"Chicken Fried Steak","mentions":4,"source":"reviews"},{"name":"Bacon","mentions":3,"source":"reviews"}]', true );
+check( 'the hit list skips Coffee, Eggs and Bacon', array( 'Biscuits And Gravy', 'Hash Browns', 'Chicken Fried Steak' ) === array_column( SAAB_Dishes::hit_list( $hills ), 'name' ), json_encode( array_column( SAAB_Dishes::hit_list( $hills ), 'name' ) ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

@@ -93,15 +93,40 @@ class SAAB_Dishes {
 	 * 28, 2025" → "Pulled Pork Benedict". A title that leads with the place, "Breakfast at Hill's Restaurant —
 	 * Pulled Pork Benedict – March 8, 2026", gives the part after the dash. "… from Bangkok Thai …" counts like
 	 * "at". A title with neither is all dish.
+	 *
+	 * Titles are read as stored, and WordPress stores the "-" Ryan types (it only shows it as "–"), so a plain
+	 * hyphen is a dash here too. The date tail can't contain a dash: "Breakfast at Hill's Restaurant — Pulled Pork
+	 * Benedict - March 8, 2026" lost everything after "Restaurant" when it could, and the visit went uncounted.
 	 */
 	public static function from_title( $title ) {
 		$t = trim( preg_replace( '/\s+/u', ' ', html_entity_decode( (string) $title, ENT_QUOTES, 'UTF-8' ) ) );
-		$t = trim( preg_replace( '/\s+[\x{2013}\x{2014}-]\s+[^\x{2013}\x{2014}]*\d{4}\s*$/u', '', $t ) ); // Trailing date.
-		if ( preg_match( '/^(.+?)\s+(?:at|from)\s+(.+?)\s+[\x{2013}\x{2014}]\s+(.+)$/iu', $t, $m ) ) {
+		$t = trim( preg_replace( '/\s+[\x{2013}\x{2014}-]\s+[^\x{2013}\x{2014}-]*\d{4}\s*$/u', '', $t ) ); // Trailing date.
+		if ( preg_match( '/^(.+?)\s+(?:at|from)\s+(.+?)\s+[\x{2013}\x{2014}-]\s+(.+)$/iu', $t, $m ) ) {
 			return trim( $m[3] );
 		}
 		$parts = preg_split( '/\s+(?:at|from)\s+/i', $t, 2 );
 		return trim( $parts[0] );
+	}
+
+	/**
+	 * One-word names reviewers use for an ingredient or a kind of food, not a dish you order: "Eggs", "Bacon",
+	 * "Coffee" (Hill's board, synced 2026-09-27). Singular, as words() gives them.
+	 */
+	const GENERIC = array( 'egg', 'bacon', 'sausage', 'ham', 'toast', 'coffee', 'tea', 'water', 'soda', 'drink', 'beer', 'wine', 'cocktail', 'bread', 'rice', 'bean', 'chip', 'salsa', 'sauce', 'cheese', 'meat', 'chicken', 'beef', 'pork', 'fish', 'potato', 'potatoe', 'fry', 'frie', 'side', 'appetizer', 'dessert', 'soup', 'salad', 'food', 'breakfast', 'brunch', 'lunch', 'dinner' );
+
+	/**
+	 * Whether a dish name from Google reviews is too generic to show: a single word from GENERIC, or a kind of
+	 * food ("Indian Food", "Mexican Cuisine"). Ryan's own dishes never go through this.
+	 */
+	public static function is_generic( $name ) {
+		$words = array_keys( self::words( $name ) );
+		if ( ! $words ) {
+			return true;
+		}
+		if ( 1 === count( $words ) && in_array( $words[0], self::GENERIC, true ) ) {
+			return true;
+		}
+		return in_array( end( $words ), array( 'food', 'cuisine' ), true );
 	}
 
 	/**
@@ -118,7 +143,7 @@ class SAAB_Dishes {
 		$reviews = array();
 		$tags    = array();
 		foreach ( $popular as $d ) {
-			if ( empty( $d['name'] ) ) {
+			if ( empty( $d['name'] ) || self::is_generic( $d['name'] ) ) {
 				continue;
 			}
 			if ( ! empty( $d['mentions'] ) ) {

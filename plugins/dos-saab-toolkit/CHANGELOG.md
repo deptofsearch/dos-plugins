@@ -5,6 +5,29 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.8.1
+
+**Hill's lost a visit.** The live page showed Pulled Pork Benedict "4×,
+last time December 2025"; the March 8, 2026 visit was linked but not counted.
+`SAAB_Dishes::from_title()` reads `post_title` as WordPress stores it, and
+WordPress stores the "-" Ryan types, only showing it as "–". The trailing-date
+rule allowed any text up to the year after a plain hyphen, so on "Breakfast at
+Hill's Restaurant — Pulled Pork Benedict - March 8, 2026" it removed
+everything from the em dash on and the dish came out as "Breakfast". The test
+fixture held the titles as the REST API renders them (with "–"), which is
+why it passed. The date tail can no longer contain a dash, a plain hyphen
+counts as the place/dish separator too, and the fixture now holds the stored
+titles (checked with `context=edit` on 2026-10-30). Without the fix the
+fixture reproduces the live page exactly: 4 visits, December 2025.
+
+**No more "Eggs", "Bacon", "Coffee".** Hill's review dishes were synced on
+2026-09-27, when the sync counted any dish a review named; ingredients and
+drinks came out on top. `SAAB_Dishes::is_generic()` drops a Google-reviews
+dish that is one word from `GENERIC` or a kind of food ("Indian Food",
+"Mexican Cuisine"), on the dish board and the hit list, so every page is fixed
+without a re-sync. Ryan's own dishes never go through it. Single-word dishes
+that are the thing you order ("Steak", "Pho", "Burger") stay.
+
 ## 0.8.0
 
 **A hit list on pages Ryan hasn't eaten at.** The restaurant directory is

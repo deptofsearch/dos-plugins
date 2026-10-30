@@ -1206,7 +1206,7 @@ class SAAB_Restaurants {
 		}
 
 		foreach ( $popular_dishes as $dish ) {
-			if ( empty( $dish['name'] ) ) {
+			if ( empty( $dish['name'] ) || SAAB_Dishes::is_generic( $dish['name'] ) ) {
 				continue;
 			}
 			$key = strtolower( $dish['name'] );

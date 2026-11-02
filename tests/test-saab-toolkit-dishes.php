@@ -41,6 +41,7 @@ function get_post_meta( $id, $key, $single ) { return $GLOBALS['meta'][ $id ][ $
 function get_post( $id ) { $id = is_object( $id ) ? $id->ID : (int) $id; return isset( $GLOBALS['posts'][ $id ] ) ? new WP_Post( $id ) : null; }
 function get_post_field( $field, $id ) { $p = get_post( $id ); return $p ? $p->$field : ''; }
 function get_post_thumbnail_id( $p ) { $id = is_object( $p ) ? $p->ID : (int) $p; return $GLOBALS['posts'][ $id ][2] ?? 0; }
+function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 function wp_list_pluck( $list, $field ) { return array_map( function ( $o ) use ( $field ) { return $o->$field; }, $list ); }
 
 require dirname( __DIR__ ) . '/plugins/dos-saab-toolkit/includes/class-saab-restaurants.php';
@@ -143,6 +144,17 @@ foreach ( array( 'Biscuits And Gravy', 'Hash Browns', 'Chicken Fried Steak', 'St
 // Hill's saab_popular_dishes as synced 2026-09-27.
 $hills = json_decode( '[{"name":"Coffee","mentions":7,"source":"reviews"},{"name":"Biscuits And Gravy","mentions":6,"source":"reviews"},{"name":"Eggs","mentions":6,"source":"reviews"},{"name":"Hash Browns","mentions":4,"source":"reviews"},{"name":"Chicken Fried Steak","mentions":4,"source":"reviews"},{"name":"Bacon","mentions":3,"source":"reviews"}]', true );
 check( 'the hit list skips Coffee, Eggs and Bacon', array( 'Biscuits And Gravy', 'Hash Browns', 'Chicken Fried Steak' ) === array_column( SAAB_Dishes::hit_list( $hills ), 'name' ), json_encode( array_column( SAAB_Dishes::hit_list( $hills ), 'name' ) ) );
+
+echo "--- Ryan's Take on a page he hasn't eaten at ---\n";
+$take = new ReflectionMethod( 'SAAB_Restaurants', 'render_take' );
+$take->setAccessible( true );
+// Ann's Best as built 2026-10-30: no take, no visits, a hit list from Google reviews.
+$GLOBALS['meta'][18565] = array( 'saab_popular_dishes' => '[{"name":"Fried Catfish","mentions":2,"source":"reviews"},{"name":"Shrimp","mentions":2,"source":"reviews"}]' );
+check( 'no "I haven\'t eaten here yet" box above the hit list', '' === $take->invoke( null, 18565, '' ) );
+$GLOBALS['meta'][18567] = array( 'saab_popular_dishes' => '[]' );
+check( 'with no hit list the box still says it', false !== strpos( $take->invoke( null, 18567, '' ), "I haven't eaten here yet." ) );
+check( 'a written take always shows', false !== strpos( $take->invoke( null, 18565, '<p>Great catfish.</p>' ), 'Great catfish.' ) );
+check( 'Hill\'s (visits, no take) still shows no box', '' === $take->invoke( null, 18039, '' ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

@@ -1133,6 +1133,13 @@ class SAAB_Restaurants {
 			return '';
 		}
 
+		// No take and he hasn't eaten here: the hit list right below already opens with "I haven't eaten here yet",
+		// so saying it twice in a row reads like a glitch (Ann's Best, 2026-10-30). Only a page with no hit list
+		// keeps the line here.
+		if ( ! $has_content && SAAB_Dishes::hit_list( self::get_json_meta( $post_id, 'saab_popular_dishes' ) ) ) {
+			return '';
+		}
+
 		ob_start();
 		?>
 		<section class="saab-restaurant__take">

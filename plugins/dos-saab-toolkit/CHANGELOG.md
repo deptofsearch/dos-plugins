@@ -5,6 +5,17 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.8.2
+
+**"I haven't eaten here yet" once, not twice.** On a directory page (Ann's
+Best, 2026-10-30) the Ryan's Take box said "I haven't eaten here yet." and the
+hit list right under it opened with "I haven't eaten here yet, so here's what
+Google reviewers say to order." Ryan asked to drop the duplicate. With no take
+written and a hit list to show, `render_take()` now leaves its box out; the
+hit list's line carries the message. A page with no hit list (no review
+dishes) keeps the box, so it still says something, and a written take always
+shows. Pinned in `tests/test-saab-toolkit-dishes.php`.
+
 ## 0.8.1
 
 **Hill's lost a visit.** The live page showed Pulled Pork Benedict "4×,

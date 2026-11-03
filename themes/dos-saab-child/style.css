@@ -2,7 +2,7 @@
 Theme Name: DoS SAAB Child
 Description: Shot and a Beer child theme for Themify Magazine. White page, black text, grey cards; Oswald headings over Barlow body (the "Taproom" homepage direction, 2026-10-18).
 Template: magazine
-Version: 0.1.1
+Version: 0.1.2
 Author: Department of Search
 Text Domain: dos-saab-child
 */
@@ -193,6 +193,19 @@ input[type="submit"]:hover,
 .button:hover {
 	background: #333333;
 	color: var(--saab-bg);
+}
+/* The "More" pill on post cards: Themify's own .more-link rule is more specific and left the text
+   touching the edge (the M was clipped), so this one is scoped up to win (Ryan, 2026-11-02).
+   The right padding is a touch smaller because letter-spacing already adds space after the last letter. */
+.post .more-link,
+.loops-wrapper .more-link,
+a.more-link {
+	display: inline-flex;
+	align-items: center;
+	gap: .35em;
+	padding: .6em 1.15em .6em 1.3em;
+	line-height: 1;
+	text-decoration: none;
 }
 input[type="text"],
 input[type="search"],

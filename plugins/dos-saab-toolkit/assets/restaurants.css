@@ -170,6 +170,11 @@ body.saab-restaurant-page #content {
 .saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
 	aspect-ratio: var(--saab-photo-ratio, 1.778);
 	width: min(100%, calc(400px * var(--saab-photo-ratio, 1.778)));
+	justify-self: center; /* Ryan, 2026-11-04: a narrower photo sits centered, not left */
+}
+
+.saab-restaurant__photo-strip--count-1 + .saab-restaurant__photo-credit {
+	text-align: center;
 }
 
 .saab-restaurant__photo-strip-link,
@@ -236,6 +241,10 @@ body.saab-restaurant-page #content {
 		width: 100%;
 		aspect-ratio: 2 / 1;
 		max-height: 200px;
+	}
+
+	.saab-restaurant__photo-strip--count-1 + .saab-restaurant__photo-credit {
+		text-align: left;
 	}
 
 	.saab-restaurant__menu-section ul,

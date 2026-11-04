@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.4
+
+**A lone photo is centered on desktop.** 0.9.3's shaped frame is narrower than the
+content column for anything under 2.66:1 (Tony's Sub Shop's 4:3 storefront is
+533px of 1064), and it sat at the left with empty space beside it. Ryan: "center
+it". The item gets `justify-self: center` and the credit right after a
+`--count-1` strip is centered too. Phones are unchanged (the photo is full width
+there and the credit stays left).
+
 ## 0.9.3
 
 **A lone photo on desktop.** Ryan, on Ethos Bakery: "The B in Bakery isn't

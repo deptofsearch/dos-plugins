@@ -164,17 +164,23 @@ body.saab-restaurant-page #content {
 	aspect-ratio: 4 / 3;
 }
 
+/* A lone photo: a frame shaped like the image (--saab-photo-ratio, set from the
+ * attachment's size, 16:9 if unknown), no taller than 400px, so it neither fills
+ * the screen nor crops the sides off a wide image. */
 .saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
-	aspect-ratio: 16 / 9;
+	aspect-ratio: var(--saab-photo-ratio, 1.778);
+	width: min(100%, calc(400px * var(--saab-photo-ratio, 1.778)));
 }
 
-.saab-restaurant__photo-strip-link {
+.saab-restaurant__photo-strip-link,
+.saab-restaurant__photo-strip-static {
 	display: block;
 	width: 100%;
 	height: 100%;
 }
 
-.saab-restaurant__photo-strip-link img {
+.saab-restaurant__photo-strip-link img,
+.saab-restaurant__photo-strip-static img {
 	display: block;
 	width: 100%;
 	height: 100%;

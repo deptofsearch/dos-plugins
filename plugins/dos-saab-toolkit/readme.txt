@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.9.2
+Stable tag: 0.9.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,10 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.3 =
+* A page's only photo gets a frame shaped like the image, at most 400px tall, so wide images and logos aren't cropped on desktop.
+* A lone photo from the restaurant's website is no longer a link to a lightbox that only repeated it.
 
 = 0.9.2 =
 * On phones, a page with a single photo shows it full width in a short, wide frame instead of a tall cropped card.

@@ -1006,10 +1006,31 @@ class SAAB_Restaurants {
 				$index    = isset( $index_map[ $attachment_id ] ) ? (int) $index_map[ $attachment_id ] : 0;
 				$full_src = self::photo_full_src( $attachment_id );
 				?>
-				<div class="saab-restaurant__photo-strip-item">
+				<?php
+				// A lone photo gets a frame shaped like the image (see single_photo_ratio()); a lone photo from the
+				// restaurant's own website isn't a link: the lightbox would only repeat it, with "1 / 1" and a "Read
+				// the post" back to this same page (Ryan, 2026-11-04: "it's showing something worthless").
+				$item_style = '';
+				$static     = false;
+				if ( 1 === $count ) {
+					$meta  = wp_get_attachment_metadata( $attachment_id );
+					$ratio = is_array( $meta ) ? self::single_photo_ratio( $meta['width'] ?? 0, $meta['height'] ?? 0 ) : 0;
+					if ( $ratio ) {
+						$item_style = ' style="--saab-photo-ratio: ' . esc_attr( $ratio ) . '"';
+					}
+					$static = '' !== (string) get_post_meta( $attachment_id, '_saab_source_image_url', true );
+				}
+				?>
+				<div class="saab-restaurant__photo-strip-item"<?php echo $item_style; ?>>
+					<?php if ( $static ) : ?>
+					<span class="saab-restaurant__photo-strip-static">
+						<?php echo wp_get_attachment_image( $attachment_id, $size, false, $img_attr ); ?>
+					</span>
+					<?php else : ?>
 					<a class="saab-restaurant__photo-strip-link" href="<?php echo esc_url( $full_src ); ?>" data-photo-index="<?php echo $index; ?>">
 						<?php echo wp_get_attachment_image( $attachment_id, $size, false, $img_attr ); ?>
 					</a>
+					<?php endif; ?>
 					<?php if ( $is_last && $count >= 2 ) : ?>
 						<a class="saab-restaurant__photo-strip-more" href="<?php echo esc_url( $full_src ); ?>" data-photo-index="<?php echo $index; ?>">
 							<?php echo esc_html( sprintf( 'See all %d photos', $count ) ); ?>
@@ -1021,6 +1042,21 @@ class SAAB_Restaurants {
 		<?php echo self::render_photo_credit( $post_id, $visible[0] ); ?>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Width:height for the frame of a page's only photo: the image's own shape, held between 4:3 and 2.4:1 so a
+	 * tall phone shot or a thin banner still makes a sensible frame. 0 when the size is unknown (CSS falls back to
+	 * 16:9). With the frame matching the image, `object-fit: cover` crops little or nothing: Ethos Bakery's 2.16:1
+	 * logo in the old fixed 16:9 frame lost the "B" of "Bakery".
+	 */
+	public static function single_photo_ratio( $width, $height ) {
+		$width  = (int) $width;
+		$height = (int) $height;
+		if ( $width <= 0 || $height <= 0 ) {
+			return 0;
+		}
+		return round( max( 4 / 3, min( 2.4, $width / $height ) ), 3 );
 	}
 
 	/**

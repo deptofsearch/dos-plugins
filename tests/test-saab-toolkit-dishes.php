@@ -189,5 +189,11 @@ check( 'a shared website photo names this page\'s city (Kennewick)', 'Spudnut Sh
 check( 'and the first location still reads Pasco', 'Spudnut Shop in Pasco' === SAAB_Restaurants::photo_alt( 9100, 19407, 'x' ) );
 check( 'Ryan\'s own photos keep their stored alt', 'Ryan\'s burger' === SAAB_Restaurants::photo_alt( 9200, 19320, 'x' ) );
 
+// The frame of a page's only photo follows the image, held between 4:3 and 2.4:1.
+check( 'Ethos Bakery\'s 1600x741 logo keeps its own shape (2.159)', 2.159 == SAAB_Restaurants::single_photo_ratio( 1600, 741 ), (string) SAAB_Restaurants::single_photo_ratio( 1600, 741 ) );
+check( 'a tall phone shot gets a 4:3 frame', 1.333 == SAAB_Restaurants::single_photo_ratio( 900, 1600 ) );
+check( 'a thin banner is held at 2.4:1', 2.4 == SAAB_Restaurants::single_photo_ratio( 3000, 600 ) );
+check( 'no size, no ratio (CSS falls back to 16:9)', 0 === SAAB_Restaurants::single_photo_ratio( 0, 0 ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

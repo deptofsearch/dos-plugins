@@ -237,14 +237,14 @@ body.saab-restaurant-page #content {
 		padding-bottom: 0;
 	}
 
+	/* Same shaped frame as desktop, capped at 200px tall instead of 400: a wide
+	   image (Ethos Bakery's logo) fills the width uncropped, a 4:3 photo is
+	   266x200 and centered. A fixed 2:1 frame trimmed the logo's edge. */
 	.saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
-		width: 100%;
-		aspect-ratio: 2 / 1;
-		max-height: 200px;
-	}
-
-	.saab-restaurant__photo-strip--count-1 + .saab-restaurant__photo-credit {
-		text-align: left;
+		flex: none;
+		aspect-ratio: var(--saab-photo-ratio, 2);
+		width: min(100%, calc(200px * var(--saab-photo-ratio, 2)));
+		margin: 0 auto;
 	}
 
 	.saab-restaurant__menu-section ul,

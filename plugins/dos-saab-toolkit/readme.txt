@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.2 =
+* On phones, a page with a single photo shows it full width in a short, wide frame instead of a tall cropped card.
 
 = 0.9.1 =
 * Restaurant pages show the featured image once, in the photo strip, instead of also above the page.

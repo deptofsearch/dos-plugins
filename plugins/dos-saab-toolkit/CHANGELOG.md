@@ -5,6 +5,16 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.2
+
+**A lone photo fits a phone.** Under 600px the photo strip is a swipeable row of
+80%-wide 4:3 cards, which suits several photos. Most directory pages have exactly
+one (from the restaurant's website), and Ryan found those "too big" on mobile:
+a wide image was zoomed and cropped to 4:3 (Ethos Bakery's logo read "thos AKER").
+`--count-1` now drops the scroll row on phones and shows the photo full width at
+2:1, capped at 200px tall. Pages with 2+ photos keep the row. Checked at iPhone
+width against the live page's HTML and CSS: 351x176 frame, whole image visible.
+
 ## 0.9.1
 
 **One photo, not two.** Once directory pages got a featured image (0.9.0), the

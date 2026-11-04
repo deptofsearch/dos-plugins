@@ -23,6 +23,7 @@ Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate
 
 = 0.9.1 =
 * Restaurant pages show the featured image once, in the photo strip, instead of also above the page.
+* A website photo shared by a chain's locations is described with each page's own city.
 
 = 0.9.0 =
 * New REST route POST /saab/v1/restaurants/image: sets a restaurant page's featured image from a photo on the restaurant's own website (downloaded, checked, re-encoded), credited to that site. An n8n workflow fills it for directory pages.

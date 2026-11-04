@@ -5,6 +5,24 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.3
+
+**A lone photo on desktop.** Ryan, on Ethos Bakery: "The B in Bakery isn't
+displaying and it's clickable but when clicked, it's showing something worthless".
+At desktop width a page's only photo filled the whole content column in a fixed
+16:9 frame (1064x598), so a 2.16:1 logo lost its sides; clicking it opened the
+lightbox on the same image with "1 / 1", dead arrows and "Read the post" linking
+back to the page itself.
+
+- `SAAB_Restaurants::single_photo_ratio()` gives the frame the image's own shape,
+  held between 4:3 and 2.4:1, as `--saab-photo-ratio` on the item. The CSS caps
+  it at 400px tall (`width: min(100%, 400px * ratio)`), 16:9 if the size is
+  unknown. Ethos now shows whole at 864x400. Phones keep 0.9.2's full-width 2:1.
+- A page's only photo, when it came from the restaurant's website
+  (`_saab_source_image_url`), renders in a `span.saab-restaurant__photo-strip-static`
+  instead of the lightbox link. A lone photo from one of Ryan's posts stays a link:
+  its lightbox caption leads to that post.
+
 ## 0.9.2
 
 **A lone photo fits a phone.** Under 600px the photo strip is a swipeable row of

@@ -175,5 +175,19 @@ check( 'the credit shows under a website photo, linked to the site', false !== s
 check( 'no credit once another photo leads the strip', '' === $credit->invoke( null, 18565, 1234 ) );
 check( 'no credit on a page without one (Hill\'s)', '' === $credit->invoke( null, 18039, 16696 ) );
 
+// A chain's website photo is one attachment (9100) shared by two locations; its stored alt names the first.
+function get_the_terms( $id, $tax ) { return $GLOBALS['terms'][ $id ] ?? false; }
+function is_wp_error( $x ) { return false; }
+function get_ancestors( $id, $tax, $type ) { return $GLOBALS['ancestors'][ $id ] ?? array(); }
+$GLOBALS['terms'] = array( 19407 => array( (object) array( 'term_id' => 31, 'name' => 'Pasco' ) ), 19320 => array( (object) array( 'term_id' => 32, 'name' => 'Kennewick' ) ) );
+$GLOBALS['ancestors'] = array( 31 => array( 2, 1 ), 32 => array( 2, 1 ) );
+$GLOBALS['posts'][19407] = array( '2026-11-01 00:00:00', 'Spudnut Shop', 9100 );
+$GLOBALS['posts'][19320] = array( '2026-11-01 00:00:00', 'Spudnut Shop', 9100 );
+$GLOBALS['meta'][9100] = array( '_saab_source_image_url' => 'https://spudnutsnw.com/x.jpg', '_wp_attachment_image_alt' => 'Spudnut Shop in Pasco' );
+$GLOBALS['meta'][9200] = array( '_wp_attachment_image_alt' => 'Ryan\'s burger' );
+check( 'a shared website photo names this page\'s city (Kennewick)', 'Spudnut Shop in Kennewick' === SAAB_Restaurants::photo_alt( 9100, 19320, 'x' ), SAAB_Restaurants::photo_alt( 9100, 19320, 'x' ) );
+check( 'and the first location still reads Pasco', 'Spudnut Shop in Pasco' === SAAB_Restaurants::photo_alt( 9100, 19407, 'x' ) );
+check( 'Ryan\'s own photos keep their stored alt', 'Ryan\'s burger' === SAAB_Restaurants::photo_alt( 9200, 19320, 'x' ) );
+
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

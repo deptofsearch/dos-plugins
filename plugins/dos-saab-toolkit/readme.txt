@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.9.0
+Stable tag: 0.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,10 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.1 =
+* Restaurant pages show the featured image once, in the photo strip, instead of also above the page.
+* A website photo shared by a chain's locations is described with each page's own city.
 
 = 0.9.0 =
 * New REST route POST /saab/v1/restaurants/image: sets a restaurant page's featured image from a photo on the restaurant's own website (downloaded, checked, re-encoded), credited to that site. An n8n workflow fills it for directory pages.

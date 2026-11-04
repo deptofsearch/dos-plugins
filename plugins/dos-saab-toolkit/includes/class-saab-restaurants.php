@@ -326,14 +326,18 @@ class SAAB_Restaurants {
 	 * request, and only for a restaurant page's own post.
 	 */
 	public static function filter_themify_layout_meta( $value, $object_id, $meta_key, $single ) {
-		if ( is_admin() || 'layout' !== $meta_key || ! is_singular( self::POST_TYPE ) ) {
+		if ( is_admin() || ! in_array( $meta_key, array( 'layout', 'hide_post_image' ), true ) || ! is_singular( self::POST_TYPE ) ) {
 			return $value;
 		}
 		if ( self::POST_TYPE !== get_post_type( $object_id ) ) {
 			return $value;
 		}
 
-		return $single ? 'sidebar-none' : array( 'sidebar-none' );
+		// Themify's per-post "Hide Featured Image" (postmeta `hide_post_image`): the theme would print the featured
+		// image above the page, and the photo strip already leads with it (Ryan, 2026-11-04: "we just need one pic").
+		// restaurants.css hides `.post-image` too, in case this theme version reads the setting from somewhere else.
+		$out = 'layout' === $meta_key ? 'sidebar-none' : 'yes';
+		return $single ? $out : array( $out );
 	}
 
 	/**
@@ -862,6 +866,24 @@ class SAAB_Restaurants {
 	}
 
 	/**
+	 * Alt text for a photo on restaurant page $page_id. A photo taken from the restaurant's own website
+	 * (SAAB_Restaurant_Image, marked by _saab_source_image_url) is one attachment shared by every location of a chain
+	 * that links the same site, so its stored alt names whichever location saved it first ("Spudnut Shop in Pasco" on
+	 * the Kennewick page). For those, the alt is built for the page being shown: "<name> in <city>". Every other
+	 * photo keeps resolved_alt().
+	 */
+	public static function photo_alt( $attachment_id, $page_id, $fallback ) {
+		if ( $page_id && '' !== (string) get_post_meta( $attachment_id, '_saab_source_image_url', true ) ) {
+			$name = self::get_raw_title( $page_id );
+			if ( '' !== $name ) {
+				$city = self::get_city_name( $page_id );
+				return $city ? sprintf( '%s in %s', $name, $city ) : $name;
+			}
+		}
+		return self::resolved_alt( $attachment_id, $fallback );
+	}
+
+	/**
 	 * The unfiltered post_title, not get_the_title()'s display version.
 	 * wptexturize (run by the 'the_title' filter) turns a plain " - " into
 	 * the "&#8211;" entity before strip_trailing_date() ever sees it, so a
@@ -905,7 +927,7 @@ class SAAB_Restaurants {
 			$data[] = array(
 				'src'     => self::photo_full_src( $id ),
 				'srcset'  => $srcset ? $srcset : '',
-				'alt'     => self::resolved_alt( $id, $caption_title ),
+				'alt'     => self::photo_alt( $id, $source_id, $caption_title ),
 				'caption' => $date ? $caption_title . ' — ' . $date : $caption_title,
 				'url'     => $source_id ? get_permalink( $source_id ) : get_permalink( $id ),
 			);
@@ -972,7 +994,7 @@ class SAAB_Restaurants {
 					? '(max-width: 600px) 80vw, (max-width: 820px) 100vw, 66vw'
 					: '(max-width: 600px) 80vw, (max-width: 820px) 50vw, 33vw';
 				$img_attr = array(
-					'alt'   => self::resolved_alt( $attachment_id, $restaurant_title ),
+					'alt'   => self::photo_alt( $attachment_id, $post_id, $restaurant_title ),
 					'sizes' => $sizes,
 				);
 				if ( $is_first ) {

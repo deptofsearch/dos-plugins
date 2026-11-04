@@ -5,6 +5,29 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.1
+
+**One photo, not two.** Once directory pages got a featured image (0.9.0), the
+Themify theme printed it above the page and the photo strip showed it again
+right under it (Ryan, on Tony's Sub Shop: "the two images are redundant and too
+much. we just need one pic"). The strip stays, since it carries the photo credit
+and Ryan's visit photos; the theme's copy goes.
+
+- `filter_themify_layout_meta()` now also answers Themify's per-post
+  `hide_post_image` with `yes` on a restaurant page (same request-only
+  short-circuit as the sidebar `layout`; nothing is written).
+- `restaurants.css` hides `article.saab_restaurant > .post-image` on
+  `body.saab-restaurant-page` as the backstop.
+
+**Each location's photo names its own city.** A chain's locations that link the
+same website share one sideloaded photo (0.9.0 reuses it by source URL), and its
+stored alt text names whichever location saved it first, so the Kennewick
+Spudnut Shop page described its photo as "Spudnut Shop in Pasco".
+`SAAB_Restaurants::photo_alt()` builds the alt for the page being shown
+("<name> in <city>") for any photo marked `_saab_source_image_url`, in the photo
+strip and the lightbox data; Ryan's own photos keep their stored alt. Nothing in
+the database changes, so the 103 photos already set are fixed on upload.
+
 ## 0.9.0
 
 **Photos for directory pages.** The ~800 pages built for places Ryan hasn't

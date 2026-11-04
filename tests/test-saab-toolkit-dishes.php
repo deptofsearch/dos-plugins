@@ -41,6 +41,8 @@ function get_post_meta( $id, $key, $single ) { return $GLOBALS['meta'][ $id ][ $
 function get_post( $id ) { $id = is_object( $id ) ? $id->ID : (int) $id; return isset( $GLOBALS['posts'][ $id ] ) ? new WP_Post( $id ) : null; }
 function get_post_field( $field, $id ) { $p = get_post( $id ); return $p ? $p->$field : ''; }
 function get_post_thumbnail_id( $p ) { $id = is_object( $p ) ? $p->ID : (int) $p; return $GLOBALS['posts'][ $id ][2] ?? 0; }
+function esc_url( $u ) { return (string) $u; }
+function esc_html( $s ) { return htmlspecialchars( (string) $s, ENT_QUOTES ); }
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 function wp_list_pluck( $list, $field ) { return array_map( function ( $o ) use ( $field ) { return $o->$field; }, $list ); }
 
@@ -155,6 +157,23 @@ $GLOBALS['meta'][18567] = array( 'saab_popular_dishes' => '[]' );
 check( 'with no hit list the box still says it', false !== strpos( $take->invoke( null, 18567, '' ), "I haven't eaten here yet." ) );
 check( 'a written take always shows', false !== strpos( $take->invoke( null, 18565, '<p>Great catfish.</p>' ), 'Great catfish.' ) );
 check( 'Hill\'s (visits, no take) still shows no box', '' === $take->invoke( null, 18039, '' ) );
+
+echo "--- photos from the restaurant's own website ---\n";
+require_once dirname( __DIR__ ) . '/plugins/dos-saab-toolkit/includes/class-saab-restaurant-image.php';
+check( 'a 1200x630 jpeg share image passes', '' === SAAB_Restaurant_Image::check_dimensions( 1200, 630, 'image/jpeg' ) );
+check( 'a 500x500 logo-sized image is too small', false !== strpos( SAAB_Restaurant_Image::check_dimensions( 500, 500, 'image/png' ), 'Too small' ) );
+check( 'a tall phone shot is rejected (strip crops wide)', false !== strpos( SAAB_Restaurant_Image::check_dimensions( 900, 1600, 'image/jpeg' ), 'Aspect ratio' ) );
+check( 'a 3000x600 banner is rejected', false !== strpos( SAAB_Restaurant_Image::check_dimensions( 3000, 600, 'image/webp' ), 'Aspect ratio' ) );
+check( 'gif and svg are not accepted', false !== strpos( SAAB_Restaurant_Image::check_dimensions( 1200, 800, 'image/gif' ), 'Unsupported' ) );
+$credit = new ReflectionMethod( 'SAAB_Restaurants', 'render_photo_credit' );
+$credit->setAccessible( true );
+$GLOBALS['posts'][18565] = array( '2026-10-30 00:20:43', "Ann's Best", 9001 );
+$GLOBALS['meta'][18565]['saab_photo_credit_text'] = "Photo: Ann's Best's website";
+$GLOBALS['meta'][18565]['saab_photo_credit_url']  = 'https://annsbest.example/';
+$html = $credit->invoke( null, 18565, 9001 );
+check( 'the credit shows under a website photo, linked to the site', false !== strpos( $html, 'annsbest.example' ) && false !== strpos( $html, 'Photo: Ann&#039;s Best&#039;s website' ), $html );
+check( 'no credit once another photo leads the strip', '' === $credit->invoke( null, 18565, 1234 ) );
+check( 'no credit on a page without one (Hill\'s)', '' === $credit->invoke( null, 18039, 16696 ) );
 
 echo "\n$pass passed, $fail failed\n";
 exit( $fail > 0 ? 1 : 0 );

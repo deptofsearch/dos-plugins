@@ -5,6 +5,30 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.0
+
+**Photos for directory pages.** The ~800 pages built for places Ryan hasn't
+eaten at had no photos: the Google data the sync reads stopped returning place
+photos, and Google Maps photos are customers' uploads that the site should not
+republish anyway. DoS Outdoor Seating already solves this with
+`/osn/v1/venues/image` (one in three venues got a photo from its own website),
+so this ports it.
+
+- `SAAB_Restaurant_Image` (`includes/class-saab-restaurant-image.php`) registers
+  `POST /saab/v1/restaurants/image` with items `{ id, image_url, credit_url,
+  credit_text?, force? }` (max 5) and `dry_run`. Each image is downloaded (20 s,
+  8 MB cap), must be jpeg/png/webp, at least 600x300, aspect 1:1 to 3.2:1
+  (`check_dimensions()`, pinned in the dishes test), is EXIF-rotated, shrunk to
+  1600 wide and saved as WebP (JPEG where the server can't write WebP), then
+  sideloaded and set as the featured image. The first good candidate for a page
+  wins; a page that already has a featured image is skipped unless `force`. An
+  image already sideloaded from the same URL is reused (chains share one).
+- The credit goes in `saab_photo_credit_url` / `saab_photo_credit_text`
+  (default "Photo: <title>'s website"), and shows, linked, under the photo strip
+  while that photo leads the strip. When one of Ryan's photos takes the lead the
+  credit goes with it.
+- `SAAB_Restaurants::get_city_name()` is public now (the alt text uses it).
+
 ## 0.8.2
 
 **"I haven't eaten here yet" once, not twice.** On a directory page (Ann's

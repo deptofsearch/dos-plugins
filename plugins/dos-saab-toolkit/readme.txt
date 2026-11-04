@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.8.2
+Stable tag: 0.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,10 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.0 =
+* New REST route POST /saab/v1/restaurants/image: sets a restaurant page's featured image from a photo on the restaurant's own website (downloaded, checked, re-encoded), credited to that site. An n8n workflow fills it for directory pages.
+* A page whose lead photo came from the restaurant's website shows "Photo: <name>'s website" under the photo strip.
 
 = 0.8.2 =
 * A page Ryan hasn't eaten at no longer says "I haven't eaten here yet" twice: when The Hit List shows, the empty Ryan's Take box above it is left out.

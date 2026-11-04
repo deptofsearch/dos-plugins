@@ -113,6 +113,9 @@ class SAAB_Restaurants {
 
 		require_once __DIR__ . '/class-saab-bestof-hub.php';
 		SAAB_Bestof_Hub::init();
+
+		require_once __DIR__ . '/class-saab-restaurant-image.php';
+		SAAB_Restaurant_Image::init();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -993,8 +996,25 @@ class SAAB_Restaurants {
 				</div>
 			<?php endforeach; ?>
 		</div>
+		<?php echo self::render_photo_credit( $post_id, $visible[0] ); ?>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * "Photo: Ann's Best's website", linked, under the strip while the lead photo is the one taken from the restaurant's
+	 * own site (SAAB_Restaurant_Image). Once one of Ryan's photos leads, the credit goes away with it.
+	 */
+	private static function render_photo_credit( $post_id, $lead_id ) {
+		$text = (string) get_post_meta( $post_id, SAAB_Restaurant_Image::CREDIT_TEXT, true );
+		if ( '' === $text || (int) $lead_id !== (int) get_post_thumbnail_id( $post_id ) ) {
+			return '';
+		}
+		$url = (string) get_post_meta( $post_id, SAAB_Restaurant_Image::CREDIT_URL, true );
+		$out = '' !== $url
+			? '<a href="' . esc_url( $url ) . '" rel="nofollow noopener" target="_blank">' . esc_html( $text ) . '</a>'
+			: esc_html( $text );
+		return '<p class="saab-restaurant__photo-credit">' . $out . '</p>';
 	}
 
 	private static function render_header( $post_id ) {
@@ -1063,7 +1083,7 @@ class SAAB_Restaurants {
 		return $deepest;
 	}
 
-	private static function get_city_name( $post_id ) {
+	public static function get_city_name( $post_id ) {
 		$deepest = self::get_deepest_region_term( $post_id );
 		return $deepest ? $deepest->name : '';
 	}

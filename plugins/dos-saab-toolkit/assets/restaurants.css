@@ -740,3 +740,14 @@ body.saab-restaurant-lightbox-open {
 		transition: opacity 0.15s ease;
 	}
 }
+
+/* Credit under the photo strip when the lead photo came from the restaurant's own website. */
+.saab-restaurant__photo-credit {
+	margin: 6px 0 0;
+	font-size: 0.75em;
+	color: var(--saab-muted);
+}
+
+.saab-restaurant__photo-credit a {
+	color: inherit;
+}

@@ -326,14 +326,18 @@ class SAAB_Restaurants {
 	 * request, and only for a restaurant page's own post.
 	 */
 	public static function filter_themify_layout_meta( $value, $object_id, $meta_key, $single ) {
-		if ( is_admin() || 'layout' !== $meta_key || ! is_singular( self::POST_TYPE ) ) {
+		if ( is_admin() || ! in_array( $meta_key, array( 'layout', 'hide_post_image' ), true ) || ! is_singular( self::POST_TYPE ) ) {
 			return $value;
 		}
 		if ( self::POST_TYPE !== get_post_type( $object_id ) ) {
 			return $value;
 		}
 
-		return $single ? 'sidebar-none' : array( 'sidebar-none' );
+		// Themify's per-post "Hide Featured Image" (postmeta `hide_post_image`): the theme would print the featured
+		// image above the page, and the photo strip already leads with it (Ryan, 2026-11-04: "we just need one pic").
+		// restaurants.css hides `.post-image` too, in case this theme version reads the setting from somewhere else.
+		$out = 'layout' === $meta_key ? 'sidebar-none' : 'yes';
+		return $single ? $out : array( $out );
 	}
 
 	/**

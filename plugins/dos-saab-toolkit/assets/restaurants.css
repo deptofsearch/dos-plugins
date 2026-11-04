@@ -19,6 +19,13 @@ body.saab-restaurant-page #sidebar {
 	display: none;
 }
 
+/* The theme's own featured-image block above the page. The photo strip already
+ * leads with that image (and credits it), so showing both doubled the photo.
+ * filter_themify_layout_meta() sets hide_post_image too; this is the backstop. */
+body.saab-restaurant-page article.saab_restaurant > .post-image {
+	display: none;
+}
+
 /* The theme's <h1> carries "Name – City, ST" (see filter_heading_title()). */
 body.saab-restaurant-page .post-title,
 body.saab-restaurant-page .entry-title {

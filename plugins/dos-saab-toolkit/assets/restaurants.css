@@ -210,11 +210,26 @@ body.saab-restaurant-page #content {
 		padding-bottom: 4px;
 	}
 
-	.saab-restaurant__photo-strip-item,
-	.saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
+	.saab-restaurant__photo-strip-item {
 		flex: 0 0 80%;
 		aspect-ratio: 4 / 3;
 		scroll-snap-align: start;
+	}
+
+	/* A lone photo (most directory pages: one from the restaurant's website) has
+	   nothing to scroll to, so it gets the full width in a short, wide frame.
+	   In the 80%-wide 4:3 card it read as too big and cropped a wide image hard
+	   (Ethos Bakery's logo showed as "thos AKER"). */
+	.saab-restaurant__photo-strip--count-1 {
+		display: block;
+		overflow: visible;
+		padding-bottom: 0;
+	}
+
+	.saab-restaurant__photo-strip--count-1 .saab-restaurant__photo-strip-item {
+		width: 100%;
+		aspect-ratio: 2 / 1;
+		max-height: 200px;
 	}
 
 	.saab-restaurant__menu-section ul,

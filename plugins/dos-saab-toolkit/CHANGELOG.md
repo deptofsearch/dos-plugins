@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.5
+
+**The phone frame follows the image too.** 0.9.2's fixed 2:1 phone frame trimmed
+the right edge of Ethos Bakery's 2.16:1 logo (the "TM"). Ryan: "fix the phone
+frame too". Under 600px a lone photo now uses `--saab-photo-ratio` like desktop,
+capped at 200px tall: `width: min(100%, 200px * ratio)`, centered. Ethos fills
+the width uncropped (351x163); Tony's 4:3 storefront is 267x200, centered. The
+credit is centered on phones as well.
+
 ## 0.9.4
 
 **A lone photo is centered on desktop.** 0.9.3's shaped frame is narrower than the

@@ -31,3 +31,10 @@
 `python3 data/hoods/hoods.py <seattle|portland> <build|assign|candidates|push>`; per-city config is the CITIES dict. `data/seattle/hoods.py` is a shim for Seattle. Outputs go to `data/<city>/`.
 - Portland: districts are the 6 official Administrative Sextants (portlandmaps layer 233, "South" shown as "South Portland"); neighborhoods are the official Neighborhood Boundaries (layer 3). Unclaimed areas are skipped; shared strips go to the participant with the nearest own polygon; each neighborhood's district is the sextant with the largest area share (ambiguous ones are listed by `build`). `areas.json` has a bbox per neighborhood.
 - `candidates --min 5` lists neighborhoods with that many visible venues (landing page candidates).
+
+## Pending: New York City borough + neighborhood filter (Ryan, 2026-11-05)
+Do this the next time the New York, NY page is updated (it went live 2026-10-19 with no hood terms: 2,091 venues, `any_city`, addresses say Brooklyn/Queens/Bronx/Staten Island as well as New York).
+- The New York page gets a **borough filter** plus a **neighborhood filter within the selected borough**, using the existing district/neighborhood chips. Districts = the 5 boroughs (Manhattan, Brooklyn, Queens, The Bronx, Staten Island); neighborhoods = their children.
+- Every visible venue gets a borough. A venue whose neighborhood is known gets the neighborhood term (borough derived from the parent). A venue with no known neighborhood gets the borough's top-level term, so it still shows under the borough filter. Never leave a NYC venue unassigned.
+- Neighborhood chips show only for the active borough, and only neighborhoods with at least one visible venue.
+- Suggested source: NYC Open Data Neighborhood Tabulation Areas (NTA 2020, each tagged with its borough), assigned point-in-polygon from venue lat/lng; a new `new-york` entry in the CITIES dict of `data/hoods/hoods.py`. Dry run `import` and `assign` first and review the outside list.

@@ -7,6 +7,29 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.8
+
+City grids show every venue. New York had 2,087 published venues but its page
+showed 1,500, and not the best 1,500: the `osn_max_cards` cap was applied to
+the database query, which is ordered by title, so every venue past the
+1,500th alphabetically was dropped before the ranking (patio first, then
+rating count, photo, summary) ever saw it. The same list feeds the district
+and neighborhood chip counts, SEO venue counts and "more patios nearby", so
+all of those were short too.
+
+A city's query now takes every venue, ranks them, and only then applies the
+cap, which is raised to 5,000 (filter `osn_max_cards`); past it the
+lowest-ranked go. The site-wide list (no city) still caps the query, since it
+can be the whole site. The sorted-list transient key changed
+(`osn_sorted2_`) so lists cached before this release are not served for
+their remaining 12 hours.
+
+Every card is still in the HTML, so crawlers and no-JS visitors see them all.
+With JS the grid shows the first 120 matching cards and a "Show N more"
+button; any search, chip or area change starts again at 120. This keeps a
+2,000-card page from laying out every card at once (hidden cards' lazy
+images never load).
+
 ## 0.6.7
 
 A GitHub access token setting, under Tools -> Outdoor Seating -> Updates.

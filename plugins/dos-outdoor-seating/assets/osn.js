@@ -18,6 +18,8 @@
     var sBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-spot]'));
     var cBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-casino]'));
     var cRow = root.querySelector('[data-osn-casinos]');
+    var moreBtn = root.querySelector('[data-osn-show-more]');
+    var PAGE = 120, limit = PAGE; // Big cities (New York ~2,000 cards): render-light paging; every card stays in the HTML.
     if (!cards.length) return;
     // Filters stay hidden until now so crawlers and no-JS visitors just see every card.
     if (filters) filters.hidden = false;
@@ -37,9 +39,15 @@
         if (ok && area.hood) ok = card.getAttribute('data-hood') === area.hood;
         if (ok && area.spot) ok = card.getAttribute('data-spot') === area.spot;
         if (ok && area.casino) ok = card.getAttribute('data-casino') === area.casino;
-        card.hidden = !ok;
         if (ok) shown++;
+        card.hidden = !ok || shown > limit;
       });
+      if (moreBtn) {
+        var left = shown - limit;
+        moreBtn.hidden = left <= 0;
+        if (left > 0) moreBtn.textContent = left <= PAGE ? 'Show ' + left + ' more' : 'Show ' + PAGE + ' more (' + left + ' left)';
+        if (moreBtn.parentNode) moreBtn.parentNode.hidden = left <= 0;
+      }
       if (count) count.textContent = shown + (shown === 1 ? ' place' : ' places');
       if (empty) empty.hidden = shown !== 0;
       if (clear) clear.hidden = !on.length && !term && !area.district && !area.hood && !area.spot && !area.casino;
@@ -83,7 +91,7 @@
       history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
     }
     function setArea(district, hood, persist) {
-      area.district = district; area.hood = hood;
+      area.district = district; area.hood = hood; limit = PAGE;
       dBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-osn-district') === district ? 'true' : 'false'); });
       var any = false;
       hBtns.forEach(function (b) {
@@ -118,7 +126,7 @@
     // Landmark / casino chips. ?spot=short-slug and ?casino=slug; casino chips belong to one landmark (data-spot).
     // On a landmark landing view there are no landmark chips (the grid is already one landmark), so casino chips stay visible.
     function setSpot(spot, casino, persist) {
-      area.spot = spot; area.casino = casino;
+      area.spot = spot; area.casino = casino; limit = PAGE;
       sBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-osn-spot') === spot ? 'true' : 'false'); });
       var any = false;
       cBtns.forEach(function (b) {
@@ -153,15 +161,19 @@
       } else setSpot('', '', false);
     }
 
-    if (q) q.addEventListener('input', update);
+    if (moreBtn) moreBtn.addEventListener('click', function () { limit += PAGE; update(); });
+    if (q) q.addEventListener('input', function () { limit = PAGE; update(); });
     chips.forEach(function (c) {
       c.addEventListener('click', function () {
         c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+        limit = PAGE;
         update();
         syncMore();
       });
     });
+    update(); // Apply paging on load (idempotent; area setters may already have run it).
     if (clear) clear.addEventListener('click', function () {
+      limit = PAGE;
       chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
       if (dBtns.length) setArea('', '', true);
       if (sBtns.length || cBtns.length) setSpot('', '', true);

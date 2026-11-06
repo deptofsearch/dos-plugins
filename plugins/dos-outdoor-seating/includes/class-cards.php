@@ -1,6 +1,7 @@
 <?php
 /**
  * [osn_venues] card grid: server-rendered cards, client-side search + amenity filters, ItemList JSON-LD.
+ * Every card is in the HTML (crawlers, no-JS); with JS the grid shows the first 120 matches and a "Show more" button.
  *
  * @package OSN
  */
@@ -198,6 +199,7 @@ foreach ( $ids as $pos => $id ) {
 }
 ?>
 </ul>
+<p class="osn-more-wrap" hidden><button type="button" class="osn-btn osn-more" data-osn-show-more hidden><?php esc_html_e( 'Show more places', 'dos-outdoor-seating' ); ?></button></p>
 <p class="osn-empty" data-osn-empty hidden><?php esc_html_e( 'No places match those filters. Try clearing a filter or a different search.', 'dos-outdoor-seating' ); ?></p>
 <?php
 if ( $spot_ui ) {

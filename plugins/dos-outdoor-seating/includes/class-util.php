@@ -249,7 +249,7 @@ final class Util {
 		return $t instanceof \WP_Term ? $t : null;
 	}
 
-	const SORTED_TRANSIENT = 'osn_sorted_';
+	const SORTED_TRANSIENT = 'osn_sorted2_'; // v2 (0.6.8): lists are ranked before the cap, so pre-0.6.8 lists are ignored.
 
 	/** Drop the cached sorted venue ID list for a city term. */
 	public static function purge_sorted( $term_id ) {
@@ -281,11 +281,14 @@ final class Util {
 	}
 
 	private static function build_sorted( $term_id ) {
-		$cap  = (int) apply_filters( 'osn_max_cards', 1500 );
+		// The cap trims the ranked list (lowest-ranked venues go), never the query: a capped query ordered by
+		// title dropped every venue past the 1,500th alphabetically (New York, 2026-11). A city's query takes
+		// every venue; only the site-wide list (term 0) still caps the query, as it can be the whole site.
+		$cap  = max( 1, (int) apply_filters( 'osn_max_cards', 5000 ) );
 		$args = array(
 			'post_type'              => Data_Model::POST_TYPE,
 			'post_status'            => 'publish',
-			'posts_per_page'         => $cap,
+			'posts_per_page'         => $term_id ? -1 : $cap,
 			'fields'                 => 'ids',
 			'orderby'                => 'title',
 			'order'                  => 'ASC',
@@ -334,7 +337,7 @@ final class Util {
 				return 0; // Index 5 is the title order from the query.
 			}
 		);
-		return array_map( 'intval', wp_list_pluck( $rows, 0 ) );
+		return array_slice( array_map( 'intval', wp_list_pluck( $rows, 0 ) ), 0, $cap );
 	}
 
 	/** True when the city has at least one published venue that is not permanently closed. */

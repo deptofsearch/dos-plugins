@@ -51,6 +51,7 @@ button.osn-chip[aria-pressed="true"] { background: var(--osn-accent); border-col
 }
 .osn-filters__chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .osn-count { margin: 0 0 14px; font-size: .9rem; color: var(--osn-muted); }
+.osn-more-wrap { margin: 0 0 1.5em; text-align: center; }
 .osn-empty { padding: 24px; text-align: center; background: var(--osn-soft); border-radius: var(--osn-radius); }
 
 /* Card grid */

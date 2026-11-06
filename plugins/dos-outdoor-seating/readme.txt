@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.7
+Stable tag: 0.6.8
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -33,6 +33,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.8 =
+* City grids show every venue: the card cap (now 5,000) applies after ranking, not to the title-ordered query that cut New York to 1,500 alphabetically. Grids show 120 cards at a time with a "Show more" button; all cards stay in the HTML. See CHANGELOG.md.
 
 = 0.6.7 =
 * GitHub access token setting (Tools -> Outdoor Seating -> Updates) for the update lookups; /osn/v1/self-update reports an unreachable GitHub as an error instead of "up to date". See CHANGELOG.md.

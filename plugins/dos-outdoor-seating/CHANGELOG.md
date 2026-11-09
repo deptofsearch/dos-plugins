@@ -7,6 +7,15 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.9
+
+The city grid's ItemList JSON-LD lists the top 100 venues in the grid's own
+ranked order (filter `osn_itemlist_max`), not every card. Since 0.6.8 the New
+York page renders all 2,087 cards, and listing every one of them in JSON-LD
+added roughly 300 KB of markup that search engines gain nothing from: rich
+results use a short list, and every venue is still linked from its card.
+`numberOfItems` is the number listed. The cards themselves are unchanged.
+
 ## 0.6.8
 
 City grids show every venue. New York had 2,087 published venues but its page

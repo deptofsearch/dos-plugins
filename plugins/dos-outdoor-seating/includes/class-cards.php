@@ -188,8 +188,12 @@ endforeach;
 <p class="osn-count" id="<?php echo esc_attr( Hoods::results_anchor( $n ) ); ?>" data-osn-count role="status" aria-live="polite"><?php echo esc_html( sprintf( /* translators: %d: number of venues */ _n( '%d place', '%d places', count( $ids ), 'dos-outdoor-seating' ), count( $ids ) ) ); ?></p>
 <ul class="osn-grid">
 <?php
+$ld_max = max( 1, (int) apply_filters( 'osn_itemlist_max', 100 ) ); // JSON-LD lists the top-ranked venues only; every card still renders.
 foreach ( $ids as $pos => $id ) {
 	echo self::card( $id, ! $hood ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in card().
+	if ( $pos >= $ld_max ) {
+		continue;
+	}
 	$list[] = array(
 		'@type'    => 'ListItem',
 		'position' => $pos + 1,

@@ -276,8 +276,6 @@ echo Util::json_ld( // phpcs:ignore WordPress.Security.EscapeOutput
 		$street = (string) Util::meta( $id, 'street' );
 		$phone  = (string) Util::meta( $id, 'phone' );
 		$os     = (string) Util::meta( $id, 'outdoor_seating' );
-		$rating = (float) Util::meta( $id, 'rating' );
-		$count  = (int) Util::meta( $id, 'rating_count' );
 		$price  = Util::price_label( $id );
 		$terms  = get_the_terms( $id, Data_Model::AMENITY );
 		$slugs  = array();
@@ -349,7 +347,6 @@ echo Util::json_ld( // phpcs:ignore WordPress.Security.EscapeOutput
 <?php if ( $show_hood && $hood_t ) : ?><span class="osn-card__hood"><?php echo $hood_u ? '<a href="' . esc_url( $hood_u ) . '">' . esc_html( $hood_t->name ) . '</a>' : esc_html( $hood_t->name ); ?></span><?php endif; ?>
 <?php if ( '' !== $casino['name'] ) : ?><span class="osn-card__casino"><?php echo esc_html( sprintf( /* translators: %s: casino or host venue name */ __( 'At %s', 'dos-outdoor-seating' ), $casino['name'] ) ); ?></span><?php endif; ?>
 <?php if ( $cat ) : ?><span class="osn-card__cat"><?php echo esc_html( $cat->name ); ?></span><?php endif; ?>
-<?php if ( $count > 0 && $rating > 0 ) : ?><span class="osn-card__rating"><span aria-hidden="true">&#9733;</span> <?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <span class="osn-card__count">(<?php echo esc_html( number_format_i18n( $count ) ); ?>)</span></span><?php endif; ?>
 <?php if ( '' !== $price ) : ?><span class="osn-card__price" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: $ signs */ __( 'Price %s', 'dos-outdoor-seating' ), $price ) ); ?>"><?php echo esc_html( $price ); ?></span><?php endif; ?>
 </p>
 <?php if ( $closed ) : ?><p class="osn-card__badge"><span class="osn-badge osn-badge--temp"><?php esc_html_e( 'Temporarily closed', 'dos-outdoor-seating' ); ?></span></p>

@@ -469,7 +469,7 @@ final class Seo {
 		$data  = Landmarks::city_data( $city, $ids );
 		$row   = $data['landmarks'][ $spot->term_id ] ?? null;
 		$host  = $row && $row['casinos'] ? ', including spots inside casinos and resorts' : '';
-		$desc  = sprintf( 'Restaurants and bars with patios and outdoor seating: %1$s, %2$s%3$s. See hours and ratings, and filter for happy hour, dogs, and brunch.', $spot->name, $label, $host );
+		$desc  = sprintf( 'Restaurants and bars with patios and outdoor seating: %1$s, %2$s%3$s. See hours, and filter for happy hour, dogs, and brunch.', $spot->name, $label, $host );
 		return array(
 			'title'       => $stem . ' | Patios & Restaurants',
 			'description' => $desc,
@@ -481,7 +481,7 @@ final class Seo {
 		$label = $p ? $p[0] . ', ' . $p[1] : $filter; // "Roxbury, Seattle" has no state code and is used as written.
 		$term  = Util::find_city( $label );
 		if ( $term && Util::city_has_venues( $term ) ) {
-			$desc = sprintf( 'Restaurants and bars with outdoor seating in %s. See patios, hours, and ratings, and filter for happy hour, dogs, and brunch.', $label );
+			$desc = sprintf( 'Restaurants and bars with outdoor seating in %s. See patios and hours, and filter for happy hour, dogs, and brunch.', $label );
 		} else {
 			$desc = sprintf( 'Restaurants, bars, and cafés with patios and outdoor seating in %s, with addresses, phone numbers, and websites.', $label );
 		}

@@ -7,6 +7,24 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.11
+
+The star rating and review count are no longer shown anywhere: not on venue
+cards in city, neighborhood and landmark grids, and not in the header of a
+venue page. 0.6.10 took them out of the structured data; this takes them off
+the page.
+
+Both numbers come from each venue's Google Maps listing. Whether a site may
+republish them is a question about the data provider's terms that has not
+been settled, and Ryan chose to stop showing them rather than leave it open
+(2026-11-09). The values are still stored and still used where a visitor
+never sees them: `Util::sorted_ids()` ranks a city's venues by review count,
+and the state page's top-cities query uses it too. Do not remove the fields.
+
+The meta description templates for city and landmark pages no longer promise
+"ratings". Descriptions already seeded keep the old wording until Tools ->
+Outdoor Seating -> Seed SEO titles/descriptions is run again.
+
 ## 0.6.10
 
 Venue pages no longer put the Google rating in their `Restaurant` JSON-LD.

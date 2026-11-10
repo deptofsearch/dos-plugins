@@ -10,7 +10,7 @@ define( 'ABSPATH', '/tmp/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'WEEK_IN_SECONDS', 604800 );
-define( 'OSN\\VERSION', '0.6.15' );
+define( 'OSN\\VERSION', '0.6.16' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();
@@ -69,6 +69,13 @@ class WP_Query {
 function __return_false() { return false; }
 function add_filter( $t, $cb, $p = 10, $n = 1 ) { $GLOBALS['filters'][ $t ][ $p ][] = $cb; return true; }
 function add_action( $t, $cb = null, $p = 10, $n = 1 ) { $GLOBALS['actions'][ $t ][ $p ][] = $cb; return true; }
+// What a shortcode prints: $GLOBALS['osn']['shortcodes'] maps the exact shortcode text to its output ('' when not set).
+if ( ! function_exists( 'shortcode_exists' ) ) {
+	function shortcode_exists( $tag ) { return empty( $GLOBALS['osn']['no_shortcodes'] ); }
+}
+if ( ! function_exists( 'do_shortcode' ) ) {
+	function do_shortcode( $text ) { $GLOBALS['osn']['calls']['do_shortcode'][] = $text; return $GLOBALS['osn']['shortcodes'][ $text ] ?? ''; }
+}
 function apply_filters( $t, $v, ...$rest ) {
 	$by = $GLOBALS['filters'][ $t ] ?? array();
 	ksort( $by );

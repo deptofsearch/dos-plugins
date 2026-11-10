@@ -7,6 +7,28 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.16
+
+Fixes 0.6.15 on the live site. A city page is empty when its first `[table]` shortcode, rendered, prints neither a
+card nor a table row. The source note reads "Compiled by Ryan R. Listings come from..." and no longer "Ryan R..".
+
+Why. After 0.6.15 went live, the 133 empty city pages that print "No patios listed here yet." (Illinois, Texas)
+were noindex and out of the sitemap, and the 79 that still print an empty TablePress table (Washington,
+California, Oregon, Arizona) were not. 0.6.15 decided with two guesses about TablePress, and at least one was
+wrong for those pages: it required the takeover to be enabled for the city, and it treated a page as showing
+listings when the stored JSON of its TablePress table contained the filter text. Neither is what the page prints.
+A city the takeover is not enabled for is left to TablePress, and an empty TablePress table is as empty as no
+cards; text in the stored table does not mean a row is printed. Rendering the shortcode is the one test that is
+right for all of it: takeover cards, TablePress rows (Columbia City, OR still prints one and stays indexed),
+hidden rows, a missing table, the tableless note.
+
+Cost and side effects. The render runs only on pages the takeover shows nothing on, once per request, and
+TablePress caches its output. On those pages TablePress numbers the visible copy of the table "-no-2", because it
+has rendered the table once already. When no `[table]` shortcode is registered in the request (TablePress
+registers it on the front end only), a page is treated as not empty rather than guessed at, and a cached
+set built in such a request is kept for 10 minutes instead of 12 hours. The requirement that the takeover be enabled for the city is gone from both the robots decision
+and the cached set.
+
 ## 0.6.15
 
 City pages with no venue to show leave the index. A city page that prints no cards (no published venue, or only

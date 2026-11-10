@@ -31,7 +31,8 @@ final class Empty_Cities {
 	}
 
 	public static function flush_memo() {
-		self::$memo = null;
+		self::$memo   = null;
+		self::$prints = array();
 	}
 
 	/** Called from City_Index::flush(), so the set follows the city index's invalidation. */
@@ -62,7 +63,8 @@ final class Empty_Cities {
 		$hit = get_transient( self::TRANSIENT );
 		if ( ! is_array( $hit ) || ! isset( $hit['ids'], $hit['paths'], $hit['terms'] ) ) {
 			$hit = self::build();
-			set_transient( self::TRANSIENT, $hit, 12 * HOUR_IN_SECONDS );
+			// Built where no [table] shortcode could be rendered: pages were assumed not empty, so try again soon.
+			set_transient( self::TRANSIENT, $hit, shortcode_exists( 'table' ) ? 12 * HOUR_IN_SECONDS : 10 * MINUTE_IN_SECONDS );
 		}
 		self::$memo = $hit;
 		return $hit;
@@ -71,7 +73,7 @@ final class Empty_Cities {
 	/**
 	 * Build the set from what pages show, not from term meta alone. A landing ID in term meta can point at a state
 	 * page, the front page or About, or at a page whose [table filter] names a different term. A candidate page
-	 * is kept only when it is a published page whose own filter names an enabled "City, ST" whose term is empty
+	 * is kept only when it is a published page whose own filter names a "City, ST" whose term is empty
 	 * (or names no term at all, which prints no cards either).
 	 *
 	 * Cost of a rebuild, inside the request that needs it: one term query, one grouped closed-venues query and one
@@ -138,15 +140,16 @@ final class Empty_Cities {
 		return $out;
 	}
 
-	/** The "City, ST" filter of a page when takeover is enabled for it (a real state, an enabled city), else ''. */
+	/**
+	 * The "City, ST" filter of a page, else ''. Whether the takeover is enabled for the city does not matter: a
+	 * city it is not enabled for is left to TablePress, and an empty TablePress table is as empty as no cards.
+	 * (0.6.15 required the city to be enabled, and on the live site none of the 79 empty pages that still print a
+	 * TablePress table were treated as empty.)
+	 */
 	private static function city_filter( $post ) {
 		$filter = Page_Title::filter_from_content( (string) $post->post_content );
 		$parsed = '' !== $filter ? Util::parse_city( $filter ) : null;
-		if ( ! $parsed || ! States::has( $parsed[1] ) ) {
-			return ''; // No filter, a neighborhood ("Ballard, Seattle"), a state page, the front page, About.
-		}
-		$enabled = Takeover::enabled();
-		return ( true === $enabled || in_array( sanitize_title( $filter ), $enabled, true ) ) ? $filter : '';
+		return ( $parsed && States::has( $parsed[1] ) ) ? $filter : ''; // Not: no filter, a neighborhood ("Ballard, Seattle"), a state page, the front page, About.
 	}
 
 	/**
@@ -158,43 +161,40 @@ final class Empty_Cities {
 			return false;
 		}
 		$filter = self::city_filter( $post );
-		return '' !== $filter && ! self::shows_other_listings( $post, $filter ) && null === Takeover::context( $post );
+		// The resolver first: it is already computed for a city with venues, and then nothing is rendered here.
+		return '' !== $filter && null === Takeover::context( $post ) && ! self::shows_other_listings( $post, $filter );
 	}
 
 	/**
-	 * True when the page may print listings that the first [table filter] does not account for, in which case it
-	 * is never treated as empty:
-	 *  - a second [table] or an [osn_venues] in the content (only the first filter is looked at);
-	 *  - rows in the page's TablePress table. Without venues the takeover does not apply and TablePress prints
-	 *    its own rows for the filter. One live page did (Columbia City, OR, 2026-11: one row, no venue).
+	 * True when the page prints, or may print, a listing, in which case it is never treated as empty:
+	 *  - a second [table] or an [osn_venues] in the content (only the first [table] is looked at);
+	 *  - the first [table] shortcode, rendered, prints a card or a table row. Rendering it is the only test that
+	 *    is right for every case: cards from the takeover, rows from TablePress for a city the takeover is not
+	 *    enabled for or has no venue for (Columbia City, OR printed one such row, 2026-11), hidden TablePress
+	 *    rows, a missing table. Reading TablePress's stored JSON for the filter text, as 0.6.15 did, is not: a
+	 *    match there does not mean a row is printed.
+	 *
+	 * Cost: TablePress caches its rendered output, so this is normally one cached read. It runs only for pages the
+	 * takeover shows nothing on. Rendering a table here makes TablePress number the page's own copy "-no-2".
 	 */
 	private static function shows_other_listings( $post, $filter ) {
+		$id = (int) $post->ID;
+		if ( isset( self::$prints[ $id ] ) ) {
+			return self::$prints[ $id ];
+		}
 		$content = (string) $post->post_content;
 		if ( preg_match_all( '/\[table\b/i', $content ) > 1 || false !== stripos( $content, '[osn_venues' ) ) {
-			return true;
+			return self::$prints[ $id ] = true;
 		}
-		if ( ! preg_match( '/\[table\b[^\]]*\bid=["\']?([A-Za-z0-9_-]+)/i', $content, $m ) ) {
-			return false;
+		if ( ! shortcode_exists( 'table' ) ) {
+			return self::$prints[ $id ] = true; // Nothing can render it in this request (TablePress loads its shortcode on the front end only): do not guess.
 		}
-		$data = self::table_json( $m[1] );
-		if ( '' === $data ) {
-			return false;
-		}
-		// The table is stored as JSON, which writes non-ASCII as \uXXXX and "/" as "\/": look for both spellings.
-		$json = trim( (string) wp_json_encode( $filter ), '"' );
-		return false !== stripos( $data, $filter ) || false !== stripos( $data, $json );
+		$html = preg_match( '/\[table\b[^\]]*\]/i', $content, $m ) ? (string) do_shortcode( $m[0] ) : '';
+		return self::$prints[ $id ] = ( false !== strpos( $html, 'osn-card' ) || 1 === preg_match( '/<td[\s>]/i', $html ) );
 	}
 
-	/** A TablePress table's stored JSON ('' when TablePress or the table is not there). */
-	private static function table_json( $id ) {
-		$opt = get_option( 'tablepress_tables' );
-		if ( is_string( $opt ) ) { // TablePress stores this option as a JSON string.
-			$opt = json_decode( $opt, true );
-		}
-		$pid  = is_array( $opt ) && isset( $opt['table_post'][ (string) $id ] ) ? (int) $opt['table_post'][ (string) $id ] : 0;
-		$post = $pid ? get_post( $pid ) : null;
-		return $post ? (string) $post->post_content : '';
-	}
+	/** @var array<int,bool> Request memo for shows_other_listings(): page ID => prints a listing. */
+	private static $prints = array();
 
 	/**
 	 * Published venues per city term that are permanently closed. One query; the result is small.

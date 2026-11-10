@@ -30,7 +30,7 @@ final class Source_Note {
 		$name  = (string) apply_filters( 'osn_compiled_by', 'Ryan R.' );
 		if ( '' !== $name ) {
 			/* translators: %s: name of the person who compiles the directory */
-			$parts[] = sprintf( __( 'Compiled by %s.', 'dos-outdoor-seating' ), $name );
+			$parts[] = sprintf( __( 'Compiled by %s.', 'dos-outdoor-seating' ), rtrim( $name, '. ' ) ); // "Ryan R." already ends in a full stop.
 		}
 		$parts[] = __( "Listings come from Google Maps listing data and each venue's own website.", 'dos-outdoor-seating' );
 		if ( self::valid_date( $checked ) ) {

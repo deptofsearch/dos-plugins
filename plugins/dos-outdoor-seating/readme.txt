@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.15
+Stable tag: 0.6.16
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -34,6 +34,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.16 =
+* Fixes 0.6.15: empty city pages that still print an (empty) TablePress table are now noindex and out of the sitemap too; 0.6.15 only caught the pages that print "No patios listed here yet." Whether a page is empty is now decided by rendering its [table] shortcode and looking for a card or a table row. The source note no longer prints "Ryan R..". See CHANGELOG.md.
 
 = 0.6.15 =
 * City pages that print no cards (no published venue, or only permanently closed ones) are noindex,follow, decided live from the page. They are also left out of the sitemap and not counted in the homepage's "N cities"; those two use a cached set that can lag up to 12 hours (normally until the next venue batch that makes a city empty or not). State pages show a tile only for cities with a venue to show, which also removes links to city pages that do not exist. A page whose old TablePress table still has a row for the city is left alone. The page's own text is unchanged. City grids, state pages and the homepage end with a line saying who compiles the listings, where the data comes from and when it was last checked or updated; the name and the About link are the filters `osn_compiled_by` and `osn_about_url`. See CHANGELOG.md.

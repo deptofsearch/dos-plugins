@@ -24,6 +24,7 @@ sn_about();
 $h = Source_Note::html( '2026-10-01' );
 check( 'one paragraph with the two classes', 0 === strpos( $h, '<p class="osn osn-source-note">' ) && '</p>' === substr( $h, -4 ) && 1 === substr_count( $h, '<p ' ) );
 check( 'compiled by the default name', false !== strpos( $h, 'Compiled by Ryan R.' ) );
+check( 'a name that ends in a full stop does not get a second one', false === strpos( $h, 'R..' ) && false !== strpos( $h, 'Compiled by Ryan R. Listings' ) );
 check( 'where the data comes from', false !== strpos( $h, 'Listings come from Google Maps listing data and each venue&#039;s own website.' ) );
 check( 'last checked, formatted like the venue page', false !== strpos( $h, 'Last checked October 1, 2026.' ), $h );
 check( 'link to the About page', false !== strpos( $h, '<a href="https://example.com/about/">How this directory is made</a>' ) );

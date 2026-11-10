@@ -118,6 +118,7 @@ function shortcode_atts( $d, $a, $t = '' ) { return array_merge( $d, array_inter
 function trailingslashit( $s ) { return rtrim( (string) $s, '/' ) . '/'; }
 function sanitize_title( $s ) { return trim( preg_replace( '/[^a-z0-9]+/', '-', strtolower( (string) $s ) ), '-' ); }
 function sanitize_hex_color( $c ) { return ''; }
+if ( ! function_exists( 'strip_shortcodes' ) ) { function strip_shortcodes( $s ) { return preg_replace( '~\[(table|osn_venues)\b[^\]]*\]~i', '', (string) $s ); } } // Registered shortcodes only, as in core.
 function wp_strip_all_tags( $s ) { return strip_tags( (string) $s ); }
 function rest_url( $p = '' ) { return 'https://example.com/wp-json/' . $p; }
 function add_query_arg( $args, $url ) { return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . http_build_query( $args ); }

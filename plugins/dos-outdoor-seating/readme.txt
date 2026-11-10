@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.19
+Stable tag: 0.6.20
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -34,6 +34,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.20 =
+* Neighborhood and district landing pages that have no text of their own get an opening paragraph written from their listings (how many places, the common categories and amenities, and for a district its busiest neighborhoods), the same way city pages do. Pages with their own text are untouched. The paragraph sits under the page's heading. With a single listing the closing line reads "It has its own page" on city pages too. Same setting as the city intros (Tools > Outdoor Seating); stored content is never changed. See CHANGELOG.md.
 
 = 0.6.19 =
 * Fixes 0.6.18: the dead "plenty of options" ending is now replaced on the pages where it was stored without a closing </p>, which on the live site was all of them. See CHANGELOG.md.
@@ -91,7 +94,7 @@ Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) 
 * City names in the landmark routes are matched to the canonical city term (case/spacing variants work). `landmarks/import` `page_id` and `landmarks/pages` refuse pages that are not pages, are hood pages, or belong to another landmark; `hoods/pages` refuses landmark pages.
 
 = 0.6.2 =
-* Takeover: the tableless-city rule now reads TablePress's JSON `tablepress_tables` option correctly and only applies to a missing or `id=0` table, so every `[table id=N]` page keeps its exact current behaviour.
+* Takeover: the tableless-city rule now reads TablePress's JSON `tablepress_tables` option correctly and only applies to a missing or `id=0` table, so every `[table id=N]` page keeps its exact current behavior.
 * Homepage preview/draft responses send no-cache headers; the draft is never returned in REST responses. City index changes also clear the homepage cache.
 * SEO state descriptions say "1 Colorado city" and only name fallback cities the state page lists. Tools > Outdoor Seating skips state stats for states without a page. `cities/register` returns landing-page warnings.
 

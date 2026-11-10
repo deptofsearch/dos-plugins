@@ -64,7 +64,7 @@ final class Takeover {
 		if ( true !== $enabled && ! in_array( sanitize_title( $filter ), $enabled, true ) ) {
 			return false;
 		}
-		// Only a missing or zero table ID: every [table id=N] page with a real ID keeps its exact current behaviour.
+		// Only a missing or zero table ID: every [table id=N] page with a real ID keeps its exact current behavior.
 		$id = isset( $atts['id'] ) ? trim( (string) $atts['id'] ) : '';
 		return ( '' === $id || '0' === $id ) && ! self::table_exists( $id );
 	}

@@ -118,6 +118,11 @@ function dos_agents_head_meta_view() {
 	if ( 'by-state' === $post->post_name ) {
 		return array( 'by-state', $post );
 	}
+	// The live site's /blog/ is an ordinary page holding a posts module, not WordPress's posts page,
+	// so is_home() never sees it. A top-level page with the "blog" slug is the blog index too.
+	if ( 'blog' === $post->post_name && ! $post->post_parent ) {
+		return array( 'blog', $post );
+	}
 	if ( null !== dos_agents_head_meta_city( $post ) ) {
 		return array( 'city', $post );
 	}
@@ -358,6 +363,10 @@ function dos_agents_head_description( $kind, $post ) {
 			break;
 
 		case 'blog':
+			$text = dos_agents_head_excerpt( $post ); // A /blog/ page's own excerpt wins; the posts page has none here.
+			if ( '' !== $text ) {
+				break;
+			}
 			$text = sprintf(
 				/* translators: %s: site name */
 				__( 'Articles from %s about working with a real estate agent.', 'dos-agents' ),
@@ -414,7 +423,7 @@ function dos_agents_head_og_title( $kind, $post ) {
 			$title = dos_agents_head_site_name();
 			break;
 		case 'blog':
-			$page_id = (int) get_option( 'page_for_posts' );
+			$page_id = $post instanceof WP_Post ? (int) $post->ID : (int) get_option( 'page_for_posts' );
 			$title   = $page_id ? dos_agents_head_post_title( get_post( $page_id ) ) : '';
 			break;
 		default:
@@ -431,7 +440,7 @@ function dos_agents_head_url( $kind, $post ) {
 	if ( 'home' === $kind ) {
 		return home_url( '/' );
 	}
-	if ( 'blog' === $kind ) {
+	if ( 'blog' === $kind && ! $post instanceof WP_Post ) {
 		$page_id = (int) get_option( 'page_for_posts' );
 		return $page_id ? (string) get_permalink( $page_id ) : home_url( '/' );
 	}

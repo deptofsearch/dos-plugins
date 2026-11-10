@@ -295,6 +295,23 @@ echo '  example blog description: ' . mv( $out, 'description' ) . "\n  example b
 check( 'blog index: the fixed sentence with the site name', 'Articles from Best Real Estate Agents Near Me about working with a real estate agent.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
 check( 'blog index: title is the posts page title, url its permalink', 'The Blog' === mv( $out, 'og:title' ) && 'https://example.com/blog/' === mv( $out, 'og:url' ), (string) mv( $out, 'og:url' ) );
 
+// The live site's /blog/ is an ordinary page (a posts module on it), not the posts page.
+update_option( 'page_for_posts', 0 );
+$GLOBALS['wp']['home'] = false;
+$plain_blog = meta_page( 'blog', '[themify_posts]', 'Blog' );
+meta_view( $plain_blog );
+$out = meta_out();
+check( 'a top-level page with the blog slug gets the blog index sentence', 'Articles from Best Real Estate Agents Near Me about working with a real estate agent.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
+check( 'blog slug page: og:title is its title, og:url its canonical', 'Blog' === mv( $out, 'og:title' ) && 'https://example.com/blog/' === mv( $out, 'og:url' ), (string) mv( $out, 'og:title' ) . ' ' . (string) mv( $out, 'og:url' ) );
+$plain_blog->post_excerpt = 'Guides to choosing an agent.';
+meta_view( $plain_blog );
+check( 'blog slug page: its own excerpt wins', 'Guides to choosing an agent.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
+$plain_blog->post_excerpt = '';
+$plain_blog->post_parent  = 77;
+meta_view( $plain_blog );
+check( 'a child page with the blog slug is an ordinary page (no description)', null === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
+$plain_blog->post_parent = 0;
+
 echo "\n--- Other pages ---\n";
 agents_reset();
 $about = meta_page( 'about', 'About us.', 'About' );
@@ -421,6 +438,6 @@ check( 'and prints again once the view is a post', '' !== meta_out()['raw'] );
 
 echo "\n--- Wiring ---\n";
 check( 'hooked on wp_head at priority 1', in_array( 'dos_agents_head_meta', $GLOBALS['actions']['wp_head'][1] ?? array(), true ) );
-check( 'version is 0.3.0 in the constant and the header', '0.3.0' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.0' ) );
+check( 'version is 0.3.1 in the constant and the header', '0.3.1' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.1' ) );
 
 finish();

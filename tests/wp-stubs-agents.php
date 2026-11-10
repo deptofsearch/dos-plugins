@@ -181,6 +181,7 @@ class WP_Post {
 	public $post_title = '';
 	public $post_excerpt = '';
 	public $post_password = '';
+	public $post_parent = 0;
 	public function __construct( $fields = array() ) { foreach ( $fields as $k => $v ) { $this->$k = $v; } }
 }
 

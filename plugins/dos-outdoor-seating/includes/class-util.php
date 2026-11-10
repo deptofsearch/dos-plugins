@@ -184,9 +184,25 @@ final class Util {
 		return 'permanently_closed' === self::meta( $post_id, 'business_status' );
 	}
 
+	/**
+	 * A venue's name as plain text, for anything that is not HTML: JSON-LD, map queries, JSON for scripts.
+	 *
+	 * get_the_title() is for display. It runs wptexturize, which returns "Ivar&#8217;s"; in HTML that is a curly
+	 * apostrophe, but JSON-LD printed the entity as the venue's name, and the Maps query sent it to Google as text
+	 * (and then no longer matched the address that starts with the name, so the name went in twice).
+	 */
+	public static function title( $post_id ) {
+		$raw = (string) get_post_field( 'post_title', $post_id, 'raw' );
+		if ( '' === $raw ) {
+			$raw = (string) get_the_title( $post_id );
+		}
+		return trim( html_entity_decode( wp_strip_all_tags( $raw ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	}
+
 	/** "Name address" for map queries; the address often already starts with the name (Maps full_address). */
 	private static function name_address( $post_id, $title ) {
-		$addr = trim( (string) self::meta( $post_id, 'address' ) );
+		$title = self::title( $post_id ); // Not the display title the callers hold: see title().
+		$addr  = trim( (string) self::meta( $post_id, 'address' ) );
 		return ( '' !== $addr && 0 === stripos( $addr, $title ) ) ? $addr : trim( $title . ' ' . $addr );
 	}
 

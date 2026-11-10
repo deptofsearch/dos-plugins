@@ -259,7 +259,7 @@ foreach ( $slice as $pos => $id ) {
 		'@type'    => 'ListItem',
 		'position' => $pos + 1,
 		'url'      => get_permalink( $id ),
-		'name'     => get_the_title( $id ),
+		'name'     => Util::title( $id ),
 	);
 }
 ?>

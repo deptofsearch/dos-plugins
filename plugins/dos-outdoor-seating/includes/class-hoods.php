@@ -767,7 +767,7 @@ foreach ( $slugs as $s ) :
 			$lng   = Util::meta( $id, 'lng' );
 			$out[] = array(
 				'id'        => (int) $id,
-				'title'     => get_the_title( $id ),
+				'title'     => Util::title( $id ),
 				'status'    => get_post_status( $id ),
 				'lat'       => '' === $lat ? null : (float) $lat,
 				'lng'       => '' === $lng ? null : (float) $lng,

@@ -7,6 +7,27 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.14
+
+Venue names are plain text wherever they are not HTML: the `name` in the
+Restaurant and ItemList JSON-LD, the Google Maps "Get directions" link and
+map embed, the `title` in `GET /osn/v1/hoods/venues`, and the excerpt the
+plugin writes for a venue. New helper `Util::title()`.
+
+Why. `get_the_title()` is a display function: it runs wptexturize, so
+"Ivar's Acres of Clams" comes back as `Ivar&#8217;s Acres of Clams`. In
+HTML that entity is a curly apostrophe, which is what the heading shows.
+Outside HTML it is just those characters. The venue's JSON-LD name was
+literally `Ivar&#8217;s Acres of Clams`. The Maps query sent the entity to
+Google as text, and because the address ("Ivar's Acres of Clams, 1001
+Alaskan Wy...") then no longer started with the title, the name was added
+in front of it a second time. `Util::title()` reads the stored title,
+strips tags and decodes entities; the map functions use it whatever title
+their caller passes. Headings, card titles, alt text and the visible
+sentences still use the display title.
+
+Excerpts already written keep their text until the venue is next saved.
+
 ## 0.6.13
 
 State pages and the homepage carousel no longer rebuild their per-city data

@@ -376,7 +376,7 @@ final class Repository {
 			$summary  = sprintf(
 				/* translators: 1: venue, 2: category, 3: City, ST */
 				__( '%1$s, %2$s in %3$s. Hours, location, and outdoor seating details.', 'dos-outdoor-seating' ),
-				get_the_title( $post_id ),
+				Util::title( $post_id ),
 				$category ? strtolower( $category->name ) : __( 'restaurant', 'dos-outdoor-seating' ),
 				$term ? $term->name : ''
 			);

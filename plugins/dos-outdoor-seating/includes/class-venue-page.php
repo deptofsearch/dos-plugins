@@ -333,7 +333,7 @@ if ( $term ) :
 			'@context'         => 'https://schema.org',
 			'@type'            => 'Restaurant',
 			'@id'              => get_permalink( $id ) . '#restaurant',
-			'name'             => get_the_title( $id ),
+			'name'             => Util::title( $id ),
 			'url'              => get_permalink( $id ),
 			'mainEntityOfPage' => get_permalink( $id ),
 		);

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.13
+Stable tag: 0.6.14
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -34,6 +34,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.14 =
+* Venue names with an apostrophe (or any character WordPress turns into an HTML entity) are plain text in JSON-LD, the Google Maps links and embed, the hoods venues route and the generated excerpt. They were printed as "Ivar&#8217;s", and the Maps query repeated the name. See CHANGELOG.md.
 
 = 0.6.13 =
 * State pages and the homepage no longer wait for state data to be rebuilt while venues are being imported. A venue change marks only its own state out of date (it used to mark every state), and the page serves the copy it has while a background job rebuilds it, at most once per state every 15 minutes. Counts and photos on state pages and the homepage carousel can be 15 minutes behind during an import, plus cron and page-cache delay. A failed rebuild keeps the previous data instead of caching an empty state. See CHANGELOG.md.

@@ -19,18 +19,143 @@
     var cBtns = Array.prototype.slice.call(root.querySelectorAll('[data-osn-casino]'));
     var cRow = root.querySelector('[data-osn-casinos]');
     var moreBtn = root.querySelector('[data-osn-show-more]');
-    var PAGE = 120, limit = PAGE; // Big cities (New York ~2,000 cards): render-light paging; every card stays in the HTML.
+    var PAGE = 120, limit = PAGE; // Big cities (New York ~2,000 cards): render-light paging of what is in the DOM.
     if (!cards.length) return;
     // Filters stay hidden until now so crawlers and no-JS visitors just see every card.
     if (filters) filters.hidden = false;
+
+    /* On-demand parts. A big city is server-rendered as numbered pages (data-per cards each); with data-src the other
+       pages are fetched when they are needed so search, chips and "Show more" still cover the whole view. Without
+       data-src none of this runs and the grid behaves exactly as it always did. */
+    var src = root.getAttribute('data-src') || '';
+    var pages = parseInt(root.getAttribute('data-pages'), 10) || 1;
+    var grid = root.querySelector('.osn-grid');
+    var paged = !!src && pages > 1 && !!grid && !!window.fetch && !!document.createElement('template').content;
+    var total = parseInt(root.getAttribute('data-total'), 10) || cards.length;
+    var page = parseInt(root.getAttribute('data-page'), 10) || 1;
+    var per = parseInt(root.getAttribute('data-per'), 10) || cards.length;
+    var nav = root.querySelector('[data-osn-pages]');
+    var parts = {};      // part number -> its card nodes (parts[page] is the server-rendered DOM)
+    var partState = {};  // part number -> 'idle' | 'loading' | 'ok' | 'fail'
+    var seen = {};       // data-id of every card already in the grid: a re-ranked part never repeats a card
+    var scopeAll = false; // false until a filter or search first becomes active, then the view is the whole view
+    var queue = [], inflight = 0, moreMode = '';
+    var ubase = page, wasActive = false; // ubase: the part an unfiltered view starts at (see update())
+    if (paged) {
+      for (var pk = 1; pk <= pages; pk++) partState[pk] = 'idle';
+      parts[page] = cards.slice();
+      partState[page] = 'ok';
+      cards.forEach(function (c) { seen[c.getAttribute('data-id')] = true; });
+    }
+
+    // First part of the view: this page's, until a filter asks for the whole thing.
+    function firstPart() { return scopeAll ? 1 : page; }
+    // Loaded parts in ascending order. Before any filter, parts before this page stay out of the view.
+    function rebuild() {
+      cards = [];
+      for (var k = firstPart(); k <= pages; k++) if (partState[k] === 'ok') cards = cards.concat(parts[k]);
+    }
+    // Cards in the unbroken run of loaded parts from the first one: what an unfiltered view may show in rank order.
+    function prefixLen() {
+      var n = 0;
+      for (var k = ubase; k <= pages && partState[k] === 'ok'; k++) n += parts[k].length;
+      return n;
+    }
+    function nextMissing() {
+      for (var k = ubase; k <= pages; k++) if (partState[k] !== 'ok') return k;
+      return 0;
+    }
+    // Loaded cards that sit before the unfiltered view's start (earlier parts fetched for a filter): kept out of it.
+    function skipLen() {
+      var n = 0;
+      for (var k = firstPart(); k < ubase; k++) if (partState[k] === 'ok') n += parts[k].length;
+      return n;
+    }
+    function earlierOk() {
+      for (var k = 1; k < page; k++) if (partState[k] !== 'ok') return false;
+      return true;
+    }
+    function insertPart(k, nodes) {
+      var ref = null;
+      for (var j = k + 1; j <= pages && !ref; j++) if (partState[j] === 'ok' && parts[j].length) ref = parts[j][0];
+      var frag = document.createDocumentFragment();
+      nodes.forEach(function (n) { frag.appendChild(n); });
+      grid.insertBefore(frag, ref); // ref null appends
+    }
+    function merge(k, data) {
+      var tpl = document.createElement('template');
+      tpl.innerHTML = data.html;
+      var fresh = [];
+      Array.prototype.slice.call(tpl.content.querySelectorAll('[data-osn-card]')).forEach(function (n) {
+        var id = n.getAttribute('data-id');
+        if (id && seen[id]) return; // A venue upsert re-ranked the list between the page and this part.
+        if (id) seen[id] = true;
+        n.hidden = true;
+        fresh.push(n);
+      });
+      insertPart(k, fresh);
+      parts[k] = fresh;
+      partState[k] = 'ok';
+      rebuild();
+    }
+    function partUrl(k) { return src + (src.indexOf('?') === -1 ? '?' : '&') + 'part=' + k; }
+    function load(k, attempt) {
+      fetch(partUrl(k), { credentials: 'omit' }).then(function (r) {
+        // 404: the view shrank since this page was cached and the part no longer exists. Nothing to add, not a failure.
+        if (r.status === 404) return { html: '' };
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function (data) {
+        if (!data || typeof data.html !== 'string') throw new Error('bad part');
+        merge(k, data);
+      }).then(function () {
+        inflight--;
+        pump();
+        update();
+      }, function () {
+        if (attempt < 1) { setTimeout(function () { load(k, attempt + 1); }, 1000); return; } // One retry, a second later; the slot stays taken.
+        inflight--;
+        partState[k] = 'fail';
+        pump();
+        update();
+      });
+    }
+    function pump() {
+      while (inflight < 2 && queue.length) { inflight++; load(queue.shift(), 0); } // At most two requests in flight.
+    }
+    function need(k) {
+      if (!k || partState[k] !== 'idle') return;
+      partState[k] = 'loading';
+      queue.push(k);
+      pump();
+    }
+    function needAll() { for (var k = 1; k <= pages; k++) need(k); }
+    function retryFailed() {
+      for (var k = 1; k <= pages; k++) if (partState[k] === 'fail') partState[k] = 'idle';
+      update();
+    }
 
     function update() {
       var term = q ? q.value.trim().toLowerCase() : '';
       var on = chips.filter(function (c) { return c.getAttribute('aria-pressed') === 'true'; })
         .map(function (c) { return c.getAttribute('data-osn-chip'); });
+      var active = !!(term || on.length || area.district || area.hood || area.spot || area.casino);
+      if (paged && active) {
+        if (!scopeAll) { scopeAll = true; rebuild(); } // The first filter or search leaves this page's slice for the whole view.
+        needAll();
+      }
+      if (paged) {
+        // A filter was just cleared. On page 2+ the unfiltered view goes back to this page's cards unless every earlier
+        // part is already here, in which case it is the whole list from rank 1. Decided once, at the clear, so the list
+        // never jumps under the reader as parts land, and never goes blank waiting for (or failing to get) part 1.
+        if (wasActive && !active) ubase = earlierOk() ? 1 : page;
+        wasActive = active;
+      }
+      var skip = paged && !active ? skipLen() : 0;
+      var pre = paged && !active ? prefixLen() : cards.length; // Unfiltered: only the unbroken run of parts keeps rank order.
       var shown = 0;
-      cards.forEach(function (card) {
-        var ok = !term || (card.getAttribute('data-name') || '').indexOf(term) !== -1;
+      cards.forEach(function (card, idx) {
+        var ok = idx >= skip && idx < skip + pre && (!term || (card.getAttribute('data-name') || '').indexOf(term) !== -1);
         if (ok && on.length) {
           var have = ' ' + (card.getAttribute('data-amenities') || '') + ' ';
           ok = on.every(function (s) { return have.indexOf(' ' + s + ' ') !== -1; });
@@ -42,6 +167,11 @@
         if (ok) shown++;
         card.hidden = !ok || shown > limit;
       });
+      if (paged) {
+        updatePaged(active, shown, pre);
+        if (clear) clear.hidden = !on.length && !term && !area.district && !area.hood && !area.spot && !area.casino;
+        return;
+      }
       if (moreBtn) {
         var left = shown - limit;
         moreBtn.hidden = left <= 0;
@@ -51,6 +181,51 @@
       if (count) count.textContent = shown + (shown === 1 ? ' place' : ' places');
       if (empty) empty.hidden = shown !== 0;
       if (clear) clear.hidden = !on.length && !term && !area.district && !area.hood && !area.spot && !area.casino;
+    }
+
+    // The count line, "Show more", the empty message and the numbered nav when parts load on demand.
+    function updatePaged(active, shown, pre) {
+      var pending = false, failed = false;
+      for (var k = firstPart(); k <= pages; k++) {
+        if (partState[k] === 'idle' || partState[k] === 'loading') pending = true;
+        else if (partState[k] === 'fail') failed = true;
+      }
+      var complete = !pending && !failed;
+      var searching = active && pending;
+
+      // Count line: the server's whole-view total until a filter is active and every part is in, then exact.
+      if (count) {
+        var text;
+        if (searching) text = 'Searching all ' + total + ' places…';
+        else if (!active) text = total + (total === 1 ? ' place' : ' places');
+        else text = shown + (shown === 1 ? ' place' : ' places');
+        if (failed && !searching) text += ' (some places could not be loaded)';
+        count.textContent = text;
+      }
+      if (empty) empty.hidden = shown !== 0 || searching || !active; // "Nothing matches" needs a filter, and every part searched.
+
+      // "Show more". Unfiltered, what is left is the server's total minus what is already behind us.
+      var left = active || complete ? shown - limit : (ubase === 1 ? total : total - (page - 1) * per) - limit;
+      var mode = '';
+      if (left > 0) {
+        if (!active && limit >= pre) { // The next cards are not loaded yet: fetch them and wait.
+          var next = nextMissing();
+          if (partState[next] === 'fail') mode = 'retry';
+          else { need(next); mode = 'loading'; }
+        } else mode = 'more';
+      } else if (active && failed && !pending) mode = 'retry'; // Matches ran out and a part is missing.
+      moreMode = mode;
+      if (moreBtn) {
+        moreBtn.hidden = !mode;
+        moreBtn.disabled = mode === 'loading';
+        if (mode === 'more') moreBtn.textContent = left <= PAGE ? 'Show ' + left + ' more' : 'Show ' + PAGE + ' more (' + left + ' left)';
+        else if (mode === 'loading') moreBtn.textContent = 'Loading…';
+        else if (mode === 'retry') moreBtn.textContent = 'Couldn\'t load more places. Try again';
+        if (moreBtn.parentNode) moreBtn.parentNode.hidden = !mode;
+      }
+
+      // The numbered nav is for the page-at-a-time view; it steps aside once the whole view or a long list is in play.
+      if (nav) nav.hidden = ((scopeAll && (active || ubase === 1)) || limit > per) && !failed;
     }
 
     // Mobile: chips past the 6th sit behind a "More filters (N)" toggle (CSS shows it at <= 640px only).
@@ -161,7 +336,20 @@
       } else setSpot('', '', false);
     }
 
-    if (moreBtn) moreBtn.addEventListener('click', function () { limit += PAGE; update(); });
+    if (moreBtn) moreBtn.addEventListener('click', function () {
+      if (paged && moreMode === 'retry') { retryFailed(); return; }
+      if (paged && moreMode === 'loading') return;
+      limit += PAGE;
+      update();
+    });
+    // A head start: focusing the search box or a chip begins fetching the rest while the visitor is still typing.
+    // Focus only, not pointerdown: on a phone a scroll that starts on the filter block is a pointerdown too, and
+    // would download the whole city for someone who was only scrolling past.
+    if (paged && filters) {
+      var warmed = false;
+      var warm = function () { if (!warmed) { warmed = true; needAll(); } };
+      filters.addEventListener('focusin', warm);
+    }
     if (q) q.addEventListener('input', function () { limit = PAGE; update(); });
     chips.forEach(function (c) {
       c.addEventListener('click', function () {

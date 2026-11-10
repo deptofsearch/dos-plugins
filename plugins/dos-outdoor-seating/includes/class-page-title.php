@@ -7,6 +7,9 @@
  * A city page is any page whose content holds a [table ... filter="City, ST"] shortcode,
  * whether or not the card takeover is on for that city.
  *
+ * Numbered pages (/city-st/page/2/): the H1, the document title and the meta description say which page it is, so
+ * the paged URLs are not duplicates of page 1 (they canonicalise to themselves; the Toolkit already does that).
+ *
  * @package OSN
  */
 
@@ -23,6 +26,56 @@ final class Page_Title {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'styles' ) );
 		// Priority 5: before wpautop and shortcodes, so the raw [table] shortcode is still visible.
 		add_filter( 'the_content', array( __CLASS__, 'prepend' ), 5 );
+		// Priority 20: after DoS Toolkit prints its title (10), so the page number goes into the finished title.
+		add_filter( 'pre_get_document_title', array( __CLASS__, 'paged_title' ), 20 );
+		add_filter( 'wp_title', array( __CLASS__, 'paged_title' ), 20 );
+		add_filter( 'get_post_metadata', array( __CLASS__, 'paged_description' ), 10, 4 );
+	}
+
+	/**
+	 * The page number asked for on a numbered grid page, 0 everywhere else (page 1, other pages, anything that is
+	 * not a takeover grid). Reads only the main query, never loop state.
+	 */
+	private static function grid_page_number( $post = null ) {
+		if ( is_admin() || ! is_page() ) {
+			return 0;
+		}
+		$post = $post ? $post : get_queried_object();
+		$n    = Paging::requested( $post ); // Page 1 unless $post is the queried page.
+		return ( $n > 1 && Paging::grid_pages( $post ) > 0 ) ? $n : 0;
+	}
+
+	/** "... – Page 2 | Site" on a numbered grid page, the Toolkit's title otherwise. Empty stays empty. */
+	public static function paged_title( $title ) {
+		if ( '' === trim( (string) $title ) ) {
+			return $title;
+		}
+		$n = self::grid_page_number();
+		return $n ? Paging::title( $title, $n ) : $title;
+	}
+
+	/**
+	 * "Page 2 of 9. " in front of the stored meta description of the queried grid page, only on page 2 and later.
+	 * Same kind of filter as Home::hide_builder_meta; the stored value itself is never changed.
+	 */
+	public static function paged_description( $check, $post_id, $key, $single ) {
+		static $busy = false;
+		if ( null !== $check || $busy || Seo::DESC_KEY !== $key || (int) $post_id !== (int) get_queried_object_id() ) {
+			return $check;
+		}
+		$n = self::grid_page_number();
+		if ( ! $n ) {
+			return $check;
+		}
+		$busy = true; // Reading the real value goes through this filter again.
+		$text = trim( (string) get_post_meta( $post_id, $key, true ) );
+		$busy = false;
+		if ( '' === $text ) {
+			return $check;
+		}
+		/* translators: 1: page number, 2: number of pages */
+		$text = sprintf( __( 'Page %1$d of %2$d. ', 'dos-outdoor-seating' ), $n, Paging::grid_pages( get_queried_object() ) ) . $text;
+		return $single ? $text : array( $text );
 	}
 
 	/** The "City, ST" this page lists, or '' when it isn't a city page (or already has an H1). */
@@ -108,11 +161,13 @@ final class Page_Title {
 			$done[ $post->ID ] = true;
 			return '<h1 class="osn-page-title">' . esc_html( $text ) . "</h1>\n" . $content;
 		}
+		$n  = self::grid_page_number( $post );
+		$pg = $n ? Paging::label( $n ) : ''; // " – Page 2" on numbered pages.
 		if ( Landmarks::active_for_page( $post ) ) { // city_for() already returned the whole landmark H1.
-			return '<h1 class="osn-page-title">' . esc_html( apply_filters( 'osn_landmark_page_h1_text', $city, $post ) ) . "</h1>\n" . $content;
+			return '<h1 class="osn-page-title">' . esc_html( apply_filters( 'osn_landmark_page_h1_text', $city, $post ) . $pg ) . "</h1>\n" . $content;
 		}
 		/* translators: %s: "City, ST" */
 		$text = apply_filters( 'osn_city_page_h1_text', sprintf( __( 'Outdoor Seating in %s', 'dos-outdoor-seating' ), $city ), $city );
-		return '<h1 class="osn-page-title">' . esc_html( $text ) . "</h1>\n" . $content;
+		return '<h1 class="osn-page-title">' . esc_html( $text . $pg ) . "</h1>\n" . $content;
 	}
 }

@@ -81,28 +81,59 @@ final class Takeover {
 
 	/** Cards for a city filter, else the hood view for a linked neighborhood page, else null. */
 	private static function resolve( $atts ) {
+		$post = get_post();
+		$ctx  = self::resolve_context( $atts, $post );
+		if ( ! $ctx ) {
+			return null;
+		}
+		// Page 1 on every page but a paged URL of this very page; Paging::requested() never reads loop state.
+		$page = Paging::requested( $post );
+		return Cards::render( $ctx['city']->name, 0, true, true, $ctx['hood'], $ctx['spot'], $page );
+	}
+
+	/**
+	 * The { city, hood, spot } terms a [table] shortcode resolves to on $post (hood and spot are null when not that
+	 * kind of view), or null when the takeover does not apply. The one place the page, the REST parts and the 404
+	 * check all decide what a grid page shows.
+	 */
+	private static function resolve_context( $atts, $post ) {
 		$term = self::match_city( $atts );
 		if ( $term ) {
 			// A page linked to a landmark zone of this city renders that landmark's cards (checked before the city view).
-			$spot = self::match_landmark( $term );
-			return $spot ? Cards::render( $term->name, 0, true, true, null, $spot ) : Cards::render( $term->name );
+			return array( 'city' => $term, 'hood' => null, 'spot' => self::match_landmark( $term, $post ) );
 		}
-		$hood = self::match_hood( $atts );
-		if ( $hood ) {
-			$city = Hoods::city_term( $hood );
-			return Cards::render( $city->name, 0, true, true, $hood );
+		$hood = self::match_hood( $atts, $post );
+		$city = $hood ? Hoods::city_term( $hood ) : null;
+		return $city ? array( 'city' => $city, 'hood' => $hood, 'spot' => null ) : null;
+	}
+
+	/** @var array<int,array|null> Per-request memo for context(): page ID => context. */
+	private static $memo_context = array();
+
+	public static function flush_memo() {
+		self::$memo_context = array();
+	}
+
+	/**
+	 * What the takeover shows on a page: parses the first [table filter="..."] in its content and returns
+	 * { city, hood, spot } (terms; hood and spot may be null), or null when the page is not a takeover grid page.
+	 * Used outside the shortcode (the paged 404, the title, the REST parts), where there is no $atts to hand.
+	 */
+	public static function context( \WP_Post $post ) {
+		if ( ! array_key_exists( $post->ID, self::$memo_context ) ) {
+			$filter = Page_Title::filter_from_content( (string) $post->post_content );
+			self::$memo_context[ $post->ID ] = '' !== $filter ? self::resolve_context( array( 'filter' => $filter ), $post ) : null;
 		}
-		return null;
+		return self::$memo_context[ $post->ID ];
 	}
 
 	/**
 	 * The hood term when this [table filter="Hood, City"] sits on a page linked to (or named for) a neighborhood
 	 * of an enabled city, and the neighborhood has a visible venue. Null otherwise, so TablePress renders as normal.
 	 */
-	private static function match_hood( $atts ) {
+	private static function match_hood( $atts, $post ) {
 		$atts   = is_array( $atts ) ? $atts : array();
 		$filter = isset( $atts['filter'] ) ? trim( (string) $atts['filter'] ) : '';
-		$post   = get_post();
 		if ( '' === $filter || ! $post ) {
 			return null;
 		}
@@ -125,8 +156,8 @@ final class Takeover {
 	}
 
 	/** The landmark term of this page when the page is linked to an active landmark of the matched (enabled) city. */
-	private static function match_landmark( $city_term ) {
-		$spot = Landmarks::active_for_page( get_post() );
+	private static function match_landmark( $city_term, $post ) {
+		$spot = Landmarks::active_for_page( $post );
 		$lc   = $spot ? Landmarks::city_term( $spot ) : null;
 		return ( $lc && $lc->term_id === $city_term->term_id ) ? $spot : null;
 	}

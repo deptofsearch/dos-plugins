@@ -3,7 +3,7 @@
  * Plugin Name:       DoS Outdoor Seating
  * Plugin URI:        https://github.com/deptofsearch/dos-plugins
  * Description:       Restaurant venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, featured venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in takeover of TablePress city tables, city neighborhoods, landmark zones with casino browse, and SEO titles/descriptions for DoS Toolkit for outdoorseatingnearme.com.
- * Version:           0.6.16
+ * Version:           0.6.19
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Department of Search
@@ -18,7 +18,7 @@ namespace OSN;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION     = '0.6.16';
+const VERSION     = '0.6.19';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/includes/class-fields.php';
@@ -43,6 +43,7 @@ require_once __DIR__ . '/includes/class-city-search.php';
 require_once __DIR__ . '/includes/class-state-cities.php';
 require_once __DIR__ . '/includes/class-home.php';
 require_once __DIR__ . '/includes/class-page-title.php';
+require_once __DIR__ . '/includes/class-city-intro.php';
 require_once __DIR__ . '/includes/class-image-redirects.php';
 require_once __DIR__ . '/includes/class-seo.php';
 require_once __DIR__ . '/includes/class-admin.php';
@@ -63,6 +64,7 @@ City_Search::hooks();
 State_Cities::hooks();
 Home::hooks();
 Page_Title::hooks();
+City_Intro::hooks();
 Image_Redirects::hooks();
 Seo::hooks();
 Admin::hooks();

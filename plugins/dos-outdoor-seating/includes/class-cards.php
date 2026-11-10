@@ -44,6 +44,22 @@ final class Cards {
 	 * @return array { ids: int[], tree: array|null, lm: array|null }. ids is empty when there is nothing to show.
 	 */
 	public static function view( $term, $hood = null, $spot = null, $limit = 0 ) {
+		// One computation per request: City_Intro reads the same city view the grid renders a moment later.
+		$key = ( $term ? (int) $term->term_id : 0 ) . '|' . ( $hood ? (int) $hood->term_id : 0 ) . '|' . ( $spot ? (int) $spot->term_id : 0 ) . '|' . (int) $limit;
+		if ( ! isset( self::$memo_view[ $key ] ) ) {
+			self::$memo_view[ $key ] = self::build_view( $term, $hood, $spot, $limit );
+		}
+		return self::$memo_view[ $key ];
+	}
+
+	/** @var array<string,array> Per-request memo for view(): "term|hood|spot|limit" => view. */
+	private static $memo_view = array();
+
+	public static function flush_memo() {
+		self::$memo_view = array();
+	}
+
+	private static function build_view( $term, $hood, $spot, $limit ) {
 		$none = array( 'ids' => array(), 'tree' => null, 'lm' => null );
 		$ids  = Util::sorted_ids( $term ? $term->term_id : 0, $limit );
 		if ( ! $ids ) {

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.16
+Stable tag: 0.6.19
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -34,6 +34,15 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.19 =
+* Fixes 0.6.18: the dead "plenty of options" ending is now replaced on the pages where it was stored without a closing </p>, which on the live site was all of them. See CHANGELOG.md.
+
+= 0.6.18 =
+* City pages with listings show an intro written from their own data (how many places, the common categories and amenities, the busiest areas) in place of the stock text that is identical on every city page, and a link to the state page in place of the dead "plenty of options" ending. Stored page text is never changed; city pages only, and only text that matches the stock wording exactly. Turn it off under Tools > Outdoor Seating ("Write city page intros from listing data"). See CHANGELOG.md.
+
+= 0.6.17 =
+* Empty city pages that have no city term (78 on the live site) now leave the sitemap as well: a page's view records whether it printed a listing, and the sitemap leaves out pages whose last view was empty. See CHANGELOG.md.
 
 = 0.6.16 =
 * Fixes 0.6.15: empty city pages that still print an (empty) TablePress table are now noindex and out of the sitemap too; 0.6.15 only caught the pages that print "No patios listed here yet." Whether a page is empty is now decided by rendering its [table] shortcode and looking for a card or a table row. The source note no longer prints "Ryan R..". See CHANGELOG.md.

@@ -111,7 +111,7 @@ final class Seo {
 			$have   = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
 			$args['meta_query'] = $have ? array( 'relation' => 'AND', $have, $clause ) : array( $clause ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			// City pages with no venue to show are noindex: leave them out of the sitemap too.
-			$empty = Empty_Cities::ids();
+			$empty = array_merge( Empty_Cities::ids(), Empty_Cities::flagged_ids() ); // The cached set, plus pages a view found empty.
 			if ( $empty ) {
 				$args['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $args['post__not_in'] ?? array() ) ), $empty ) ) );
 			}

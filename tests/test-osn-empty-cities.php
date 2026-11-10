@@ -29,6 +29,7 @@ function ec_page( $id, $slug, $filter ) {
 }
 function ec_site() {
 	osn_reset();
+	Empty_Cities::$flagged = function () { return array(); };
 	$GLOBALS['osn']['options']['osn_takeover_cities'] = '*';
 	ec_city( 1, 'Phoenix, AZ', 101, 12 );
 	ec_page( 101, 'phoenix-az', 'Phoenix, AZ' );
@@ -222,6 +223,32 @@ Empty_Cities::page_shows_nothing( $tomb );
 $n = count( $GLOBALS['osn']['calls']['do_shortcode'] );
 Empty_Cities::page_shows_nothing( $tomb );
 check( 'the shortcode is rendered once per request for a page', $n === count( $GLOBALS['osn']['calls']['do_shortcode'] ) );
+
+echo "\n--- the view records what it found, and the sitemap uses it ---\n";
+ec_site();
+Empty_Cities::hooks();
+Empty_Cities::flush_memo();
+$GLOBALS['osn']['calls']['meta_write'] = array();
+$in = array( 'index' => true, 'follow' => true );
+osn_request( 102 );
+apply_filters( 'wp_robots', $in );
+check( 'viewing an empty city page flags it', '1' === ( $GLOBALS['osn']['meta'][102]['_osn_empty'] ?? '' ) );
+$w = count( $GLOBALS['osn']['calls']['meta_write'] ?? array() );
+apply_filters( 'wp_robots', $in );
+check( 'a second view writes nothing', $w === count( $GLOBALS['osn']['calls']['meta_write'] ?? array() ) );
+$GLOBALS['osn']['shortcodes']['[table id=1 filter="Tombstone, AZ"]'] = '<table><tbody><tr><td>Bird Cage</td></tr></tbody></table>';
+Empty_Cities::flush_memo();
+apply_filters( 'wp_robots', $in );
+check( 'a view that prints a listing removes the flag', ! isset( $GLOBALS['osn']['meta'][102]['_osn_empty'] ) );
+osn_request( 108 );
+$w = count( $GLOBALS['osn']['calls']['meta_write'] ?? array() );
+apply_filters( 'wp_robots', $in );
+check( 'a page that is not a city page is never written to', $w === count( $GLOBALS['osn']['calls']['meta_write'] ?? array() ) );
+ec_site();
+Empty_Cities::$flagged = function () { return array( 555, 102 ); }; // 555: an empty page with no city term.
+$a = Seo::sitemap_venue_args( array(), 'page' );
+check( 'the sitemap leaves out flagged pages as well as the cached set', array( 102, 106, 109, 555 ) === $a['post__not_in'], json_encode( $a['post__not_in'] ) );
+Empty_Cities::$flagged = function () { return array(); };
 
 echo "\n--- the venue-change routes ---\n";
 ec_site();

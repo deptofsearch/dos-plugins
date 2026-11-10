@@ -1,0 +1,279 @@
+<?php
+/**
+ * City landing pages with no venue to show: noindex, out of the sitemap, no tile on state pages, not counted on the homepage.
+ *
+ * Robots decides live from the page. The sitemap, state tiles and homepage counts read a cached set.
+ *
+ * "Empty" means what the page itself shows: no card is printed. That is a city term with no published venue, or one whose
+ * published venues are all permanently closed (Util::city_has_venues() skips those). The page's own text is not changed.
+ *
+ * @package OSN
+ */
+
+namespace OSN;
+
+defined( 'ABSPATH' ) || exit;
+
+final class Empty_Cities {
+
+	const TRANSIENT = 'osn_empty_cities_v1';
+
+	/** @var array|null Request memo of the cached set. */
+	private static $memo = null;
+
+	/** @var callable|null Replaces closed_counts() in tests. */
+	public static $closed = null;
+
+	public static function hooks() {
+		add_filter( 'wp_robots', array( __CLASS__, 'robots' ), 99 );
+		// A first venue arriving or the last one leaving does not always pass through City_Index::flush().
+		add_action( 'osn_city_venues_changed', array( __CLASS__, 'on_city_venues_changed' ), 10, 2 );
+	}
+
+	public static function flush_memo() {
+		self::$memo = null;
+	}
+
+	/** Called from City_Index::flush(), so the set follows the city index's invalidation. */
+	public static function flush() {
+		delete_transient( self::TRANSIENT );
+		self::$memo = null;
+	}
+
+	/** @return int[] Landing page IDs of cities with nothing to show. */
+	public static function ids() {
+		return self::get()['ids'];
+	}
+
+	/** @return array<string,true> Landing paths in State_Cities::local_key() format ("phoenix-az"); use with isset(). */
+	public static function paths() {
+		return self::get()['paths'];
+	}
+
+	public static function is_empty_page( $post_id ) {
+		return in_array( (int) $post_id, self::ids(), true );
+	}
+
+	/** @return array { ids: int[], paths: array<string,true>, terms: int[] } terms: the empty city terms that have a landing page. */
+	private static function get() {
+		if ( null !== self::$memo ) {
+			return self::$memo;
+		}
+		$hit = get_transient( self::TRANSIENT );
+		if ( ! is_array( $hit ) || ! isset( $hit['ids'], $hit['paths'], $hit['terms'] ) ) {
+			$hit = self::build();
+			set_transient( self::TRANSIENT, $hit, 12 * HOUR_IN_SECONDS );
+		}
+		self::$memo = $hit;
+		return $hit;
+	}
+
+	/**
+	 * Build the set from what pages show, not from term meta alone. A landing ID in term meta can point at a state
+	 * page, the front page or About, or at a page whose [table filter] names a different term. A candidate page
+	 * is kept only when it is a published page whose own filter names an enabled "City, ST" whose term is empty
+	 * (or names no term at all, which prints no cards either).
+	 *
+	 * Cost of a rebuild, inside the request that needs it: one term query, one grouped closed-venues query and one
+	 * post prime.
+	 */
+	private static function build() {
+		$out   = array( 'ids' => array(), 'paths' => array(), 'terms' => array() );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Data_Model::CITY,
+				'hide_empty' => false,
+				'number'     => 0,
+			)
+		);
+		if ( is_wp_error( $terms ) || ! $terms ) {
+			return $out;
+		}
+		$closed  = (array) ( self::$closed ? call_user_func( self::$closed ) : self::closed_counts() );
+		$by_slug = array();
+		$by_name = array();
+		$empty   = array(); // term_id => true: no card is printed for this city.
+		foreach ( $terms as $term ) {
+			$by_slug[ $term->slug ] = $term;
+			$by_name[ strtolower( $term->name ) ] = $term; // get_term_by( 'name' ) matches without regard to case.
+			// term->count is the published venues; closed ones are published but print no card.
+			$empty[ (int) $term->term_id ] = ( (int) $term->count - (int) ( $closed[ $term->term_id ] ?? 0 ) ) <= 0;
+		}
+		$cand = array();
+		foreach ( $terms as $term ) {
+			$landing = (int) get_term_meta( $term->term_id, 'osn_landing_page_id', true );
+			if ( $landing > 0 && $empty[ (int) $term->term_id ] ) {
+				$cand[ $landing ]   = true;
+				$out['terms'][]     = (int) $term->term_id;
+			}
+		}
+		$cand = array_keys( $cand );
+		sort( $cand );
+		if ( $cand ) {
+			_prime_post_caches( $cand, false, false );
+		}
+		foreach ( $cand as $id ) {
+			$post   = get_post( $id );
+			$filter = ( $post && 'page' === $post->post_type && 'publish' === $post->post_status ) ? self::city_filter( $post ) : '';
+			if ( '' === $filter ) {
+				continue;
+			}
+			// Mirror Util::find_city(): slug first, then name.
+			$hit = $by_slug[ sanitize_title( $filter ) ] ?? ( $by_name[ strtolower( $filter ) ] ?? null );
+			if ( ! $hit ) {
+				$hit = Util::find_city( $filter ); // The maps are not core's exact name match (collation, "&"); rare, one query.
+			}
+			if ( self::shows_other_listings( $post, $filter ) ) {
+				continue;
+			}
+			if ( $hit && ! $empty[ (int) $hit->term_id ] ) {
+				continue; // The page shows another city that has venues.
+			}
+			$key = State_Cities::local_key( (string) get_permalink( $id ) );
+			if ( null !== $key ) {
+				$out['paths'][ $key ] = true;
+			}
+			$out['ids'][] = $id;
+		}
+		return $out;
+	}
+
+	/** The "City, ST" filter of a page when takeover is enabled for it (a real state, an enabled city), else ''. */
+	private static function city_filter( $post ) {
+		$filter = Page_Title::filter_from_content( (string) $post->post_content );
+		$parsed = '' !== $filter ? Util::parse_city( $filter ) : null;
+		if ( ! $parsed || ! States::has( $parsed[1] ) ) {
+			return ''; // No filter, a neighborhood ("Ballard, Seattle"), a state page, the front page, About.
+		}
+		$enabled = Takeover::enabled();
+		return ( true === $enabled || in_array( sanitize_title( $filter ), $enabled, true ) ) ? $filter : '';
+	}
+
+	/**
+	 * True when this page is a city page that prints no cards, decided from the page itself and live: nothing here
+	 * reads or writes the cached set, so a stale set can never noindex a page that has venues.
+	 */
+	public static function page_shows_nothing( \WP_Post $post ) {
+		if ( 'page' !== $post->post_type ) {
+			return false;
+		}
+		$filter = self::city_filter( $post );
+		return '' !== $filter && ! self::shows_other_listings( $post, $filter ) && null === Takeover::context( $post );
+	}
+
+	/**
+	 * True when the page may print listings that the first [table filter] does not account for, in which case it
+	 * is never treated as empty:
+	 *  - a second [table] or an [osn_venues] in the content (only the first filter is looked at);
+	 *  - rows in the page's TablePress table. Without venues the takeover does not apply and TablePress prints
+	 *    its own rows for the filter. One live page did (Columbia City, OR, 2026-11: one row, no venue).
+	 */
+	private static function shows_other_listings( $post, $filter ) {
+		$content = (string) $post->post_content;
+		if ( preg_match_all( '/\[table\b/i', $content ) > 1 || false !== stripos( $content, '[osn_venues' ) ) {
+			return true;
+		}
+		if ( ! preg_match( '/\[table\b[^\]]*\bid=["\']?([A-Za-z0-9_-]+)/i', $content, $m ) ) {
+			return false;
+		}
+		$data = self::table_json( $m[1] );
+		if ( '' === $data ) {
+			return false;
+		}
+		// The table is stored as JSON, which writes non-ASCII as \uXXXX and "/" as "\/": look for both spellings.
+		$json = trim( (string) wp_json_encode( $filter ), '"' );
+		return false !== stripos( $data, $filter ) || false !== stripos( $data, $json );
+	}
+
+	/** A TablePress table's stored JSON ('' when TablePress or the table is not there). */
+	private static function table_json( $id ) {
+		$opt = get_option( 'tablepress_tables' );
+		if ( is_string( $opt ) ) { // TablePress stores this option as a JSON string.
+			$opt = json_decode( $opt, true );
+		}
+		$pid  = is_array( $opt ) && isset( $opt['table_post'][ (string) $id ] ) ? (int) $opt['table_post'][ (string) $id ] : 0;
+		$post = $pid ? get_post( $pid ) : null;
+		return $post ? (string) $post->post_content : '';
+	}
+
+	/**
+	 * Published venues per city term that are permanently closed. One query; the result is small.
+	 *
+	 * @return array<int,int> term_id => closed venues. On a query error, empty: only the term count is used then.
+	 */
+	private static function closed_counts() {
+		global $wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT tt.term_id AS term_id, COUNT(DISTINCT p.ID) AS n
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = %s
+				INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s AND pm.meta_value = 'permanently_closed'
+				WHERE p.post_type = %s AND p.post_status = 'publish'
+				GROUP BY tt.term_id",
+				Data_Model::CITY,
+				Fields::key( 'business_status' ),
+				Data_Model::POST_TYPE
+			)
+		);
+		$out = array();
+		if ( '' !== (string) $wpdb->last_error ) {
+			return $out;
+		}
+		foreach ( (array) $rows as $r ) {
+			$out[ (int) $r->term_id ] = (int) $r->n;
+		}
+		return $out;
+	}
+
+	/** @param int $term_id City term ID. @param int $landing Its landing page ID (unused: read from term meta). */
+	public static function on_city_venues_changed( $term_id, $landing = 0 ) {
+		self::check_term( $term_id );
+	}
+
+	/**
+	 * A city's venues changed through a path that may not reach City_Index::flush() (venue batches, wp-admin
+	 * publish, trash or delete): flush when this city crossed between empty and not empty.
+	 *
+	 * Cheap on purpose, because Takeover::on_option_change purges every city. A city the set says is not empty
+	 * and whose term count is above zero returns with no query; a city that went from not empty to only
+	 * permanently closed venues is therefore caught at the next rebuild (12 hours at most), not here. The term
+	 * count may lag a post status change by a moment; the same rebuild catches that.
+	 *
+	 * @param int $term_id City term ID.
+	 */
+	public static function check_term( $term_id ) {
+		$term_id = (int) $term_id;
+		$hit     = get_transient( self::TRANSIENT );
+		if ( ! is_array( $hit ) || ! isset( $hit['terms'] ) || (int) get_term_meta( $term_id, 'osn_landing_page_id', true ) < 1 ) {
+			return; // Nothing cached to be wrong, or the city has no landing page to hide.
+		}
+		$term = get_term( $term_id, Data_Model::CITY );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return;
+		}
+		if ( in_array( $term_id, array_map( 'intval', $hit['terms'] ), true ) ) {
+			$cross = Util::city_has_venues( $term ); // Few cities are empty: one query each is fine.
+		} else {
+			$cross = 0 === (int) $term->count;
+		}
+		if ( $cross ) {
+			self::flush();
+			Home::flush(); // The homepage's per-state city counts skip empty cities.
+		}
+	}
+
+	/** An empty city page is noindex,follow: Google reports an empty 200 page as a soft 404. */
+	public static function robots( $robots ) {
+		if ( is_page() ) {
+			$post = get_queried_object();
+			if ( $post instanceof \WP_Post && self::page_shows_nothing( $post ) ) {
+				unset( $robots['index'] );
+				$robots['noindex'] = true;
+				$robots['follow']  = true;
+			}
+		}
+		return $robots;
+	}
+}

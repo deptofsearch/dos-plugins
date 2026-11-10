@@ -48,6 +48,7 @@ final class City_Index {
 						$t = get_term_by( 'term_taxonomy_id', (int) $tt, Data_Model::CITY );
 						if ( $t ) {
 							Util::purge_sorted( $t->term_id );
+							Empty_Cities::check_term( $t->term_id ); // Counts are already updated when this action fires.
 						}
 					}
 				}
@@ -77,6 +78,7 @@ final class City_Index {
 		$terms = get_the_terms( $post_id, Data_Model::CITY );
 		foreach ( ( $terms && ! is_wp_error( $terms ) ) ? $terms : array() as $t ) {
 			Util::purge_sorted( $t->term_id );
+			Empty_Cities::check_term( $t->term_id );
 		}
 	}
 
@@ -85,6 +87,7 @@ final class City_Index {
 		delete_transient( self::TRANSIENT );
 		if ( false !== $states ) { // Hooks call this with their own first argument: only an explicit false skips.
 			State_Cities::flush();
+			Empty_Cities::flush(); // A venue batch keeps the set: osn_city_venues_changed flushes it on a crossing.
 		}
 		Home::flush(); // The homepage tile counts and city search read the city index.
 	}

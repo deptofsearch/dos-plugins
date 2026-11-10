@@ -276,6 +276,7 @@ final class Home {
 		$cities = array();
 		$counts = array();
 		$pages  = array();
+		$empty  = Empty_Cities::paths();
 		foreach ( States::names() as $code => $name ) {
 			$page = State_Cities::page_for( $code );
 			if ( $page && 'publish' === $page->post_status ) {
@@ -291,7 +292,7 @@ final class Home {
 					}
 				}
 			}
-			$counts[ $code ] = count( $rows );
+			$counts[ $code ] = count( array_filter( $rows, function ( $r ) use ( $empty ) { return ! isset( $empty[ $r['key'] ] ); } ) ); // Cities whose page has no venue are not counted.
 			foreach ( $rows as $r ) {
 				$cities[ $r['key'] ] = array(
 					'n' => $r['name'] . ', ' . $code,
@@ -421,6 +422,7 @@ final class Home {
 		}
 		echo self::carousel_html(); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
 		echo self::states_html( $data ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped inside.
+		echo Source_Note::html( Source_Note::site_latest(), true ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Source_Note.
 		?>
 </div>
 		<?php

@@ -577,6 +577,7 @@ final class State_Cities {
 		$search = array();
 		$groups = array();
 		$pop    = array();
+		$empty  = Empty_Cities::paths();
 		foreach ( $links as $l ) {
 			$d        = $data[ $l['key'] ] ?? null;
 			$l['d']   = $d;
@@ -585,6 +586,13 @@ final class State_Cities {
 				'u' => City_Index::relative( $l['url'] ),
 				's' => $code,
 			);
+			// Searchable (above), but no tile for a city with nothing to show: its page is empty and noindex, or
+			// does not exist at all (the Oregon page listed 52 cities with no page, each a 404 "View list" link).
+			// The state's own data says which cities have a venue; only when that data is missing altogether
+			// (a failed build with no copy to fall back on) does the cached set of empty pages decide.
+			if ( $data ? ! ( $d && $d['count'] > 0 ) : isset( $empty[ $l['key'] ] ) ) {
+				continue;
+			}
 			$groups[ self::letter( $l['name'] ) ][] = $l;
 			if ( $d && $d['count'] > 0 ) {
 				$pop[] = $l;
@@ -721,6 +729,7 @@ final class State_Cities {
 				)
 			);
 		}
+		echo Source_Note::html( Source_Note::site_latest(), true ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Source_Note.
 		?>
 </div>
 		<?php

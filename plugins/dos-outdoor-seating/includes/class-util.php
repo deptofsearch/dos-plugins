@@ -255,7 +255,7 @@ final class Util {
 	public static function purge_sorted( $term_id ) {
 		delete_transient( self::SORTED_TRANSIENT . (int) $term_id );
 		self::$has_cache = array();
-		State_Cities::flush(); // State pages show per-city counts and photos from the same venues.
+		State_Cities::flush( (int) $term_id ); // State pages show per-city counts and photos from the same venues: this city's state only.
 	}
 
 	/** @var array<int,bool> */

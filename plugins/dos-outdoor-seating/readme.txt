@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.12
+Stable tag: 0.6.13
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -34,6 +34,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.13 =
+* State pages and the homepage no longer wait for state data to be rebuilt while venues are being imported. A venue change marks only its own state out of date (it used to mark every state), and the page serves the copy it has while a background job rebuilds it, at most once per state every 15 minutes. Counts and photos on state pages and the homepage carousel can be 15 minutes behind during an import, plus cron and page-cache delay. A failed rebuild keeps the previous data instead of caching an empty state. See CHANGELOG.md.
 
 = 0.6.12 =
 * City, neighborhood and landmark pages with more than 240 venues are split into numbered pages (/city-st/page/2/) so each page stays under Googlebot's 2 MB HTML limit; every venue is server-rendered on one page. With JavaScript, search, filters and "Show more" load the other pages on demand and still cover the whole view. A page number past the last is a 404 (and no longer redirects to a guessed page). Supersedes 0.6.8's "every card is in the HTML". New setting Tools > Outdoor Seating > Cards per page (0 = all on one page and everything else as before; 1 to 119 is raised to 120); new public route GET /osn/v1/cards. See CHANGELOG.md.

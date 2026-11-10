@@ -80,9 +80,12 @@ final class City_Index {
 		}
 	}
 
-	public static function flush() {
+	/** @param bool $states False when the caller has already flushed the states it touched (a venue batch). */
+	public static function flush( $states = true ) {
 		delete_transient( self::TRANSIENT );
-		State_Cities::flush();
+		if ( false !== $states ) { // Hooks call this with their own first argument: only an explicit false skips.
+			State_Cities::flush();
+		}
 		Home::flush(); // The homepage tile counts and city search read the city index.
 	}
 

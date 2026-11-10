@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.9.6
+Stable tag: 0.9.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.7 =
+* The sitemap no longer lists Themify Builder's saved layouts (/tbuilder-layout/...), which are templates, not pages.
 
 = 0.9.6 =
 * Fix: /wp-sitemap.xml, the sitemap robots.txt points to, showed the homepage instead of the sitemap. It lists the site's sitemaps again, and /sitemap.xml redirects to it.

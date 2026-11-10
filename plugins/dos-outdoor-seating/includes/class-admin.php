@@ -49,6 +49,15 @@ final class Admin {
 		);
 		register_setting(
 			self::GROUP,
+			City_Intro::OPTION,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( City_Intro::class, 'sanitize' ),
+				'default'           => '1',
+			)
+		);
+		register_setting(
+			self::GROUP,
 			State_Cities::OPTION,
 			array(
 				'type'              => 'array',
@@ -254,6 +263,14 @@ final class Admin {
 <td>
 <input id="osn-per-page" type="number" min="0" step="10" name="<?php echo esc_attr( Paging::OPTION ); ?>" value="<?php echo (int) max( 0, (int) get_option( Paging::OPTION, Paging::DEFAULT ) ); ?>" class="small-text">
 <p class="description"><?php esc_html_e( 'City, neighborhood and landmark pages with more venues than this are split into numbered pages (/city-st/page/2/) so each page stays under the 2 MB of HTML Googlebot reads. With JavaScript, search, filters and "Show more" still cover every venue. 0 turns paging off: every card is on one page, as before 0.6.12. Pages already in a page cache keep their old layout until the cache is purged.', 'dos-outdoor-seating' ); ?></p>
+</td>
+</tr>
+<tr>
+<th scope="row"><?php esc_html_e( 'City page intros', 'dos-outdoor-seating' ); ?></th>
+<td>
+<input type="hidden" name="<?php echo esc_attr( City_Intro::OPTION ); ?>" value="0">
+<label><input type="checkbox" name="<?php echo esc_attr( City_Intro::OPTION ); ?>" value="1"<?php checked( '0' !== (string) get_option( City_Intro::OPTION, '1' ) ); ?>> <?php esc_html_e( 'Write city page intros from listing data', 'dos-outdoor-seating' ); ?></label>
+<p class="description"><?php esc_html_e( 'On a city page that has listings, the stock intro and the dead "plenty of options" ending are shown as a short summary of that city (how many places, the common categories and amenities, the busiest neighborhoods) plus a link to the state page. The stored page text is never edited; unchecking restores it exactly. Pages with other wording, or none, are left alone.', 'dos-outdoor-seating' ); ?></p>
 </td>
 </tr>
 <tr>

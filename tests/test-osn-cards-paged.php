@@ -97,6 +97,7 @@ check( 'the term cache is loaded for all 600 ids', in_array( 600, $GLOBALS['osn'
 check( 'no landmarks: meta is not primed for all ids', ! isset( $GLOBALS['osn']['calls']['meta_cache'] ) );
 $GLOBALS['osn']['taxonomies'][] = 'osn_landmark';
 osn_term( 30, 'On the Strip', 'testville-tx-on-strip', 'osn_landmark', 0, array( 'osn_city' => 'Testville, TX' ) );
+Cards::flush_memo(); // The landmark taxonomy appears mid-script: a new request in real life.
 osn_request( 500, 2 );
 Cards::render( 'Testville, TX', 0, true, true, null, null, 2 );
 check( 'a city with landmarks primes meta for every id (the casino lookups read it)', in_array( 600, $GLOBALS['osn']['calls']['meta_cache'] ?? array(), true ), json_encode( $GLOBALS['osn']['calls'] ) );

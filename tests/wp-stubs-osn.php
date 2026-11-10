@@ -10,7 +10,7 @@ define( 'ABSPATH', '/tmp/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'WEEK_IN_SECONDS', 604800 );
-define( 'OSN\\VERSION', '0.6.17' );
+define( 'OSN\\VERSION', '0.6.18' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();
@@ -70,6 +70,9 @@ function __return_false() { return false; }
 function add_filter( $t, $cb, $p = 10, $n = 1 ) { $GLOBALS['filters'][ $t ][ $p ][] = $cb; return true; }
 function add_action( $t, $cb = null, $p = 10, $n = 1 ) { $GLOBALS['actions'][ $t ][ $p ][] = $cb; return true; }
 // What a shortcode prints: $GLOBALS['osn']['shortcodes'] maps the exact shortcode text to its output ('' when not set).
+if ( ! function_exists( 'doing_filter' ) ) {
+	function doing_filter( $hook = null ) { return in_array( $hook, (array) ( $GLOBALS['wp_current_filter'] ?? array() ), true ); }
+}
 if ( ! function_exists( 'shortcode_exists' ) ) {
 	function shortcode_exists( $tag ) { return empty( $GLOBALS['osn']['no_shortcodes'] ); }
 }
@@ -206,8 +209,9 @@ function is_page() { return ! empty( $GLOBALS['osn']['is_page'] ); }
 function get_queried_object() { return $GLOBALS['osn']['queried'] ?? null; }
 function get_queried_object_id() { $p = get_queried_object(); return $p ? $p->ID : 0; }
 function get_query_var( $v ) { return 'paged' === $v ? ( $GLOBALS['osn']['paged'] ?? 0 ) : ''; }
-function in_the_loop() { return true; }
-function is_main_query() { return true; }
+function in_the_loop() { return empty( $GLOBALS['osn']['not_loop'] ); }
+function is_main_query() { return empty( $GLOBALS['osn']['not_main'] ); }
+if ( ! function_exists( 'is_singular' ) ) { function is_singular( $t = '' ) { return is_page() && ( '' === $t || 'page' === $t ); } }
 function is_front_page() { return false; }
 
 // ---- test helpers --------------------------------------------------------------------------------
@@ -222,7 +226,7 @@ function finish() {
 
 /** The plugin classes under test, in the order the plugin file loads them. */
 function osn_load() {
-	foreach ( array( 'fields', 'data-model', 'icons', 'states', 'util', 'assets', 'city-index', 'empty-cities', 'source-note', 'city-search', 'state-cities', 'home', 'hoods', 'landmarks', 'paging', 'cards', 'venue-image', 'rest', 'takeover', 'page-title', 'seo' ) as $f ) {
+	foreach ( array( 'fields', 'data-model', 'icons', 'states', 'util', 'assets', 'city-index', 'empty-cities', 'source-note', 'city-search', 'state-cities', 'home', 'hoods', 'landmarks', 'paging', 'cards', 'venue-image', 'rest', 'takeover', 'page-title', 'city-intro', 'seo' ) as $f ) {
 		require_once dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/includes/class-' . $f . '.php';
 	}
 }
@@ -250,6 +254,7 @@ function osn_reset() {
 	\OSN\Hoods::flush_memo();
 	\OSN\Landmarks::flush_memo();
 	\OSN\Takeover::flush_memo();
+	\OSN\Cards::flush_memo();
 	\OSN\Paging::flush_memo();
 	\OSN\Empty_Cities::flush_memo();
 	\OSN\Empty_Cities::$closed = null;

@@ -50,6 +50,7 @@ button.osn-chip[aria-pressed="true"] { background: var(--osn-accent); border-col
 	border: 1px solid rgba(0, 0, 0, .25); border-radius: 8px; box-shadow: none;
 }
 .osn-filters__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.osn-intro { text-align: center; }
 .osn-count { margin: 0 0 14px; font-size: .9rem; color: var(--osn-muted); }
 .osn-more-wrap { margin: 0 0 1.5em; text-align: center; }
 .osn-empty { padding: 24px; text-align: center; background: var(--osn-soft); border-radius: var(--osn-radius); }

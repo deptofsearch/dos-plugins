@@ -7,6 +7,50 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.18
+
+City pages with listings show an intro written from their own data. The stock intro blocks pasted into city pages are
+replaced, in the page output only, by a short summary built from the city's cards: how many places and how many
+confirm outdoor seating, the most common categories, the most common amenities, the busiest areas (the top level of the city's neighborhood list, which is a borough in New York), and a
+line saying each place has its own page with the address and directions. The dead "plenty of options" ending
+is replaced by a link to the state page ("More places nearby: every city in Texas with outdoor seating."). New class
+`City_Intro`, on `the_content` at priority 7 (after the H1 at 5 and the state takeover at 6, before wpautop).
+`Cards::view()` is now computed once per request, so the intro and the grid share one pass over the city. That
+also helps numbered pages (`/city/page/2/`), where the paging and title code already built the view before the grid
+did: two full builds become one.
+
+Why. In a sample of 140 random indexed city pages, 70 had the same one-paragraph intro and 65 the same
+three-block intro (a "List of Outdoor & Patio Seating in ..." heading, a sunshine paragraph, a "here is your list"
+line), identical but for the city name; a few Utah and Colorado pages have a hand-written first sentence followed by
+the same stock sentence. That is the same text on about 2,400 indexed pages. It is also partly wrong: the stock
+sentence promises "ratings", which the site stopped showing in 0.6.11. 29 of the 65 pages with the three-block intro end with a
+heading and one sentence ("there are plenty of options") that links nowhere. Google's spam policies describe doorway
+pages as pages targeted at specific cities that funnel users without unique value, and a set of city pages that
+differ only by the name in a template reads that way. Google gives no word-count requirement, so the replacement is
+facts a visitor can use, not padding: every number comes from the listings on the page.
+
+What each template becomes. The one-paragraph intro becomes one generated paragraph. In the three-block intro the
+heading and the "here is your list" line are removed and the sunshine paragraph becomes the generated one. On a page
+with a hand-written first sentence, that sentence is kept and only the stock sentence after it is replaced. Matching
+is tolerant (apostrophes straight or curly, `&`, `&amp;` or `&#038;`, extra whitespace, a missing style attribute,
+any city name); anything that does not match a known stock block exactly is left as it is. A city with 1 to 3
+places names them as well as counting them. Counts are written as digits and phrases agree with them ("1 has a happy
+hour", "4 have a happy hour").
+
+What it deliberately does not do. The stored page content is never edited. Neighborhood and landmark pages are not
+touched. A page with no intro (Los Angeles) does not get one; it only gets the state link line if it has no closing
+section. The closing sections that already link to nearby towns are kept as they are. The homepage's own copy is not
+touched. A city with no cards is not touched. Nothing is rewritten outside the main loop of a single page.
+
+Rollback. Tools > Outdoor Seating > "Write city page intros from listing data" (option `osn_city_intro`, on by
+default). Off restores every page's own text at once. The filter `osn_city_intro_enabled` can force it either way.
+Pages already in a page cache keep their old text until the cache is purged.
+
+Notes. "Confirm outdoor seating" counts venues with the Outdoor Seating amenity, the same number as the grid's
+"Outdoor Seating" filter chip, not the card badge (which reads the outdoor_seating field; the pipeline sets the
+two separately). The rewrite runs only on the page body: not inside `get_the_excerpt`, and not in a nested
+`the_content` call.
+
 ## 0.6.17
 
 A city page's view records on the page (meta `_osn_empty`) whether it printed a listing, and the sitemap leaves

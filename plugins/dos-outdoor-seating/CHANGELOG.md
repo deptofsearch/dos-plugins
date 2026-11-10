@@ -7,6 +7,93 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.16
+
+Fixes 0.6.15 on the live site. A city page is empty when its first `[table]` shortcode, rendered, prints neither a
+card nor a table row. The source note reads "Compiled by Ryan R. Listings come from..." and no longer "Ryan R..".
+
+Why. After 0.6.15 went live, the 133 empty city pages that print "No patios listed here yet." (Illinois, Texas)
+were noindex and out of the sitemap, and the 79 that still print an empty TablePress table (Washington,
+California, Oregon, Arizona) were not. 0.6.15 decided with two guesses about TablePress, and at least one was
+wrong for those pages: it required the takeover to be enabled for the city, and it treated a page as showing
+listings when the stored JSON of its TablePress table contained the filter text. Neither is what the page prints.
+A city the takeover is not enabled for is left to TablePress, and an empty TablePress table is as empty as no
+cards; text in the stored table does not mean a row is printed. Rendering the shortcode is the one test that is
+right for all of it: takeover cards, TablePress rows (Columbia City, OR still prints one and stays indexed),
+hidden rows, a missing table, the tableless note.
+
+Cost and side effects. The render runs only on pages the takeover shows nothing on, once per request, and
+TablePress caches its output. On those pages TablePress numbers the visible copy of the table "-no-2", because it
+has rendered the table once already. When no `[table]` shortcode is registered in the request (TablePress
+registers it on the front end only), a page is treated as not empty rather than guessed at, and a cached
+set built in such a request is kept for 10 minutes instead of 12 hours. The requirement that the takeover be enabled for the city is gone from both the robots decision
+and the cached set.
+
+## 0.6.15
+
+City pages with no venue to show leave the index. A city page that prints no cards (no published venue, or only
+permanently closed ones) is now `noindex,follow`, is left out of the sitemap and is not counted in the homepage's
+"N cities" for its state. State pages no longer print a tile for any city with no venue to show (a letter left
+with no tiles loses its heading and jump link). New class `Empty_Cities`.
+
+Two mechanisms, on purpose. Robots is decided live from the page itself (`Empty_Cities::page_shows_nothing()`): the
+page's `[table filter="City, ST"]` must name a real state and a city the takeover is enabled for, and
+`Takeover::context()` must find nothing to show. It never reads the cached set, so a stale set cannot noindex a page
+that has venues. A page with no filter, a neighborhood filter ("Ballard, Seattle"), a state page, the front page
+and About are never touched. Nor is a page that may print listings the first filter does not account for: one
+with a second `[table]` or an `[osn_venues]`, or one whose TablePress table still holds a row for that filter
+(without venues the takeover does not apply and TablePress prints its own rows; a check of the live pages found
+one, Columbia City, OR). The sitemap, the state tiles and the homepage counts read a cached set (one transient,
+12 hours) that can lag: in the worst case up to 12 hours (about 24 for the homepage counts, which sit in the
+homepage's own 12-hour cache), normally until the next venue batch that crosses a city between empty and not
+empty, or the next city change. The set is built from what pages show, not from term meta
+alone: a landing ID in term meta that points at a state page, the front page or About, or at a page whose filter
+names a different city, is not in it; a page whose filter names no city at all is. Rebuilding the set runs inside
+the request that needs it and costs one term query, one term-meta load, one grouped closed-venues query and one
+post prime.
+
+State tiles use the state's own data instead: a city gets a tile only when that data counts a venue for it. That
+also removes links to city pages that do not exist. The same check of the live pages found 53 of the 265 "View
+list" links were 404s: the Oregon page's content lists 52 cities that have no page, and Idaho's links Coeur
+d'Alene under a slug that is not the page's. Hiding the tiles hides those links; the page content is still wrong
+and the homepage still counts those 52 for Oregon. Only when a state has no data at all (a failed build with no
+copy to fall back on) does the cached set decide, so one bad build cannot empty a state page.
+
+Invalidation. City term created, edited or deleted, landing meta changes, any save of a published page, the
+register-cities route (all through `City_Index::flush()`) and a change to the takeover's city list clear the set.
+Venue batches no longer discard it: `City_Index::flush( false )` skips it, and instead the
+`osn_city_venues_changed` hook, a venue's city being set or changed, and a venue being published, unpublished or
+trashed run `Empty_Cities::check_term()`, which clears the set only when that city crossed between empty and not
+empty. Deleting a published venue outright is not caught there (its term count is still the old one when the
+hook runs); the next rebuild catches it. To stay cheap on bulk purges (turning the takeover on or off purges every city), a city the
+set calls non-empty with a term count above zero is not queried; one that dropped to only closed venues is caught at
+the next rebuild.
+
+Hub pages (city grids, state pages, the homepage) end with one line: "Compiled by Ryan R. Listings come from Google
+Maps listing data and each venue's own website.", a date, and a "How this directory is made" link to the page with
+the slug "about". On a city grid the date is "Last checked <date>": the newest check among the cards on the current
+numbered page. On state pages and the homepage it is "Directory last updated <date>": the newest check across all
+published venues, which is site-wide, not that state's. The note appears on state pages and the homepage only where
+the plugin renders them (state takeover or shortcode, homepage takeover). The name and the link are filters:
+`osn_compiled_by` (empty string leaves the name out) and `osn_about_url` (empty string leaves the link out). New
+class `Source_Note`.
+
+Why. 265 of the 2,615 cities listed on the state pages had no venue to show. 211 of them were pages that were
+indexable, in the sitemap and printed an empty table (the rest: 53 dead links and the one TablePress row above), and Google reports an empty page that returns 200 as a soft 404. "Empty" is what the page shows,
+not the raw term count: `Util::city_has_venues()` skips permanently closed venues, so a city whose only venues are
+closed prints no cards even though its term count is above zero. `Empty_Cities` therefore subtracts the closed
+venues per city with one grouped query rather than calling `city_has_venues()` for each of 2,600 terms. Venue pages
+already said where their data came from and hub pages did not; a directory that does not say who is behind it
+or how current it is gives a visitor, and a quality reviewer, nothing to judge it by.
+
+Not changed. The empty page's own text ("No patios listed here yet." and the rest), so a visitor who lands on one
+still sees what they did before. The city search list and its datalist still include empty cities. Neighborhood
+and landmark pages are not targeted (one exception: a neighborhood page whose filter happens to end in a state
+code, such as "Downtown, LA", and whose area has no venue is treated like an empty city page). A state whose
+cities are all empty would print its "All cities" heading with nothing under it. A city that gets a venue
+is indexable again at once (robots is live); page caches in front of the site may hold the old robots tag until
+they expire.
+
 ## 0.6.14
 
 Venue names are plain text wherever they are not HTML: the `name` in the

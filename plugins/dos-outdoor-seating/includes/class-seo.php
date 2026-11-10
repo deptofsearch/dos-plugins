@@ -110,6 +110,11 @@ final class Seo {
 			$clause = array( 'key' => Hoods::REDIRECT_KEY, 'compare' => 'NOT EXISTS' );
 			$have   = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
 			$args['meta_query'] = $have ? array( 'relation' => 'AND', $have, $clause ) : array( $clause ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			// City pages with no venue to show are noindex: leave them out of the sitemap too.
+			$empty = Empty_Cities::ids();
+			if ( $empty ) {
+				$args['post__not_in'] = array_values( array_unique( array_merge( array_map( 'intval', (array) ( $args['post__not_in'] ?? array() ) ), $empty ) ) );
+			}
 			return $args;
 		}
 		if ( Data_Model::POST_TYPE !== $post_type ) {

@@ -418,3 +418,6 @@ a.osn-venue__hood:hover { border-color: var(--osn-accent); }
 /* Let the chip rows scroll inside their section instead of widening the page. */
 .osn-filters { grid-template-columns: minmax(0, 1fr); }
 .osn-filter-section, .osn-area-sub, .osn-filters__chips { min-width: 0; max-width: 100%; }
+/* Hub pages: who compiles the listings and where the data comes from. */
+.osn-source-note { margin: 2em 0 0; font-size: .875rem; color: var(--osn-muted); }
+.osn .osn-source-note a { color: inherit; text-decoration: underline; }

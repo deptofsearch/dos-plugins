@@ -270,6 +270,8 @@ foreach ( $slice as $pos => $id ) {
 if ( $pages > 1 && $page > 0 && '' !== $perma ) {
 	echo Paging::nav_html( $perma, $page, $pages, $total ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Paging.
 }
+// Who compiles this, and when the cards on this page were last checked. Not in rest_part(): the page already has it.
+echo Source_Note::html( Source_Note::latest( $slice ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in Source_Note.
 // The browse lists and the ItemList sit on page 1 only; the nearby / back links are useful on every page.
 if ( $spot_ui ) {
 	if ( $page <= 1 ) {

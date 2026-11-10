@@ -432,5 +432,7 @@ final class Takeover {
 			}
 		}
 		Repository::purge_cities( $ids );
+		Empty_Cities::flush(); // Which pages count as empty city pages depends on which cities are enabled.
+		Home::flush();
 	}
 }

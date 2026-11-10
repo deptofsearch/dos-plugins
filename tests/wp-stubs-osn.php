@@ -10,7 +10,7 @@ define( 'ABSPATH', '/tmp/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'WEEK_IN_SECONDS', 604800 );
-define( 'OSN\\VERSION', '0.6.14' );
+define( 'OSN\\VERSION', '0.6.16' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();
@@ -61,7 +61,7 @@ class WP_REST_Response {
 class WP_Query {
 	public $posts = array();
 	public $is_404 = false;
-	public function __construct( $args = array() ) { $this->posts = $GLOBALS['osn']['query_posts'] ?? array(); }
+	public function __construct( $args = array() ) { $GLOBALS['osn']['wpq'] = ( $GLOBALS['osn']['wpq'] ?? 0 ) + 1; $this->posts = $GLOBALS['osn']['query_posts'] ?? array(); }
 	public function set_404() { $this->is_404 = true; }
 }
 
@@ -69,6 +69,13 @@ class WP_Query {
 function __return_false() { return false; }
 function add_filter( $t, $cb, $p = 10, $n = 1 ) { $GLOBALS['filters'][ $t ][ $p ][] = $cb; return true; }
 function add_action( $t, $cb = null, $p = 10, $n = 1 ) { $GLOBALS['actions'][ $t ][ $p ][] = $cb; return true; }
+// What a shortcode prints: $GLOBALS['osn']['shortcodes'] maps the exact shortcode text to its output ('' when not set).
+if ( ! function_exists( 'shortcode_exists' ) ) {
+	function shortcode_exists( $tag ) { return empty( $GLOBALS['osn']['no_shortcodes'] ); }
+}
+if ( ! function_exists( 'do_shortcode' ) ) {
+	function do_shortcode( $text ) { $GLOBALS['osn']['calls']['do_shortcode'][] = $text; return $GLOBALS['osn']['shortcodes'][ $text ] ?? ''; }
+}
 function apply_filters( $t, $v, ...$rest ) {
 	$by = $GLOBALS['filters'][ $t ] ?? array();
 	ksort( $by );
@@ -149,6 +156,10 @@ function get_terms( $args ) {
 		if ( $t->taxonomy !== $args['taxonomy'] ) { continue; }
 		$ok = true;
 		foreach ( $args['meta_query'] ?? array() as $mq ) {
+			if ( 'EXISTS' === ( $mq['compare'] ?? '' ) ) {
+				$ok = $ok && isset( $GLOBALS['osn']['term_meta'][ $t->term_id ][ $mq['key'] ] );
+				continue;
+			}
 			$ok = $ok && (string) ( $GLOBALS['osn']['term_meta'][ $t->term_id ][ $mq['key'] ] ?? '' ) === (string) $mq['value'];
 		}
 		if ( $ok ) { $out[] = $t; }
@@ -160,6 +171,33 @@ function update_object_term_cache( $ids, $type ) { $GLOBALS['osn']['calls']['ter
 function update_meta_cache( $type, $ids ) { $GLOBALS['osn']['calls']['meta_cache'][] = count( (array) $ids ); }
 function _prime_post_caches( $ids, $terms = true, $meta = true ) { $GLOBALS['osn']['calls']['post_cache'][] = array( count( (array) $ids ), (bool) $meta ); }
 function wp_get_attachment_image() { return ''; }
+
+// ---- added for Empty_Cities, Source_Note, State_Cities and Home (guarded: tests may define their own) ------
+if ( ! function_exists( 'wp_date' ) ) { function wp_date( $f, $t = null, $tz = null ) { return gmdate( $f, $t ); } }
+if ( ! function_exists( 'home_url' ) ) { function home_url( $p = '/' ) { return 'https://example.com' . ( '' === $p ? '' : '/' . ltrim( $p, '/' ) ); } }
+if ( ! function_exists( 'wp_parse_url' ) ) { function wp_parse_url( $u, $c = -1 ) { return parse_url( $u, $c ); } }
+if ( ! function_exists( 'user_trailingslashit' ) ) { function user_trailingslashit( $s ) { return trailingslashit( $s ); } }
+if ( ! function_exists( 'untrailingslashit' ) ) { function untrailingslashit( $s ) { return rtrim( (string) $s, '/' ); } }
+if ( ! function_exists( 'remove_accents' ) ) { function remove_accents( $s ) { return $s; } }
+if ( ! function_exists( 'add_shortcode' ) ) { function add_shortcode( $tag, $cb ) { return true; } }
+if ( ! function_exists( 'wp_kses_post' ) ) { function wp_kses_post( $s ) { return $s; } }
+if ( ! function_exists( 'get_page_by_path' ) ) {
+	function get_page_by_path( $path ) {
+		foreach ( $GLOBALS['osn']['posts'] ?? array() as $p ) {
+			if ( 'page' === $p->post_type && $p->post_name === $path && ! $p->post_parent ) { return $p; }
+		}
+		return null;
+	}
+}
+/** $wpdb: prepare() fills %s / %d; get_var() and get_results() return $GLOBALS['osn']['db_var'] / ['db_rows']. */
+class OSN_Stub_DB {
+	public $prefix = 'wp_'; public $posts = 'wp_posts'; public $postmeta = 'wp_postmeta'; public $terms = 'wp_terms';
+	public $term_taxonomy = 'wp_term_taxonomy'; public $term_relationships = 'wp_term_relationships'; public $last_error = '';
+	public function prepare( $q, ...$args ) { $GLOBALS['osn']['calls']['db'][] = $q; return vsprintf( str_replace( array( '%s', '%d' ), array( "'%s'", '%d' ), $q ), $args ); }
+	public function get_var( $q ) { return $GLOBALS['osn']['db_var'] ?? null; }
+	public function get_results( $q ) { return $GLOBALS['osn']['db_rows'] ?? array(); }
+}
+$GLOBALS['wpdb'] = new OSN_Stub_DB();
 
 // ---- the main query ------------------------------------------------------------------------------
 function is_page() { return ! empty( $GLOBALS['osn']['is_page'] ); }
@@ -182,7 +220,7 @@ function finish() {
 
 /** The plugin classes under test, in the order the plugin file loads them. */
 function osn_load() {
-	foreach ( array( 'fields', 'data-model', 'icons', 'states', 'util', 'assets', 'hoods', 'landmarks', 'paging', 'cards', 'venue-image', 'rest', 'takeover', 'page-title', 'seo' ) as $f ) {
+	foreach ( array( 'fields', 'data-model', 'icons', 'states', 'util', 'assets', 'city-index', 'empty-cities', 'source-note', 'city-search', 'state-cities', 'home', 'hoods', 'landmarks', 'paging', 'cards', 'venue-image', 'rest', 'takeover', 'page-title', 'seo' ) as $f ) {
 		require_once dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/includes/class-' . $f . '.php';
 	}
 }
@@ -211,6 +249,9 @@ function osn_reset() {
 	\OSN\Landmarks::flush_memo();
 	\OSN\Takeover::flush_memo();
 	\OSN\Paging::flush_memo();
+	\OSN\Empty_Cities::flush_memo();
+	\OSN\Empty_Cities::$closed = null;
+	\OSN\Source_Note::flush_memo();
 }
 
 /**

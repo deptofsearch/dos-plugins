@@ -40,6 +40,15 @@ final class Admin {
 		);
 		register_setting(
 			self::GROUP,
+			Paging::OPTION,
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_per_page' ),
+				'default'           => Paging::DEFAULT,
+			)
+		);
+		register_setting(
+			self::GROUP,
 			State_Cities::OPTION,
 			array(
 				'type'              => 'array',
@@ -152,6 +161,12 @@ final class Admin {
 		return Home::clean_state_images( $value );
 	}
 
+	/** Cards per numbered page: a whole number, never negative. 0 puts every card on one page (paging off). */
+	public static function sanitize_per_page( $value ) {
+		$n = max( 0, (int) $value );
+		return ( $n > 0 && $n < Paging::MIN ) ? Paging::MIN : $n; // Same floor as Paging::per_page().
+	}
+
 	public static function sanitize_cities( $value ) {
 		$out = array();
 		foreach ( preg_split( '/[\r\n]+/', (string) $value ) as $line ) {
@@ -232,6 +247,13 @@ final class Admin {
 <td>
 <textarea id="osn-takeover" name="<?php echo esc_attr( Takeover::OPTION ); ?>" rows="8" cols="40" class="large-text code"><?php echo esc_textarea( (string) get_option( Takeover::OPTION, '' ) ); ?></textarea>
 <p class="description"><?php esc_html_e( 'One "City, ST" per line, or a single * for every city. When a page shows [table filter="City, ST"] for an enabled city that has published venues, the cards replace the table. Everything else still renders through TablePress. Changing this list refreshes the page caches of the cities that flip.', 'dos-outdoor-seating' ); ?></p>
+</td>
+</tr>
+<tr>
+<th scope="row"><label for="osn-per-page"><?php esc_html_e( 'Cards per page (0 = all on one page)', 'dos-outdoor-seating' ); ?></label></th>
+<td>
+<input id="osn-per-page" type="number" min="0" step="10" name="<?php echo esc_attr( Paging::OPTION ); ?>" value="<?php echo (int) max( 0, (int) get_option( Paging::OPTION, Paging::DEFAULT ) ); ?>" class="small-text">
+<p class="description"><?php esc_html_e( 'City, neighborhood and landmark pages with more venues than this are split into numbered pages (/city-st/page/2/) so each page stays under the 2 MB of HTML Googlebot reads. With JavaScript, search, filters and "Show more" still cover every venue. 0 turns paging off: every card is on one page, as before 0.6.12. Pages already in a page cache keep their old layout until the cache is purged.', 'dos-outdoor-seating' ); ?></p>
 </td>
 </tr>
 <tr>

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.11
+Stable tag: 0.6.12
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -13,6 +13,7 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 * Custom post type `osn_venue` (permalinks `/restaurants/<name>-<city>-<st>/`) with admin-only taxonomies `osn_city`, `osn_amenity`, `osn_category`.
 * `POST /wp-json/osn/v1/venues/upsert` (needs `edit_posts`; max 50 per call; `dry_run` supported). Dedupes on `source` + `source_id`, then `google_place_id`, then `maps_cid`. Unchanged records are skipped by a per-pass hash. Merge semantics: fields left out are kept, `null` clears a field. Full field list: docs/UPSERT-CONTRACT.md in the project repo.
 * `GET /wp-json/osn/v1/cities[?state=AZ]` public cached city index.
+* `GET /wp-json/osn/v1/cards?post=<page ID>&part=<N>` public, cacheable: the cards of numbered page N of a city, neighborhood or landmark grid, loaded on demand by the card grid script.
 * Single venue page via `the_content`: rating, summary intro, outdoor seating callout, chip sections (Food & drinks, Highlights, Good to know) from Google Maps listing details, Monday-first hours with an open-now badge, map, contact, more nearby, source line, Restaurant JSON-LD. Thin pages (no summary, no confirmed patio, no hours) are noindex,follow.
 * `[osn_venues city="Phoenix, AZ" limit="0" filters="1" search="1"]` card grid with ItemList JSON-LD. Permanently closed venues are left out.
 * `[osn_city_search state="AZ"]` typeahead built from cities with a linked landing page; lists over 300 cities load from the REST endpoint on first focus.
@@ -33,6 +34,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.12 =
+* City, neighborhood and landmark pages with more than 240 venues are split into numbered pages (/city-st/page/2/) so each page stays under Googlebot's 2 MB HTML limit; every venue is server-rendered on one page. With JavaScript, search, filters and "Show more" load the other pages on demand and still cover the whole view. A page number past the last is a 404 (and no longer redirects to a guessed page). Supersedes 0.6.8's "every card is in the HTML". New setting Tools > Outdoor Seating > Cards per page (0 = all on one page and everything else as before; 1 to 119 is raised to 120); new public route GET /osn/v1/cards. See CHANGELOG.md.
 
 = 0.6.11 =
 * The star rating and review count are no longer shown on venue cards or venue pages. They come from Google Maps listing data. City grids still rank by review count. See CHANGELOG.md.

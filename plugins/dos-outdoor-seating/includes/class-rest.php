@@ -86,6 +86,32 @@ final class Rest {
 
 		register_rest_route(
 			self::NAMESPACE_V1,
+			'/cards',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( Cards::class, 'rest_part' ),
+				'permission_callback' => '__return_true', // Public: the same venue cards the grid page prints.
+				'args'                => array(
+					'post' => array(
+						'description' => 'ID of the page that carries the grid.',
+						'type'        => 'integer',
+						'required'    => true,
+					),
+					'part' => array(
+						'description' => 'Numbered page of the grid, from 1.',
+						'type'        => 'integer',
+						'default'     => 1,
+					),
+					'v'    => array(
+						'description' => 'Cache-buster printed in the page; ignored by the server.',
+						'type'        => 'string',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NAMESPACE_V1,
 			'/cities',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,

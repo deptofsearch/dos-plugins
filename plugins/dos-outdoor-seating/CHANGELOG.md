@@ -7,6 +7,109 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.12
+
+City, neighborhood and landmark grids are cut into numbered pages of 240
+cards: `/seattle-wa/`, `/seattle-wa/page/2/`, and so on. With JavaScript the
+grid still searches and filters the whole view, because the other pages are
+fetched on demand. This replaces the 0.6.8 decision that every card is in the
+HTML of one page.
+
+Why. Googlebot reads only the first 2 MB (uncompressed) of an HTML file and
+ignores the rest. A card averages about 1,950 bytes, so New York (2,087
+cards) was 4.19 MB, San Diego 2.38 MB, Chicago 2.17 MB and Portland 1.90 MB:
+past the limit, the lowest-ranked venues on the biggest pages were never
+read at all. Real numbered pages put every venue in server-rendered HTML on
+some page, each one well under the limit (240 cards is about 0.5 MB), and
+they link to each other with plain anchors so a crawler can walk them. They
+canonicalise to themselves, so they are not duplicates of page 1. DoS Toolkit
+builds that canonical with core's `get_pagenum_link()`, which keeps the
+request's query string, so `/city/page/2/?utm_source=x` would have named
+itself canonical; a `get_pagenum_link` filter here returns the clean
+`/page/N/` URL on grid pages.
+
+What a numbered page is.
+- 240 cards per page (setting Tools -> Outdoor Seating -> Cards per page,
+  option and filter `osn_cards_per_page`). Any value from 1 to 119 is raised
+  to 120: the script reveals 120 cards at a time, so a smaller page would
+  make every visit fetch the next part on load.
+- 0 puts everything on one page and is the rollback switch. It has to undo
+  all of this, so with 0 there is no nav, no `data-src`, the old script path,
+  the old markup apart from a `data-id` on each card, `/page/N/` answers as
+  it did before (page 1 again, not a 404), the canonical link filter stands
+  aside, and `/osn/v1/cards` returns 404.
+- The nav shows "Page N of T (places 241 to 480 of 700)", a link to every
+  page, and Prev / Next.
+- The filter and chip block, the count line and the chip counts cover the
+  whole view on every page, not the slice. A filter that said "Dog friendly 9"
+  on page 1 and "Dog friendly 4" on page 2 would be wrong, and the counts are
+  what the JavaScript filters promise.
+- The H1 gets " – Page N", the title gets it before the first " | " (a
+  filter at priority 20, after the Toolkit's 10), and the meta description
+  gets "Page N of T. " in front, all from page 2 on, so the pages read as
+  different pages in a results list.
+- The "Browse by neighborhood" and "Browse by landmark" lists and the ItemList
+  JSON-LD are on page 1 only: they describe the whole view, and repeating
+  them would add weight and duplicate markup to every page. The "nearby
+  neighborhoods" and "back to the city" links stay on every page.
+- A page number past the last is a real 404 (it used to return page 1 again
+  with a 200, a duplicate of the canonical page). That includes `/page/2/` on
+  a grid that fits on one page. Setting the 404 is not enough on its own:
+  core answers a 404 by guessing a permalink from the slug and redirecting,
+  so `/seattle-wa/page/99/` would have 301'd to `/seattle-wa/`, and
+  `/<city>/downtown/page/9/` to whichever "downtown…" page matched first,
+  possibly in another city. `do_redirect_guess_404_permalink` is switched off
+  for that request. Pages that are not takeover grids are left alone. Paged
+  URLs stay out of the sitemap, and there is no rel prev/next (Google ignores
+  it).
+- `[osn_venues city=...]` used on its own is not paged in this release.
+
+On-demand loading. A new public route, `GET /osn/v1/cards?post=<page ID>&part=<N>&v=<hash>`,
+returns the cards of numbered page N as JSON (`part`, `parts`, `total`, `per`,
+`ids`, `html`) with `Cache-Control: public, max-age=300`, so the edge cache can
+hold it. It resolves the page through the same resolver the page itself uses
+and cuts the same slice, so part N is exactly numbered page N. `v` is a
+cache-buster printed in the page (a hash of the plugin version and the ranked
+ids); the server ignores it. A page that is unknown, unpublished, password
+protected or not a grid is a 404 `osn_no_grid`, a part out of range a 404
+`osn_no_part`. The script treats a 404 as an empty part, not a failure: it
+means the view shrank after the page was cached.
+
+`assets/osn.js` fetches only when it has to: when a search or filter becomes
+active (including `?hood=`, `?district=`, `?spot=` and `?casino=` on load),
+once when the search box or a chip first takes focus, as a head start (focus,
+not touch: on a phone a scroll that begins on the filter block is a touch too),
+and for the next part when "Show more" reaches the end of what is loaded. At most two requests
+run at once, each is retried once, and a part that still fails is skipped:
+filters keep working over what loaded, the count line says some places could
+not be loaded, "Show more" becomes a retry button and the numbered nav comes
+back. While a filter is still waiting on parts the count line says "Searching
+all N places…" and "No places match" is held back until every part has been
+searched. A card already on the page is dropped from a part (matched by
+`data-id`), which is the guard if a venue upsert re-ranks the list between
+the page and the part. On page 2 and later the view starts at that page until
+the first filter, then becomes the whole view from rank 1. When the filter is
+cleared, the list goes back to that page's cards unless every earlier part is
+already loaded, in which case it stays the whole view from rank 1. That is
+decided once, at the clear, so the list never goes blank waiting for part 1
+and never jumps as parts arrive.
+
+Things to know.
+- `osn_max_cards` still caps the ranked list before it is split, and the
+  `osn_sorted2_` transient is unchanged (it holds ids, not pages).
+- Each numbered page and each part still loads the term cache for every id
+  of the view (the hood and landmark filters read it); posts, meta and
+  thumbnails are primed for the slice only. A city that has landmarks also
+  primes meta for every id, because the casino lookups read it.
+- A cached numbered page and a fresh part can disagree for a few minutes
+  after an upsert re-ranks the list. The version in `data-src` and the
+  `data-id` de-duplication are the whole guard; nothing heavier is added.
+- Changing the setting does not purge page caches by itself.
+- None of this ran on a real WordPress before release: there is no staging
+  site. The PHP is covered by `tests/test-osn-*.php` against stubs, and the
+  script was exercised in a browser against a local harness. The 404, the
+  redirect guard and the canonical filter rest on a reading of core.
+
 ## 0.6.11
 
 The star rating and review count are no longer shown anywhere: not on venue

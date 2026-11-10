@@ -16,15 +16,21 @@ defined( 'ABSPATH' ) || exit;
 final class State_Cities {
 
 	const OPTION     = 'osn_state_takeover';
-	const VER_OPTION = 'osn_state_data_ver';
+	const FLUSH      = 'osn_state_flush_';   // + state code, or "all": when that state's data was last marked out of date.
 	const TRANSIENT  = 'osn_state_';
+	const CRON       = 'osn_rebuild_state';
+	const TTL        = WEEK_IN_SECONDS;      // Long, so there is always a copy to serve while a rebuild runs.
+	const REFRESH    = 12 * HOUR_IN_SECONDS; // Rebuild at this age even when nothing was flushed (the old lifetime).
+	const MIN_AGE    = 900;                  // While venues keep changing, rebuild a state at most every 15 minutes.
+	const OVERDUE    = 600;                  // A rebuild job this late means cron is not running: do it in the request.
 	const MIN_LINKS  = 5;
 	const POPULAR    = 8;
 
 	public static function hooks() {
 		add_shortcode( 'osn_state_cities', array( __CLASS__, 'shortcode' ) );
 		add_filter( 'the_content', array( __CLASS__, 'takeover' ), 6 );
-		add_action( 'osn_city_venues_changed', array( __CLASS__, 'flush' ) );
+		add_action( 'osn_city_venues_changed', array( __CLASS__, 'flush' ) ); // Passes the city term ID: that city's state only.
+		add_action( self::CRON, array( __CLASS__, 'cron_rebuild' ) );
 		add_action( 'update_option_' . self::OPTION, array( __CLASS__, 'on_option_change' ), 10, 2 );
 		add_action(
 			'add_option_' . self::OPTION,
@@ -211,34 +217,164 @@ final class State_Cities {
 
 	/* ---------------------------------------------------------------- data */
 
-	/** Invalidate every state's cached data (cheap: one option write per request until the next rebuild). */
-	public static function flush() {
-		if ( self::$stale ) {
+	/**
+	 * Mark cached state data out of date (cheap: at most one option write per state per second).
+	 *
+	 * Until 0.6.13 any venue change anywhere invalidated every state, and the next visitor to each state page
+	 * (and to the homepage, whose carousel reads several states) waited for two heavy queries per state. The
+	 * enrichment pipeline changes venues for 30 to 100 minutes every two hours, so hub pages were slow for much
+	 * of the day. Now a venue change marks its own state only, and data() serves the copy it has while a
+	 * background job rebuilds it.
+	 *
+	 * Each state's flush time is its own option, so writing one never rewrites another. One shared map would be read at the start of a
+	 * request and written back whole, so two overlapping requests (an upsert batch and a photo batch) would undo
+	 * each other's flushes and leave a state out of date until the 12-hour refresh.
+	 *
+	 * @param int|string $what A city term ID or a state code: that state only. Empty, or a term whose state is
+	 *                         not known: every state (a city or landing page was added, removed or relinked).
+	 */
+	public static function flush( $what = '' ) {
+		$code = '*';
+		if ( is_string( $what ) && States::has( strtoupper( $what ) ) ) {
+			$code = strtoupper( $what );
+		} elseif ( is_numeric( $what ) && (int) $what > 0 ) {
+			$st   = self::state_of_term( (int) $what );
+			$code = '' !== $st ? $st : '*';
+		}
+		$now = time();
+		// The memo holds the second written, not a flag: a rebuild can land between two flushes of one long request,
+		// and the second flush must then still count.
+		if ( ( self::$flushed[ $code ] ?? 0 ) === $now || ( self::$flushed['*'] ?? 0 ) === $now ) {
 			return;
 		}
-		self::$stale = true;
-		update_option( self::VER_OPTION, (int) get_option( self::VER_OPTION, 0 ) + 1 );
+		self::$flushed[ $code ] = $now;
+		update_option( self::flush_key( $code ), $now, false );
 	}
 
-	/** @var bool A flush already happened since the last rebuild in this request. */
-	private static $stale = false;
+	/** @var array<string,int> When each state (or '*') was last flushed by this request. */
+	private static $flushed = array();
+
+	public static function flush_memo() {
+		self::$flushed = array();
+	}
+
+	/** @var callable|null Replaces build() in tests. */
+	public static $builder = null;
+
+	/** Option holding a state's last flush time ('*': every state). Not autoloaded: each is its own cache key. */
+	private static function flush_key( $code ) {
+		return self::FLUSH . ( '*' === $code ? 'all' : $code );
+	}
+
+	/** Two-letter state of a city term ("" when unknown): the osn_state term meta, else the ", ST" in its name. */
+	private static function state_of_term( $term_id ) {
+		$st = strtoupper( (string) get_term_meta( $term_id, 'osn_state', true ) );
+		if ( '' === $st ) {
+			$t  = get_term( $term_id, Data_Model::CITY );
+			$p  = ( $t && ! is_wp_error( $t ) ) ? Util::parse_city( $t->name ) : null;
+			$st = $p ? strtoupper( (string) $p[1] ) : '';
+		}
+		return States::has( $st ) ? $st : '';
+	}
 
 	/**
 	 * Per-city venue data for a state, keyed by landing page path ("phoenix-az").
 	 * Cached in a transient per state; one aggregated pair of queries per rebuild.
 	 *
+	 * A copy that is out of date is still returned: a visitor never waits for the rebuild. The rebuild is
+	 * scheduled as a cron job, no sooner than MIN_AGE after the last one, so a long run of venue changes costs
+	 * one rebuild per state every 15 minutes at most. Counts and photos on state pages and the homepage
+	 * carousel can therefore be 15 minutes behind, plus however late cron runs and however long the page cache
+	 * keeps the page. Three cases build in the request: there is no copy at all (the cache was evicted, or a
+	 * state is read for the first time), the job could not be scheduled, or the scheduled job is OVERDUE, which
+	 * means cron is not running; a lock keeps the last two to one request.
+	 *
 	 * @return array<string,array> { term_id, count, top: [ [label, n], ... ], photo: attachment id }
 	 */
 	public static function data( $code ) {
-		$ver = (int) get_option( self::VER_OPTION, 0 );
 		$hit = get_transient( self::TRANSIENT . $code );
-		if ( is_array( $hit ) && isset( $hit['v'], $hit['d'] ) && (int) $hit['v'] === $ver ) {
+		if ( ! is_array( $hit ) || ! isset( $hit['d'] ) || ! is_array( $hit['d'] ) ) {
+			return self::rebuild( $code );
+		}
+		$now     = time();
+		$built   = (int) ( $hit['b'] ?? 0 ); // Copies cached before 0.6.13 have no build time and count as out of date.
+		$flushed = max( (int) get_option( self::flush_key( '*' ), 0 ), (int) get_option( self::flush_key( $code ), 0 ) );
+		// Strictly newer: a build and a flush in the same second cannot be told apart, so the copy is rebuilt.
+		if ( $built > $flushed && ( $now - $built ) < self::REFRESH ) {
 			return $hit['d'];
 		}
-		$d = self::build( $code );
-		set_transient( self::TRANSIENT . $code, array( 'v' => $ver, 'd' => $d ), 12 * HOUR_IN_SECONDS );
-		self::$stale = false;
+		$args  = array( $code );
+		$next  = wp_next_scheduled( self::CRON, $args );
+		$tried = max( $built, (int) ( $hit['t'] ?? 0 ) );
+		// Cron normally does the rebuild. When it cannot, the request does, but no more often than cron would have:
+		// without the MIN_AGE test a site with broken cron and no shared object cache (so no lock) would rebuild on
+		// every view during an import.
+		$due = ( $now - $tried ) >= self::MIN_AGE;
+		if ( ! $next ) {
+			if ( false !== wp_schedule_single_event( max( $now, $tried + self::MIN_AGE ), self::CRON, $args ) || ! $due || ! self::lock( $code ) ) {
+				return $hit['d'];
+			}
+			return self::rebuild( $code, $hit );
+		}
+		if ( ( $now - $next ) < self::OVERDUE ) {
+			return $hit['d'];
+		}
+		if ( ! $due ) {
+			wp_clear_scheduled_hook( self::CRON, $args ); // A job left over from before the last build: the next read schedules a new one.
+			return $hit['d'];
+		}
+		if ( ! self::lock( $code ) ) {
+			return $hit['d'];
+		}
+		wp_clear_scheduled_hook( self::CRON, $args );
+		return self::rebuild( $code, $hit );
+	}
+
+	/**
+	 * Build a state's data now and store it.
+	 *
+	 * The build time is taken before the queries run: a venue saved while they run is not in the result, and
+	 * its flush must be newer than the copy. When a query fails (build() returns null) the copy we already have
+	 * is kept, or an empty one stored with no build time, marked with the time of the attempt so the retry waits
+	 * MIN_AGE like any rebuild; before 0.6.13 a failed build was cached as an empty state for 12 hours.
+	 *
+	 * @param array|null $old The cached copy being replaced, if any.
+	 */
+	private static function rebuild( $code, $old = null ) {
+		$started = time();
+		$d       = self::$builder ? call_user_func( self::$builder, $code ) : self::build( $code );
+		if ( ! is_array( $d ) ) {
+			$keep = ( is_array( $old ) && isset( $old['d'] ) && is_array( $old['d'] ) ) ? $old : array( 'b' => 0, 'd' => array() );
+			set_transient( self::TRANSIENT . $code, array( 'b' => (int) ( $keep['b'] ?? 0 ), 't' => $started, 'd' => $keep['d'] ), self::TTL );
+			return $keep['d'];
+		}
+		set_transient( self::TRANSIENT . $code, array( 'b' => $started, 'd' => $d ), self::TTL );
 		return $d;
+	}
+
+	/**
+	 * The cron job: rebuild one state in the background.
+	 *
+	 * WordPress removes the event before it runs this, so a visitor who arrives while the queries run sees no
+	 * job and schedules another for now. Jobs are only ever scheduled MIN_AGE or more after the last attempt,
+	 * so one that finds a younger copy is that duplicate and does nothing.
+	 */
+	public static function cron_rebuild( $code ) {
+		$code = strtoupper( (string) $code );
+		if ( ! States::has( $code ) ) {
+			return;
+		}
+		$hit   = get_transient( self::TRANSIENT . $code );
+		$hit   = ( is_array( $hit ) && isset( $hit['d'] ) && is_array( $hit['d'] ) ) ? $hit : null;
+		$tried = $hit ? max( (int) ( $hit['b'] ?? 0 ), (int) ( $hit['t'] ?? 0 ) ) : 0;
+		if ( ( time() - $tried ) >= self::MIN_AGE && self::lock( $code ) ) {
+			self::rebuild( $code, $hit );
+		}
+	}
+
+	/** One rebuild of a state at a time, across requests where there is a shared object cache (two minutes). */
+	private static function lock( $code ) {
+		return (bool) wp_cache_add( 'osn_state_lock_' . $code, 1, 'osn', 2 * MINUTE_IN_SECONDS );
 	}
 
 	private static function build( $code ) {
@@ -314,6 +450,9 @@ final class State_Cities {
 				$out[ $tid ]['photo'] = (int) $r->th;
 			}
 		}
+		if ( '' !== (string) $wpdb->last_error ) {
+			return null; // The venue query failed: not the same as a state with no venues.
+		}
 		if ( ! $out ) {
 			return array();
 		}
@@ -337,6 +476,9 @@ final class State_Cities {
 				Data_Model::POST_TYPE
 			)
 		);
+		if ( '' !== (string) $wpdb->last_error ) {
+			return null; // Without the amenity counts every city would lose its "top" line.
+		}
 		$by_city = array();
 		foreach ( (array) $am as $r ) {
 			if ( in_array( $r->slug, array( 'outdoor-seating', 'wheelchair-accessible' ), true ) ) {

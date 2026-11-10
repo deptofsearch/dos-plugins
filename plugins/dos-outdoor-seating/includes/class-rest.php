@@ -164,7 +164,7 @@ final class Rest {
 		if ( ! $dry && ( $counts['created'] || $counts['updated'] ) ) {
 			Repository::purge_cities( $terms );
 			if ( $dirty ) {
-				City_Index::flush();
+				City_Index::flush( false ); // purge_cities() has marked the states of the cities touched; the others have not changed.
 			}
 		}
 		return rest_ensure_response(

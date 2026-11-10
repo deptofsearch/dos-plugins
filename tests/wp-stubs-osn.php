@@ -7,8 +7,10 @@
  */
 
 define( 'ABSPATH', '/tmp/' );
+define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
-define( 'OSN\\VERSION', '0.6.12' );
+define( 'WEEK_IN_SECONDS', 604800 );
+define( 'OSN\\VERSION', '0.6.13' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();
@@ -75,10 +77,15 @@ function apply_filters( $t, $v, ...$rest ) {
 }
 function osn_run_filter( $t, ...$args ) { return apply_filters( $t, ...$args ); }
 function get_option( $k, $d = false ) { return $GLOBALS['osn']['options'][ $k ] ?? $d; }
-function update_option( $k, $v ) { $GLOBALS['osn']['options'][ $k ] = $v; return true; }
+function update_option( $k, $v, $autoload = null ) { $GLOBALS['osn']['options'][ $k ] = $v; return true; }
 function get_transient( $k ) { return $GLOBALS['osn']['transients'][ $k ] ?? false; }
 function set_transient( $k, $v, $t = 0 ) { $GLOBALS['osn']['transients'][ $k ] = $v; return true; }
 function delete_transient( $k ) { unset( $GLOBALS['osn']['transients'][ $k ] ); return true; }
+// Cron and the object cache: $GLOBALS['osn']['cron'] is { "hook|json args" => timestamp }, ['locks'] the keys added.
+function wp_next_scheduled( $hook, $args = array() ) { return $GLOBALS['osn']['cron'][ $hook . '|' . json_encode( $args ) ] ?? false; }
+function wp_schedule_single_event( $ts, $hook, $args = array() ) { if ( ! empty( $GLOBALS['osn']['cron_fails'] ) ) { return false; } $GLOBALS['osn']['cron'][ $hook . '|' . json_encode( $args ) ] = (int) $ts; return true; }
+function wp_clear_scheduled_hook( $hook, $args = array() ) { unset( $GLOBALS['osn']['cron'][ $hook . '|' . json_encode( $args ) ] ); return 1; }
+function wp_cache_add( $k, $v, $g = '', $t = 0 ) { if ( isset( $GLOBALS['osn']['locks'][ "$g:$k" ] ) ) { return false; } $GLOBALS['osn']['locks'][ "$g:$k" ] = $v; return true; }
 function register_rest_route( $ns, $route, $args ) { $GLOBALS['osn']['routes'][ $ns . $route ] = $args; }
 function rest_ensure_response( $d ) { return $d instanceof WP_REST_Response ? $d : new WP_REST_Response( $d ); }
 function is_wp_error( $t ) { return $t instanceof WP_Error; }

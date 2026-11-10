@@ -7,6 +7,76 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.13
+
+State pages and the homepage carousel no longer rebuild their per-city data
+while a visitor waits. A venue change marks only its own state out of date,
+and `State_Cities::data()` returns the copy it has while a cron job
+(`osn_rebuild_state`) rebuilds that state in the background.
+
+Why. The data behind a state page (venue count, top categories and photo per
+city) costs two aggregate queries over every venue in the state. Until now
+one version number covered all states: any venue saved anywhere, or any
+photo attached, discarded all of them, and the next visitor to each state
+page ran those queries inside the request. The homepage carousel reads
+several states, so it paid for each in turn. The import pipeline saves
+venues for 30 to 100 minutes every two hours, which kept the data
+permanently discarded while it ran: an audit crawl that overlapped a run
+timed state pages at 10 to 14 seconds and the homepage at 22 to 27, against
+about 0.6 seconds when the pipeline was idle.
+
+What changed, and what it costs:
+
+- Each state has its own flush time, in an option of its own
+  (`osn_state_flush_WA`, and `osn_state_flush_all` for every state), so
+  writing one never rewrites another. `State_Cities::flush()` takes a city term ID or
+  a state code and marks that state only; with no argument, or a term whose
+  state cannot be told, it marks every state. One shared map was the first
+  design and was dropped in review: a request reads options once at its
+  start, so two overlapping batches would have written back each other's
+  stale map and lost flushes. The old counter `osn_state_data_ver` is no
+  longer read.
+- What still marks every state: a city term created, edited or deleted, any
+  published page saved or a page published or unpublished (existing
+  behaviour, broader than it needs to be), a city's landing page or state
+  changed, and the register-cities route. A venue batch no longer does. It
+  used to reach `State_Cities::flush()` a second time through
+  `City_Index::flush()` whenever a venue was created or changed status or
+  city, which is most of an import; `purge_cities()` has already marked the
+  states it touched, so that call now passes `false`. (A venue that creates
+  a brand new city still marks every state, through the term hooks.)
+- The cached copy lives a week and records when its build started, not when
+  it finished: a venue saved while the queries run is not in the result, so
+  its flush has to count as newer. A copy is out of date when a flush is as
+  new as it or newer, or it is 12 hours old (the old lifetime).
+- An out-of-date copy is still served, and a rebuild is scheduled no sooner
+  than 15 minutes after the last one, so a long import costs one rebuild per
+  visited state per 15 minutes rather than one per page view. The price:
+  counts and photos on state pages and the carousel can be 15 minutes
+  behind during an import, plus however late cron runs and however long the
+  page cache holds the page. City pages are not affected; they do not read
+  this data.
+- A request still builds in line in three cases: there is no copy at all
+  (the cache was evicted, or a state is read for the first time), the job
+  could not be scheduled, or the scheduled job is more than 10 minutes
+  overdue, which means cron is not running. The last two happen no sooner
+  than 15 minutes after the previous build, as a job would, and a two-minute
+  lock keeps them to one request where there is a shared object cache.
+  Without these a site with broken cron would show the same counts for a
+  week.
+- A build whose query fails no longer replaces a good copy with an empty
+  state (which 0.6.12 then cached for 12 hours). `build()` returns null when
+  either query reports an error; the copy is kept and the retry waits 15
+  minutes.
+- Copies cached by 0.6.12 have no build time, so they count as out of date:
+  each is served until its background rebuild runs.
+
+Not changed: the homepage's own city list (`Home::data()`) and the city
+index are still discarded by a venue batch that creates a venue, and are
+rebuilt in the next request. That build is page parsing and one term query,
+not the per-state venue queries; if the homepage is still slow during an
+import, that is where to look next.
+
 ## 0.6.12
 
 City, neighborhood and landmark grids are cut into numbered pages of 240

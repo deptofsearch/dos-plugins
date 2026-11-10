@@ -3,7 +3,7 @@
  *
  * The matching rules here mirror includes/search.php exactly, so the box behaves the same whether
  * this script ran or the form was submitted without it. Change one and change the other: both
- * normalise the same way, read the same state names and rank the same way.
+ * normalize the same way, read the same state names and rank the same way.
  *
  * Everything degrades. The form posts to the site root with ?s=&breanm_city=1 and the server
  * redirects on a single match; the carousel is a scrollable list and the arrow buttons only appear
@@ -47,7 +47,7 @@
 		return out;
 	}
 
-	/* The ways one query can be read: [ normalised city, state codes or null ]. */
+	/* The ways one query can be read: [ normalized city, state codes or null ]. */
 	function readings(raw) {
 		raw = String(raw == null ? '' : raw);
 		var out = [], pos = raw.indexOf(','), city, state, codes, n, tokens, i;

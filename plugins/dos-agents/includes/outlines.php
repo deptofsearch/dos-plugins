@@ -7,7 +7,7 @@
  * 300x200 box. It is shared with DoS - Best Lenders, which generated it.
  *
  * The outlines are drawn inline rather than written out as files and linked. There are 51 of them on
- * one page, they are decorative, and they have to recolour on hover, which an <img> cannot do. Inline
+ * one page, they are decorative, and they have to recolor on hover, which an <img> cannot do. Inline
  * also means no uploads directory to be unwritable and no stale tiles to version. The file is read
  * once per request and only on a page that asks for a card.
  */
@@ -83,7 +83,7 @@ function dos_agents_outlines() {
 
 /**
  * The inline outline for a state, or '' when there is no drawing for it. Decorative next to the
- * state's own name, so it is labelled for screen readers rather than hidden: a card read aloud as
+ * state's own name, so it is labeled for screen readers rather than hidden: a card read aloud as
  * "California, 9 cities" says everything the picture does.
  */
 function dos_agents_outline_svg( $state ) {

@@ -20,7 +20,7 @@ function dos_agents_brand_enabled() {
 
 /** The site name, in two weights: the plain part and the muted "Near Me". */
 function dos_agents_brand_wordmark() {
-	// A house under a magnifier, the site's own mark, drawn rather than loaded so it takes the link colour.
+	// A house under a magnifier, the site's own mark, drawn rather than loaded so it takes the link color.
 	$mark = '<svg class="breanm-brand__mark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
 		. ' stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
 		. '<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg>';

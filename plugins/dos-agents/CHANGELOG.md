@@ -5,17 +5,39 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.0
+
+Meta descriptions and social sharing tags, which the site had almost none of.
+
+### Added
+- **A meta description, Open Graph and Twitter Card tags** (`includes/head-meta.php`, hooked on `wp_head` at priority 1). Why: a live audit found no `<meta name="description">` and no Open Graph on 59 of 60 pages, and no SEO plugin printing them, so every share was a bare link and every result snippet was whatever the search engine guessed. One description per page, plain text, 155 characters at most, cut on a word boundary. The tags are `og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`, `og:locale`, `og:image` (with width, height and alt), `twitter:card`, `twitter:title`, `twitter:description` and `twitter:image`, each printed once.
+- **Every description says only what the page shows.** A city page: "Compare 12 real estate agents in Abilene, TX: ratings, local sales, what reviewers say about each one, and how recent the reviews are", with the stored agent count from the index (one option read, no query per agent); a city with nothing stored gets the same sentence with no number. A state hub: "Real estate agents in Texas: 12 cities with agent cards, including Houston, Dallas and Austin.", the three being the cities with the most agents. It mirrors the hub's own heading because the hub page also lists every city in the state, so a bare "12 Texas cities" would contradict it; with long city names the call to action is shortened, then dropped, rather than cut mid-sentence. The homepage and `/by-state/`: the live city and state counts, each pluralized on its own ("1 city across 1 state"). A blog post: its manual excerpt, else the first sentences of its content with shortcodes and tags stripped (a password-protected post gets none). The blog index: a fixed sentence. Any other page: its manual excerpt, or no description at all, because a weak one is worse than letting the search engine write its own. The cards do not link out to Zillow, so no description mentions a profile link.
+- **`og:title` is a clean title, not the WordPress document title:** "Real Estate Agents in Abilene, TX" on a city page, "Real Estate Agents in Texas" on a hub, the site name on the homepage, the post or page title elsewhere. Titles come back from WordPress with `&#8211;` and `&#038;` in them, so they are decoded once and escaped once.
+- **`og:image`: the post's featured image, else the WordPress Site Icon at 512px, else none.** Never the brand SVG favicon: Open Graph readers do not render SVG, and a filter result that points at one is dropped. `twitter:card` is `summary_large_image` only for an image at least 600px wide; the square Site Icon gets `summary`, because stretched into the large card it is cropped into a blur.
+- **Filters:** `dos_agents_head_meta` (default true, turns all of it off), `dos_agents_meta_description` (`$text`, `$post`, `$kind`), `dos_agents_og_title` (`$title`, `$post`, `$kind`), `dos_agents_og_image` (an array of `url`, `width`, `height`, `alt`, or empty) and `dos_agents_meta_description_max` (155). `$kind` is one of `home`, `by-state`, `hub`, `city`, `blog`, `post`, `page`.
+
+### Stands down
+- It prints nothing when another layer already prints these tags: Yoast (`WPSEO_VERSION`), Rank Math (`RANK_MATH_VERSION`), All in One SEO (`AIOSEO_VERSION`, or the `aioseo()` function, which some builds define late), Jetpack's Open Graph output (`JETPACK__VERSION` defined and the `jetpack_enable_open_graph` filter true, which defaults to on when Jetpack's Publicize or Sharing module is active), SEOPress (`SEOPRESS_VERSION`), The SEO Framework (`THE_SEO_FRAMEWORK_VERSION`), or DoS Toolkit's SEO module when it is enabled (`DOS_Toolkit::is_active( 'seo' )`, not merely loaded). Two descriptions or two `og:title` tags are worse than none.
+- The page being described is the queried object, not whatever the global post happens to be when `wp_head` runs. A protected or private post's `og:title` drops the "Protected: " and "Private: " prefix, which belongs in the page heading and not a share card.
+- It prints only on singular views, the front page and the posts page. Nothing on 404, search, archives, feeds, attachments or in the admin.
+
+### Unchanged
+- **The `<title>` is not touched in this release.** Today's titles are the WordPress defaults ("in Texas - Best Real Estate Agents Near Me"); fixing them is a separate change.
+
+### Changed
+- American spelling in the changelog, README and code comments ("normalized", "recognized", "color", "labeled", "sanitizing"). The function `dos_agents_normalise_agent()` keeps its name: renaming it is a code change, not a wording one.
+
 ## 0.2.4
 
 ### Added
 - **A filter on the by-state grid.** 51 cards is more than anyone wants to read through to find one state, so `[breanm_state_index layout="grid"]` now carries a box above it. It matches the start of the state's name, the start of any later word in it, or the postal code — so "new", "mexico", "nm" and "NM" all land on New Mexico, and "carolina" finds both. A live count reads "Showing 4 of 51 states", and an empty result says so rather than leaving a blank page.
 - The box ships `hidden` and `breanm-home.js` reveals it: a filter that cannot filter should not be on the page, and without the script every state is visible anyway. Cards are hidden rather than removed, so clearing the box is instant and nothing is re-rendered. The count wording is handed over in `data-label-*` attributes so it stays translatable.
-- Every state card now carries `data-name` (normalised the same way the city search normalises) and `data-code`. Harmless on the carousel, which gets no filter.
+- Every state card now carries `data-name` (normalized the same way the city search normalizes) and `data-code`. Harmless on the carousel, which gets no filter.
 
 ## 0.2.3
 
 ### Fixed
-- **State hubs loaded the brand stylesheet but not the homepage one**, so the cities-with-cards block came out as a bulleted list with the city name and the agent count run together ("Bellevue18 agents"). A hub never holds the shortcode — `hub.php` renders the block straight into the content — so nothing ever asked for `breanm-home.css`. `dos_agents_maybe_enqueue_home()` now recognises a hub page and enqueues it in `<head>`, and the content filter asks again as a fallback. Found on the live site right after 0.2.2 went up; `test-agents-home.php` now asserts that rendering a hub enqueues the stylesheet, which is the check that would have caught it.
+- **State hubs loaded the brand stylesheet but not the homepage one**, so the cities-with-cards block came out as a bulleted list with the city name and the agent count run together ("Bellevue18 agents"). A hub never holds the shortcode — `hub.php` renders the block straight into the content — so nothing ever asked for `breanm-home.css`. `dos_agents_maybe_enqueue_home()` now recognizes a hub page and enqueues it in `<head>`, and the content filter asks again as a fallback. Found on the live site right after 0.2.2 went up; `test-agents-home.php` now asserts that rendering a hub enqueues the stylesheet, which is the check that would have caught it.
 
 ## 0.2.2
 
@@ -23,18 +45,18 @@ The 49 state hub pages, and a grid for the by-state page.
 
 ### Added
 - **State hubs get the heading and the cities-with-cards block** (`includes/hub.php`), through `the_content` at priority 9 (before `wpautop`, which would otherwise wrap the block's markup in stray paragraphs). Why a filter and not an edit: there are 49 of these pages and each holds a table of every city in the state — Washington's content is 159,000 characters — so rewriting them would mean pushing 7MB of other people's markup back and forth to add two blocks. The filter also covers a hub created tomorrow, and `dos_agents_hub_block` turns it off and puts every page back as it was. Added once per page: `the_content` runs again for excerpts and feeds, and the block would otherwise appear twice.
-- A hub is recognised by its slug — "in-" plus the state's name, which is how all 49 are named. City pages are "in-&lt;city&gt;-&lt;st&gt;" and end in a two-letter code, so the two cannot collide; `in-house-financing` is not New Hampshire.
+- A hub is recognized by its slug — "in-" plus the state's name, which is how all 49 are named. City pages are "in-&lt;city&gt;-&lt;st&gt;" and end in a two-letter code, so the two cannot collide; `in-house-financing` is not New Hampshire.
 - **`[breanm_state_index layout="grid"]`**: the same state cards laid out as a grid instead of a scrolling row, for the by-state page, where browsing every state *is* the page and hiding 46 of 51 behind a horizontal scroll would be perverse. The grid carries no carousel hook and no arrows. Default is unchanged.
 
 ### Changed
 - **Hubs render as Pages, not posts.** They carried Themify's `sidebar1`, so each one printed a "Recent Posts" column beside a table of 470 cities. They now take the same no-sidebar treatment city pages do, and get a `breanm-hub-page` body class.
-- The old hub heading carries an inline `font-family: Verdana` and colour. Inline styles beat a stylesheet, so the brand rule for it is the one place `!important` is the only tool that works; it is scoped to `body.breanm-hub-page` so nothing else is touched.
+- The old hub heading carries an inline `font-family: Verdana` and color. Inline styles beat a stylesheet, so the brand rule for it is the one place `!important` is the only tool that works; it is scoped to `body.breanm-hub-page` so nothing else is touched.
 
 ## 0.2.1
 
 The homepage lead row: intro copy on the left, the city box on the right.
 
-- `.breanm-home__lead` in `breanm-brand.css` is a two-column grid, half the width each, vertically centred. The box is moved right with `order: 2` rather than by markup order, so the single-column phone layout can put it FIRST and the copy under it — on a phone the point is to search, not to read. Why this shape: it is the one Outdoor Seating Near Me already uses (`.osn-home__lead`), so the two sites behave the same way, and Ryan asked for this page to match it.
+- `.breanm-home__lead` in `breanm-brand.css` is a two-column grid, half the width each, vertically centered. The box is moved right with `order: 2` rather than by markup order, so the single-column phone layout can put it FIRST and the copy under it — on a phone the point is to search, not to read. Why this shape: it is the one Outdoor Seating Near Me already uses (`.osn-home__lead`), so the two sites behave the same way, and Ryan asked for this page to match it.
 - The dek loses its top margin and width cap inside the row, where it sets the row height and the 62ch cap would fight the column.
 - The page content wraps the dek in `.breanm-home__lead-copy` and the two of them in `.breanm-home__lead`; without the wrapper the page just stacks as before, so content and plugin can be updated in either order.
 
@@ -52,17 +74,17 @@ site look like the cards.
 - **`GET /wp-json/breanm/v1/cities`** (public): the index as `{c, s, u}`, for the typeahead once there are more cities than ride along in the page markup (400, filter `dos_agents_inline_max`). **`POST /cities/rebuild`** (`manage_options`) rebuilds the index from every stored city — needed once after this version is installed, because the index starts empty, and any time a page was changed outside WordPress.
 
 ### Changed
-- **City pages render as Pages, not posts** (`includes/layout.php`). Why: they carried Themify's `sidebar1`, so every city page printed a "Recent Posts" column beside a list of agents, unrelated to it, and on a phone that landed under the cards as a tail of blog links. The site's other Pages are already sidebar-none. Themify's per-post settings are answered through `get_post_metadata` rather than written to 28,000 pages, so nothing is stored and a page that stops holding the shortcode goes straight back to the theme's own behaviour. Filter `dos_agents_page_layout` turns it off.
+- **City pages render as Pages, not posts** (`includes/layout.php`). Why: they carried Themify's `sidebar1`, so every city page printed a "Recent Posts" column beside a list of agents, unrelated to it, and on a phone that landed under the cards as a tail of blog links. The site's other Pages are already sidebar-none. Themify's per-post settings are answered through `get_post_metadata` rather than written to 28,000 pages, so nothing is stored and a page that stops holding the shortcode goes straight back to the theme's own behavior. Filter `dos_agents_page_layout` turns it off.
 
 ### Notes
-- The state outlines in `assets/state-outlines.json` are the US Census Bureau's generalized state geometry (public domain), shared with DoS - Best Lenders. They are drawn inline rather than written out as files: there are 51 on one page, they are decorative, and they recolour on hover, which an `<img>` cannot do. No uploads directory to be unwritable, no stale tiles to version.
+- The state outlines in `assets/state-outlines.json` are the US Census Bureau's generalized state geometry (public domain), shared with DoS - Best Lenders. They are drawn inline rather than written out as files: there are 51 on one page, they are decorative, and they recolor on hover, which an `<img>` cannot do. No uploads directory to be unwritable, no stale tiles to version.
 - `tests/home-preview.php` writes `tests/preview/home.html` from the real shortcodes and the real CSS, optionally over an export of the live index, so the homepage can be looked at without a WordPress install.
 
 ## 0.1.8
 
 ### Added
-- **An optional review window.** A payload agent may now carry `reviews_window_years`, a whole number from 1 to 20: how many years back the reviews behind its tags and summary were taken from. It is stored right after `reviews_analyzed`, re-sanitised on every read and returned unchanged by the authenticated GET. Anything else (0, a negative, over 20, a fraction, a word, a list) is dropped, not clamped, and an agent that does not send it stores exactly the keys it did before. Why: the pipeline now limits tagging to recent reviews, and "the 20 most recent reviews" no longer said what was actually used. Dropping rather than clamping because a wrong window would print a false claim on the card.
-- **A note when a window leaves too little to summarise.** With `reviews_window_years` set and neither `summary_parts` nor `summary`, the card prints a muted "Not enough reviews from the last {Y} years to write a summary." where the review summary would be. Why: those cards otherwise looked like the summary was missing by mistake. The note only appears when a window was given, so older payloads render as before.
+- **An optional review window.** A payload agent may now carry `reviews_window_years`, a whole number from 1 to 20: how many years back the reviews behind its tags and summary were taken from. It is stored right after `reviews_analyzed`, re-sanitized on every read and returned unchanged by the authenticated GET. Anything else (0, a negative, over 20, a fraction, a word, a list) is dropped, not clamped, and an agent that does not send it stores exactly the keys it did before. Why: the pipeline now limits tagging to recent reviews, and "the 20 most recent reviews" no longer said what was actually used. Dropping rather than clamping because a wrong window would print a false claim on the card.
+- **A note when a window leaves too little to summarize.** With `reviews_window_years` set and neither `summary_parts` nor `summary`, the card prints a muted "Not enough reviews from the last {Y} years to write a summary." where the review summary would be. Why: those cards otherwise looked like the summary was missing by mistake. The note only appears when a window was given, so older payloads render as before.
 
 ### Changed
 - **The "Last review" line says the window when there is one.** With a window it reads "Last review {Mon YYYY} · tags based on {N} reviews from the last {Y} years" (singular "review" and "year" at 1). Without one it keeps "tags based on the N most recent reviews". With no review count it still stops after the date, as before. Why: the reader should see how recent the reviews behind the tags are, not just how many.
@@ -72,8 +94,8 @@ site look like the cards.
 ## 0.1.7
 
 ### Added
-- **A labelled, collapsible review summary.** A payload agent may now carry `summary_parts`, `{ "buyers": string, "sellers": string, "working_style": string }` (each up to 320 characters). The card prints a closed `<details>` titled "What reviewers say" with one paragraph per part that has text, labelled Buyers, Sellers and Working style, in that order. The tag chips stay visible below it. Why: one run-together paragraph cut off after four lines hid most of what reviewers said, and ran what buyers said together with what sellers said. A native `<details>` needs no JavaScript, so it works for crawlers and visitors without JS, and the text stays in the HTML.
-- Sanitising follows the other text fields: strings only (a number or list in a slot is ignored), tags stripped, whitespace collapsed, empty parts dropped, unknown keys ignored, and the whole object dropped if no part is left, so a city that sends none stores exactly what it did before. It is re-sanitised on every read and the authenticated GET returns it unchanged. The existing `summary` string is untouched: an agent with no `summary_parts` still shows its single paragraph, and an agent with both shows the parts only.
+- **A labeled, collapsible review summary.** A payload agent may now carry `summary_parts`, `{ "buyers": string, "sellers": string, "working_style": string }` (each up to 320 characters). The card prints a closed `<details>` titled "What reviewers say" with one paragraph per part that has text, labeled Buyers, Sellers and Working style, in that order. The tag chips stay visible below it. Why: one run-together paragraph cut off after four lines hid most of what reviewers said, and ran what buyers said together with what sellers said. A native `<details>` needs no JavaScript, so it works for crawlers and visitors without JS, and the text stays in the HTML.
+- Sanitizing follows the other text fields: strings only (a number or list in a slot is ignored), tags stripped, whitespace collapsed, empty parts dropped, unknown keys ignored, and the whole object dropped if no part is left, so a city that sends none stores exactly what it did before. It is re-sanitized on every read and the authenticated GET returns it unchanged. The existing `summary` string is untouched: an agent with no `summary_parts` still shows its single paragraph, and an agent with both shows the parts only.
 - **An "old reviews" label.** When the newest review (`last_review`) is more than 3 years before the site's local date, the card shows "Reviews on file are from {year} or earlier" under the "Last review" line and carries `data-old="1"`. Why: the line above only gave a month and year, which is easy to read past, and a reader can mistake a years-old review history for a current one. The threshold uses the same local-date "now" and year length as the 12-month filter, so the two agree; it defaults to 3 years and the `dos_agents_old_reviews_years` filter changes it.
 
 ### Changed
@@ -107,9 +129,9 @@ site look like the cards.
 ## 0.1.2
 
 ### Added
-- **The disclosure travels with the city data.** The payload may carry an optional top-level `disclosure` object, `{ "title": string (80 characters), "paragraphs": up to 6 strings (900 characters each) }`. It is stored with the city, re-sanitised on every read like the rest of the payload, and returned unchanged by the authenticated GET. The page prints it in the existing disclosure box: the title in `<strong>`, then each paragraph in its own `<p>`, all escaped.
+- **The disclosure travels with the city data.** The payload may carry an optional top-level `disclosure` object, `{ "title": string (80 characters), "paragraphs": up to 6 strings (900 characters each) }`. It is stored with the city, re-sanitized on every read like the rest of the payload, and returned unchanged by the authenticated GET. The page prints it in the existing disclosure box: the title in `<strong>`, then each paragraph in its own `<p>`, all escaped.
 - Why: the wording is part of what a city's data is published with, and the pipeline that produces the data is the thing that knows the right wording per city. A city without one still shows the `breanm_agents_disclosure` option, and then the built-in default, exactly as before, so nothing changes for cities already stored.
-- Sanitising is strict: strings only, tags stripped, whitespace inside a paragraph collapsed, empty paragraphs dropped, anything else inside the object ignored. An object with no paragraph left is dropped whole (a lone title is not a disclosure), which means the fallback applies.
+- Sanitizing is strict: strings only, tags stripped, whitespace inside a paragraph collapsed, empty paragraphs dropped, anything else inside the object ignored. An object with no paragraph left is dropped whole (a lone title is not a disclosure), which means the fallback applies.
 
 ## 0.1.1
 
@@ -122,7 +144,7 @@ First release: filterable agent cards for a city page on Best Real Estate
 Agents Near Me.
 
 **Data is pushed, not fetched.** An n8n workflow reads each city's agents from
-public Zillow profiles, summarises their recent reviews and tags them, then
+public Zillow profiles, summarizes their recent reviews and tags them, then
 POSTs the result to `breanm/v1/agents/upsert`. The plugin never calls Zillow
 or any other service; a page load reads one option.
 
@@ -204,7 +226,7 @@ An independent review found these; all are in 0.1.0 because it has not shipped.
   stores outside the post body (those print in the footer). Whether they are
   already enqueued is asked of WordPress, so they are never added twice.
 - **Stored data is re-checked on every read.** The shortcode and the GET run the
-  stored option back through the sanitiser, and the renderer fills in any missing
+  stored option back through the sanitizer, and the renderer fills in any missing
   key and skips an agent with no valid Zillow link, so a hand-edited option or an
   older shape cannot cause a PHP warning, an empty `href` or a field outside the
   schema on the page.

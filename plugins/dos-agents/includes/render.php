@@ -55,7 +55,7 @@ function dos_agents_is_old( $agent, $cutoff ) {
 	return '' !== $agent['last_review'] && $agent['last_review'] < $cutoff;
 }
 
-/** The labelled parts of a review summary, in the order a card prints them. */
+/** The labeled parts of a review summary, in the order a card prints them. */
 function dos_agents_summary_part_labels() {
 	return array(
 		'buyers'        => __( 'Buyers', 'dos-agents' ),
@@ -486,7 +486,7 @@ function dos_agents_render( array $payload, $initial = 12, $now = null ) {
 	$more    = max( 0, count( $chips ) - $keep );
 
 	// The disclosure that came with the city data wins; then the option; then the built-in default.
-	// (dos_agents_get() has already sanitised the payload's; here it is only checked for shape.)
+	// (dos_agents_get() has already sanitized the payload's; here it is only checked for shape.)
 	$d_title = '';
 	$d_paras = array();
 	if ( isset( $payload['disclosure'] ) && is_array( $payload['disclosure'] ) ) {

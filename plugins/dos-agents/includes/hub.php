@@ -9,7 +9,7 @@
  * a new state hub is covered the day it is created, and turning the filters off puts every page
  * back exactly as it was.
  *
- * A hub is recognised by its slug: "in-" plus the state's name, which is how all 49 are named.
+ * A hub is recognized by its slug: "in-" plus the state's name, which is how all 49 are named.
  * City pages are "in-<city>-<st>" and end in a two-letter code, so the two never collide.
  */
 

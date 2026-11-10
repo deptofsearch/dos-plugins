@@ -4,7 +4,7 @@
  *
  * The rules live here and are mirrored in assets/breanm-home.js, because the box has to behave the
  * same whether the typeahead is running or the form was submitted with JavaScript off. Keep the two
- * in step: they normalise the same way, read the same state names and rank the same way. The rules
+ * in step: they normalize the same way, read the same state names and rank the same way. The rules
  * are the ones DoS - Best Lenders arrived at, so a visitor who uses both sites types the same things.
  *
  * A query may be "Boise", "boise id", "Boise, ID", "Boise, Idaho", "Saint Helens", "St. Helens", or a
@@ -28,7 +28,7 @@ function dos_agents_search_norm( $s ) {
 }
 
 /**
- * The state codes a normalised string can mean: an exact code, an exact name, or a name prefix of at
+ * The state codes a normalized string can mean: an exact code, an exact name, or a name prefix of at
  * least $min_prefix letters. "wa" is Washington; "new" is neither New York nor New Mexico on its own,
  * which is why the caller asks for three letters when the state was not set off by a comma.
  */
@@ -55,7 +55,7 @@ function dos_agents_search_states( $s, $min_prefix ) {
 }
 
 /**
- * The ways one query can be read: a list of [ normalised city, state codes or null ]. "kansas city"
+ * The ways one query can be read: a list of [ normalized city, state codes or null ]. "kansas city"
  * is both a city called Kansas City and a city called Kansas in a state starting "city" (no such
  * state, so that reading is dropped); "springfield il" is Springfield in Illinois and also a city
  * literally called "springfield il" (no such city, so that one finds nothing).

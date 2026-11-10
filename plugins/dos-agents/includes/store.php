@@ -1,6 +1,6 @@
 <?php
 /**
- * Agent payload: validation, sanitising and storage.
+ * Agent payload: validation, sanitizing and storage.
  *
  * The payload comes from an n8n workflow, but it is treated as untrusted anyway: every field is
  * coerced to its type, trimmed to a length, and anything outside the schema is dropped, so what is
@@ -120,13 +120,13 @@ function dos_agents_window_years( $v ) {
 	return $y >= 1 && $y <= 20 ? $y : 0;
 }
 
-/** The keys of an agent's labelled review summary, in the order a card prints them. */
+/** The keys of an agent's labeled review summary, in the order a card prints them. */
 function dos_agents_summary_part_keys() {
 	return array( 'buyers', 'sellers', 'working_style' );
 }
 
 /**
- * The optional labelled review summary: {buyers, sellers, working_style}, each a plain string of
+ * The optional labeled review summary: {buyers, sellers, working_style}, each a plain string of
  * up to 320 characters. Strings only (a number or list in a slot is ignored, not stringified), tags
  * stripped, whitespace collapsed, empty parts dropped, unknown keys ignored. Returns array() when no
  * part survives, which callers treat as "no summary_parts": the agent keeps its single `summary`.
@@ -344,7 +344,7 @@ function dos_agents_sanitize_payload( $raw ) {
 }
 
 /**
- * Stores a sanitised payload under its city's option, not autoloaded.
+ * Stores a sanitized payload under its city's option, not autoloaded.
  *
  * @return array|WP_Error {slug, count, skipped}
  */
@@ -375,7 +375,7 @@ function dos_agents_store( $raw ) {
 /**
  * The stored payload for a city slug, or null.
  *
- * The stored copy is run back through the sanitiser on every read: it is cheap, and it means a
+ * The stored copy is run back through the sanitizer on every read: it is cheap, and it means a
  * hand-edited option, an older shape or a partial write can never reach a page or the REST output
  * with a field that is not in the schema, or with an agent that has no usable profile link.
  */

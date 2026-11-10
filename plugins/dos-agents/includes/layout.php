@@ -8,7 +8,7 @@
  *
  * Themify reads its per-post settings from meta keys. Rather than write those keys to 28,000 pages,
  * they are answered through get_post_metadata, so nothing is stored and a city page that stops
- * holding the shortcode goes back to the theme's own behaviour on the next load. The body class and
+ * holding the shortcode goes back to the theme's own behavior on the next load. The body class and
  * the CSS in breanm-brand.css are the fallback if a theme update reads them another way.
  *
  * Filter `dos_agents_page_layout` (default true) turns it off.

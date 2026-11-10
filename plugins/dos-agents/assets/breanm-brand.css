@@ -98,7 +98,7 @@ body.breanm-brand .breanm-disclosure p { max-width: none; margin: 0; }
 /* In the theme's markup #sidebar is a sibling of #contentwrap (which holds main#content), and #contentwrap is the
    floated 67.64% column; #sidebar is the floated 28.28% one. !important beats the theme's concatenated and skin CSS. */
 /* State hubs: the h1 the plugin adds, and the old table heading, which carries an inline
-   font-family and colour. Inline styles beat a stylesheet, so this is the one place !important is
+   font-family and color. Inline styles beat a stylesheet, so this is the one place !important is
    the only tool that works; it is scoped to hub pages so nothing else is touched. */
 body.breanm-brand .breanm-hub-title { font-weight: 600; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.07; letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance; }
 body.breanm-brand.breanm-hub-page .entry-content h3[style] {

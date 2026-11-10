@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 final class Empty_Cities {
 
 	const TRANSIENT = 'osn_empty_cities_v1';
+	const FLAG      = '_osn_empty'; // Page meta: '1' when the page's last view printed no listing.
 
 	/** @var array|null Request memo of the cached set. */
 	private static $memo = null;
@@ -268,12 +269,46 @@ final class Empty_Cities {
 	public static function robots( $robots ) {
 		if ( is_page() ) {
 			$post = get_queried_object();
-			if ( $post instanceof \WP_Post && self::page_shows_nothing( $post ) ) {
-				unset( $robots['index'] );
-				$robots['noindex'] = true;
-				$robots['follow']  = true;
+			if ( $post instanceof \WP_Post ) {
+				$empty = self::page_shows_nothing( $post );
+				self::sync_flag( $post->ID, $empty );
+				if ( $empty ) {
+					unset( $robots['index'] );
+					$robots['noindex'] = true;
+					$robots['follow']  = true;
+				}
 			}
 		}
 		return $robots;
+	}
+
+	/**
+	 * Remember on the page itself what its last view decided, so the sitemap can leave it out.
+	 *
+	 * The cached set only knows landing pages of city terms. On the live site 78 empty city pages (the TablePress
+	 * era states) have no city term at all, because a term is made when a city gets its first venue: they were
+	 * noindex and still in the sitemap. The view is the one place that knows what every page prints, so it sets
+	 * this flag when a page turns out empty and removes it when it no longer is. A page is flagged at its first
+	 * uncached view, which for a page in the sitemap is at the latest the next crawl. Writes only on a change.
+	 */
+	private static function sync_flag( $post_id, $empty ) {
+		$has = '1' === (string) get_post_meta( $post_id, self::FLAG, true );
+		if ( $empty && ! $has ) {
+			update_post_meta( $post_id, self::FLAG, '1' );
+		} elseif ( ! $empty && $has ) {
+			delete_post_meta( $post_id, self::FLAG );
+		}
+	}
+
+	/** @var callable|null Replaces the query in flagged_ids() in tests. */
+	public static $flagged = null;
+
+	/** @return int[] Pages whose last view found them empty. One indexed query; called for sitemap requests only. */
+	public static function flagged_ids() {
+		if ( self::$flagged ) {
+			return array_map( 'intval', (array) call_user_func( self::$flagged ) );
+		}
+		global $wpdb;
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = %s", self::FLAG ) ) );
 	}
 }

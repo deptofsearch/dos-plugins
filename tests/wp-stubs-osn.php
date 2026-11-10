@@ -10,7 +10,7 @@ define( 'ABSPATH', '/tmp/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'WEEK_IN_SECONDS', 604800 );
-define( 'OSN\\VERSION', '0.6.16' );
+define( 'OSN\\VERSION', '0.6.17' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();
@@ -141,6 +141,8 @@ function get_post_meta( $id, $k = '', $single = false ) {
 	$v = $GLOBALS['osn']['meta'][ $id ][ $k ] ?? '';
 	return $single ? $v : ( '' === $v ? array() : array( $v ) );
 }
+function update_post_meta( $id, $k, $v ) { $GLOBALS['osn']['meta'][ $id ][ $k ] = $v; $GLOBALS['osn']['calls']['meta_write'][] = array( $id, $k, $v ); return true; }
+function delete_post_meta( $id, $k ) { unset( $GLOBALS['osn']['meta'][ $id ][ $k ] ); $GLOBALS['osn']['calls']['meta_write'][] = array( $id, $k, null ); return true; }
 function get_term_meta( $id, $k = '', $single = false ) { return $GLOBALS['osn']['term_meta'][ $id ][ $k ] ?? ''; }
 function taxonomy_exists( $t ) { return in_array( $t, $GLOBALS['osn']['taxonomies'] ?? array(), true ); }
 function get_term( $id, $tax = '' ) { return $GLOBALS['osn']['terms'][ (int) $id ] ?? null; }

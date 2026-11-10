@@ -7,6 +7,21 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.17
+
+A city page's view records on the page (meta `_osn_empty`) whether it printed a listing, and the sitemap leaves
+out pages whose last view was empty, in addition to the cached set.
+
+Why. With 0.6.16 live, all 211 empty city pages were noindex, but 78 of them were still in the sitemap. The cached
+set is built from city terms that have a landing page, and those 78 (the states that began on TablePress) have no
+city term at all: a term is made when a city gets its first venue. Finding them from the page side would mean
+reading the content of every page on each rebuild. The view already decides, for robots, what the page prints, so
+it writes that down: set when the page is empty, removed when it no longer is, a write only on a change. A page is
+flagged at its first uncached view, which for a page in the sitemap is at the latest the next crawl; until then it
+is noindex and still listed, which Search Console reports as "Submitted URL marked noindex" and nothing worse.
+
+The cached set stays for what the flag cannot give: the homepage's per-state counts, and pages nobody has viewed.
+
 ## 0.6.16
 
 Fixes 0.6.15 on the live site. A city page is empty when its first `[table]` shortcode, rendered, prints neither a

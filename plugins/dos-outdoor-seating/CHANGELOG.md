@@ -7,6 +7,24 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.10
+
+Venue pages no longer put the Google rating in their `Restaurant` JSON-LD.
+The `aggregateRating` block (star value and review count) is gone; every other
+property is unchanged, and the visible "★ 4.3 (9,568 reviews)" line on the
+page stays as it was.
+
+The rating and count come from each venue's Google Maps listing. Google's
+review snippet guidelines say "Don't aggregate reviews or ratings from other
+websites", and the same page names a manual action as the consequence of
+breaking them. Its local business documentation recommends `aggregateRating`
+only for sites that collect reviews about other businesses, which this site
+does not. A site audit on 2026-11-09 found the markup on every venue page
+sampled (43 of 43), so the exposure was the whole venue template.
+
+Do not add it back from Maps data. Ratings in the markup would need to be
+first-party: collected from this site's own visitors.
+
 ## 0.6.9
 
 The city grid's ItemList JSON-LD lists the top 100 venues in the grid's own

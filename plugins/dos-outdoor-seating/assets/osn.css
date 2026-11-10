@@ -82,8 +82,6 @@ button.osn-chip[aria-pressed="true"] { background: var(--osn-accent); border-col
 .osn-card__title a { color: var(--osn-ink); text-decoration: none; }
 .osn-card__title a:hover { color: var(--osn-accent); text-decoration: underline; }
 .osn-card__meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .875rem; color: var(--osn-muted); }
-.osn-card__rating { color: var(--osn-ink); }
-.osn-card__rating [aria-hidden] { color: #d9962b; }
 .osn-card__addr, .osn-card__phone { font-size: .875rem; color: var(--osn-muted); }
 .osn-card__phone a { color: inherit; }
 .osn-badge { display: inline-block; padding: 2px 10px; font-size: .78rem; font-weight: 600; border-radius: 999px; }
@@ -111,8 +109,6 @@ button.osn-chip[aria-pressed="true"] { background: var(--osn-accent); border-col
 }
 a.osn-venue__city:hover { filter: brightness(1.1); }
 .osn .osn-venue__city, .osn a.osn-venue__city { color: #fff; }
-.osn-venue__rating [aria-hidden] { color: #d9962b; }
-.osn-venue__count { color: var(--osn-muted); font-size: .9em; }
 .osn-venue__open { font-weight: 600; font-size: .9rem; padding: 2px 10px; border-radius: 999px; background: #f1eeea; }
 .osn-venue__open[data-state="open"] { background: #e8f3e6; color: #25621d; }
 .osn-venue__summary { font-size: 1.05rem; color: var(--osn-muted); margin: 0 0 1.4em; }

@@ -114,8 +114,7 @@ final class Venue_Page {
 		$hood     = $hood['hood'] ? $hood['hood'] : $hood['district'];
 		$hood_url = $hood ? Hoods::page_url( $hood ) : '';
 		$cat     = Util::first_term( $id, Data_Model::CATEGORY );
-		$rating  = (float) Util::meta( $id, 'rating' );
-		$count   = (int) Util::meta( $id, 'rating_count' );
+		// No rating or review count on the page: both come from the venue's Google Maps listing (see CHANGELOG 0.6.11).
 		$price   = Util::price_label( $id );
 		$tz      = Util::timezone( $id );
 		$hours   = Util::hours( $id );
@@ -148,7 +147,6 @@ final class Venue_Page {
 	<?php if ( $city_url ) : ?><a class="osn-venue__city" href="<?php echo esc_url( $city_url ); ?>"><?php echo esc_html( $term ? $term->name : $city ); ?></a><?php else : ?><span class="osn-venue__city"><?php echo esc_html( $term ? $term->name : $city ); ?></span><?php endif; ?>
 <?php endif; ?>
 <?php if ( $cat ) : ?><span class="osn-venue__cat"><?php echo esc_html( $cat->name ); ?></span><?php endif; ?>
-<?php if ( $count > 0 && $rating > 0 ) : ?><span class="osn-venue__rating"><span aria-hidden="true">&#9733;</span> <?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?> <span class="osn-venue__count">(<?php echo esc_html( number_format_i18n( $count ) ); ?> <?php esc_html_e( 'reviews', 'dos-outdoor-seating' ); ?>)</span></span><?php endif; ?>
 <?php if ( '' !== $price ) : ?><span class="osn-venue__price" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: $ signs */ __( 'Price %s', 'dos-outdoor-seating' ), $price ) ); ?>"><?php echo esc_html( $price ); ?></span><?php endif; ?>
 <?php if ( 'temporarily_closed' === $status ) : ?><span class="osn-badge osn-badge--temp"><?php esc_html_e( 'Temporarily closed', 'dos-outdoor-seating' ); ?></span><?php elseif ( 'permanently_closed' === $status ) : ?><span class="osn-badge osn-badge--no"><?php esc_html_e( 'Permanently closed', 'dos-outdoor-seating' ); ?></span><?php endif; ?>
 <?php if ( $hours && $tz && 'permanently_closed' !== $status ) : ?><span class="osn-venue__open" data-osn-open data-tz="<?php echo esc_attr( $tz ); ?>" data-hours="<?php echo esc_attr( wp_json_encode( $hours, JSON_UNESCAPED_UNICODE ) ); ?>" hidden></span><?php endif; ?>

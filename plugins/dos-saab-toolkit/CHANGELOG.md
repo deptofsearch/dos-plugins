@@ -5,6 +5,36 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.6
+
+**The sitemap index works again.** Ryan: "I need a sitemap for this". The site
+already had one: robots.txt points to `/wp-sitemap.xml`, and WordPress's own
+sitemaps behind it were fine (656 posts, 821 restaurant pages, 47 pages, the
+review taxonomies). But `/wp-sitemap.xml` itself returned the homepage, as HTML
+with a 200, so no crawler could find the rest. `/sitemap.xml`, `/sitemap.html`
+and `/<anything>-sitemap.xml` did the same while `/foo.xml` was a 404: the
+rewrite rules of a sitemap plugin that no longer runs were still stored, one of
+them matches `wp-sitemap.xml`, and its query variable is gone, so the request
+became an empty query, which is the front page.
+
+New `SAAB_Sitemap`, started by the SEO module after its stand-down check:
+
+- `/wp-sitemap.xml` is answered from the path at `parse_request`, whatever rule
+  matched. A flush alone would be undone if that plugin is still active and
+  re-adds its rules, and the path check costs nothing.
+- `/sitemap.xml` redirects (301) to `/wp-sitemap.xml`. Core only does that when
+  the request ends as a 404, which the stray rule prevented.
+- One rewrite flush (`saab_sitemap_flush_version`) clears the stored leftovers.
+- The users sitemap is dropped. The SEO module marks the author archive noindex
+  (single-author site), and a sitemap should not list a noindex page.
+
+Not done on purpose: no custom sitemap generator. Core's covers every public
+post type and taxonomy here, with `lastmod`, and a second one is how the stray
+rules got here.
+
+After updating, purge the page cache: the host's proxy cache was serving the
+homepage copy of `/wp-sitemap.xml`.
+
 ## 0.9.5
 
 **The phone frame follows the image too.** 0.9.2's fixed 2:1 phone frame trimmed

@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.9.5
+Stable tag: 0.9.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,10 @@ Modules, each off until ticked under Settings → SAAB Toolkit:
 Formerly "SAAB Toolkit" (saab-toolkit). Settings and data carry over: deactivate the old plugin, then activate this one.
 
 == Changelog ==
+
+= 0.9.6 =
+* Fix: /wp-sitemap.xml, the sitemap robots.txt points to, showed the homepage instead of the sitemap. It lists the site's sitemaps again, and /sitemap.xml redirects to it.
+* The sitemap no longer lists the author archive, which is marked noindex.
 
 = 0.9.5 =
 * On phones, a page's only photo also gets a frame shaped like the image (at most 200px tall), so wide logos aren't trimmed.

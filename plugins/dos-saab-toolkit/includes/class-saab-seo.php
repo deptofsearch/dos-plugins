@@ -33,6 +33,10 @@ class SAAB_SEO {
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ), 10, 2 );
 
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+
+		// The XML sitemap follows the same stand-down: a full SEO plugin brings its own.
+		require_once __DIR__ . '/class-saab-sitemap.php';
+		SAAB_Sitemap::init();
 	}
 
 	/* ---------------------------------------------------------------------

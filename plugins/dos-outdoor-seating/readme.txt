@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.6.9
+Stable tag: 0.6.10
 License: GPL-2.0-or-later
 
 Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment pipeline, venue photos, a city search box, redesigned state pages, an opt-in homepage takeover, an opt-in TablePress takeover, and SEO titles/descriptions and sitemap rules for DoS Toolkit.
@@ -33,6 +33,9 @@ Venue pages, searchable patio card grids, a REST upsert for the n8n enrichment p
 Category icons are from Lucide (https://lucide.dev), ISC License, Copyright (c) Lucide Icons and Contributors. See LICENSES.txt.
 
 == Changelog ==
+
+= 0.6.10 =
+* Venue pages no longer include aggregateRating in their Restaurant JSON-LD: the rating comes from Google Maps, and Google's review snippet guidelines say not to mark up ratings aggregated from other websites. The visible star line is unchanged. See CHANGELOG.md.
 
 = 0.6.9 =
 * City grid ItemList JSON-LD lists the top 100 ranked venues (filter osn_itemlist_max) instead of every card. See CHANGELOG.md.

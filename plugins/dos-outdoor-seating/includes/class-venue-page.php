@@ -372,16 +372,11 @@ if ( $term ) :
 		if ( '' !== $lat && '' !== $lng ) {
 			$ld['geo'] = array( '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng );
 		}
-		$count = (int) Util::meta( $id, 'rating_count' );
-		$rate  = (float) Util::meta( $id, 'rating' );
-		if ( $count > 0 && $rate > 0 ) {
-			$ld['aggregateRating'] = array(
-				'@type'       => 'AggregateRating',
-				'ratingValue' => $rate,
-				'reviewCount' => $count,
-				'bestRating'  => 5,
-			);
-		}
+		// No aggregateRating here, on purpose. The rating and count come from the
+		// venue's Google Maps listing, and Google's review snippet guidelines say
+		// not to mark up ratings aggregated from other websites (a manual action
+		// is the stated consequence). The page still shows the star line to
+		// readers; only the structured data leaves it out.
 
 		// Cuisine from the Maps types (minus generic ones), else the category term.
 		$generic = array( 'restaurant', 'bar', 'food', 'establishment', 'point of interest' );

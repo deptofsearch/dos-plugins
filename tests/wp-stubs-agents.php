@@ -74,6 +74,16 @@ function agents_reset() {
 		'did_init'  => true,    // did_action('init'); the layout guard reads it
 		'in_loop'   => true,    // in_the_loop() + is_main_query(), for the_content filters
 		'cache_deletes' => array(),
+		'queried_obj' => null,    // get_queried_object(); null falls back to the global post
+		'feed'      => false,     // is_feed()
+		'is_404'    => false,
+		'front'     => false,     // is_front_page()
+		'home'      => false,     // is_home(): the posts page
+		'attachment' => false,
+		'thumbs'    => array(),   // post ID => array( attachment ID, url, w, h, alt )
+		'sitename'  => 'Best Real Estate Agents Near Me',
+		'locale'    => 'en_US',
+		'canonical' => array(),   // post ID => canonical URL, when it differs from the permalink
 	);
 }
 agents_reset();
@@ -87,6 +97,8 @@ function delete_transient( $k ) { unset( $GLOBALS['transients'][ $k ] ); return 
 function add_filter( $t, $cb, $p = 10, $n = 1 ) { $GLOBALS['filters'][ $t ][] = $cb; return true; }
 function add_action( $t, $cb = null, $p = 10, $n = 1 ) { $GLOBALS['actions'][ $t ][ $p ][] = $cb; return true; }
 function apply_filters( $t, $v ) {
+	// Core's wptexturize turns & into &#038; and spaced hyphens into en dashes on every title.
+	if ( 'the_title' === $t ) { $v = str_replace( array( '&', ' - ' ), array( '&#038;', ' &#8211; ' ), (string) $v ); }
 	foreach ( $GLOBALS['filters'][ $t ] ?? array() as $cb ) { $v = call_user_func( $cb, $v ); }
 	return $v;
 }
@@ -111,8 +123,13 @@ function get_post( $p = null ) {
 	return null;
 }
 function is_page() { return $GLOBALS['wp']['page']; }
+function get_queried_object() { return $GLOBALS['wp']['queried_obj']; }
 function get_queried_object_id() { return $GLOBALS['wp']['queried']; }
 function is_search() { return $GLOBALS['wp']['search']; }
+function is_404() { return $GLOBALS['wp']['is_404']; }
+function is_front_page() { return $GLOBALS['wp']['front']; }
+function is_home() { return $GLOBALS['wp']['home']; }
+function is_attachment() { return $GLOBALS['wp']['attachment']; }
 function get_query_var( $k, $d = '' ) { return $GLOBALS['wp']['query'][ $k ] ?? $d; }
 /** The code calls exit right after redirecting, which would end the test run; throw instead. */
 class RedirectHalt extends Exception {
@@ -121,8 +138,21 @@ class RedirectHalt extends Exception {
 	public function __construct( $url, $status ) { $this->url = $url; $this->status = $status; parent::__construct( 'redirect' ); }
 }
 function wp_safe_redirect( $url, $status = 302 ) { $GLOBALS['wp']['redirect'] = array( $url, $status ); throw new RedirectHalt( $url, $status ); }
-function is_feed() { return false; } function is_embed() { return false; } function wp_doing_ajax() { return false; }
+function is_feed() { return $GLOBALS['wp']['feed']; } function is_embed() { return false; } function wp_doing_ajax() { return false; }
 function has_site_icon() { return $GLOBALS['wp']['site_icon']; }
+function get_site_icon_url( $size = 512 ) { return $GLOBALS['wp']['site_icon'] ? 'https://example.com/wp-content/uploads/icon-' . $size . '.png' : ''; }
+function get_bloginfo( $k = '' ) { return 'name' === $k ? $GLOBALS['wp']['sitename'] : ''; }
+function get_locale() { return $GLOBALS['wp']['locale']; }
+function has_post_thumbnail( $p = null ) { return isset( $GLOBALS['wp']['thumbs'][ is_object( $p ) ? $p->ID : (int) $p ] ); }
+function get_post_thumbnail_id( $p = null ) { return $GLOBALS['wp']['thumbs'][ is_object( $p ) ? $p->ID : (int) $p ][0] ?? 0; }
+function wp_get_attachment_image_src( $id, $size = 'thumbnail' ) { foreach ( $GLOBALS['wp']['thumbs'] as $t ) { if ( $t[0] === (int) $id ) { return array( $t[1], $t[2], $t[3], false ); } } return false; }
+function get_post_meta( $id, $key = '', $single = false ) { foreach ( $GLOBALS['wp']['thumbs'] as $t ) { if ( $t[0] === (int) $id && '_wp_attachment_image_alt' === $key ) { return $t[4]; } } return ''; }
+function wp_get_canonical_url( $p = null ) { $id = is_object( $p ) ? $p->ID : (int) $p; return $GLOBALS['wp']['canonical'][ $id ] ?? get_permalink( $p ); }
+// Core's version only strips registered shortcodes; the test content registers none, so strip every [tag].
+function strip_shortcodes( $s ) { return preg_replace( '/\[\/?breanm_[a-z_]+[^\]]*\]/', '', (string) $s ); }
+// Core runs titles through wptexturize, which turns & into &#038; and dashes into &#8211;.
+function get_the_title( $p = 0 ) { $t = apply_filters( 'the_title', is_object( $p ) ? $p->post_title : '' ); return ( is_object( $p ) && $p->post_password ? 'Protected: ' : '' ) . $t; }
+function wp_parse_url( $u, $c = -1 ) { return parse_url( $u, $c ); }
 function wp_is_post_revision( $id ) { return false; } function wp_is_post_autosave( $id ) { return false; }
 function in_the_loop() { return $GLOBALS['wp']['in_loop']; }
 function is_main_query() { return $GLOBALS['wp']['in_loop']; }
@@ -148,6 +178,9 @@ class WP_Post {
 	public $post_type = 'page';
 	public $post_status = 'publish';
 	public $post_content = '';
+	public $post_title = '';
+	public $post_excerpt = '';
+	public $post_password = '';
 	public function __construct( $fields = array() ) { foreach ( $fields as $k => $v ) { $this->$k = $v; } }
 }
 
@@ -171,6 +204,7 @@ function get_page_by_path( $path, $output = OBJECT, $type = 'page' ) {
 	return $GLOBALS['wp']['pages'][ $path ] ?? null;
 }
 function get_permalink( $post = null ) {
+	if ( is_numeric( $post ) ) { $post = get_post( (int) $post ); }
 	$slug = is_object( $post ) ? $post->post_name : (string) $post;
 	return 'https://example.com/' . $slug . '/';
 }

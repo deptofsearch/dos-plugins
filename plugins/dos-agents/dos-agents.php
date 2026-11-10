@@ -3,7 +3,7 @@
  * Plugin Name: DoS - Agents
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Filterable real-estate agent cards for a city page on Best Real Estate Agents Near Me, plus the homepage city search and "Browse by state" carousel and the site's brand layer. Agent data is pushed to a REST endpoint and stored per city; [breanm_agents city="boise-id"] renders the cards, search, filters and sort.
- * Version: 0.2.4
+ * Version: 0.3.0
  * Author: Department of Search
  * Text Domain: dos-agents
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_AGENTS_VERSION', '0.2.4' );
+define( 'DOS_AGENTS_VERSION', '0.3.0' );
 define( 'DOS_AGENTS_FILE', __FILE__ );
 // One option per city, never autoloaded: a city holds up to 500 agents and only its own page reads it.
 define( 'DOS_AGENTS_OPTION_PREFIX', 'breanm_agents_' );
@@ -36,6 +36,7 @@ require_once __DIR__ . '/includes/home.php';
 require_once __DIR__ . '/includes/hub.php';
 require_once __DIR__ . '/includes/brand.php';
 require_once __DIR__ . '/includes/layout.php';
+require_once __DIR__ . '/includes/head-meta.php';
 
 // Not behind is_admin(): WP-Cron and the REST API run the update check too.
 require_once __DIR__ . '/includes/class-dos-github-updater.php';
@@ -71,6 +72,10 @@ add_action( 'wp_enqueue_scripts', 'dos_agents_brand_enqueue', 5 );
 add_filter( 'body_class', 'dos_agents_brand_body_class' );
 add_action( 'template_redirect', 'dos_agents_brand_start_buffer', 1 );
 add_action( 'wp_head', 'dos_agents_brand_icons', 2 );
+
+// Meta description, Open Graph and Twitter Card tags. Priority 1 so they sit at the top of <head>; the
+// function stands down by itself when another SEO layer prints the same tags (includes/head-meta.php).
+add_action( 'wp_head', 'dos_agents_head_meta', 1 );
 
 // State hubs get the cities-with-cards block without the 49 pages being rewritten. Priority 9 so it
 // runs before wpautop (10), which would otherwise wrap the block's markup in stray paragraphs.

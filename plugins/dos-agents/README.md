@@ -46,7 +46,7 @@ An agent carries `summary` (one paragraph, up to 1500 characters) and may also c
 Each part is a plain string of up to 320 characters; tags are stripped, empty or
 non-string parts are dropped, and the object is dropped when no part is left. With
 at least one part the card prints a closed `<details>` ("What reviewers say") holding
-one labelled paragraph per part, in the order Buyers, Sellers, Working style, with the
+one labeled paragraph per part, in the order Buyers, Sellers, Working style, with the
 tag chips below it. Without parts, the card shows the `summary` paragraph in full, so
 older city payloads render as they did. `summary_parts` is stored and returned by the
 authenticated GET unchanged.
@@ -126,6 +126,30 @@ settings are answered through `get_post_metadata`, so nothing is written to the
 Three filters turn it off without a release: `dos_agents_brand` (the whole
 layer), `dos_agents_brand_logo` (the header wordmark alone) and
 `dos_agents_page_layout` (the city-page layout).
+
+## Head tags: description and social sharing
+
+`includes/head-meta.php` prints one `<meta name="description">`, Open Graph and
+Twitter Card tags in `<head>` on pages, posts, the front page and the posts
+page. It never changes the `<title>`.
+
+| Page | Description built from | `og:title` |
+|---|---|---|
+| City page | the stored agent count and the city ("Compare 12 real estate agents in Abilene, TX: ...") | Real Estate Agents in Abilene, TX |
+| State hub | the number of cities with agent cards and the three with the most agents | Real Estate Agents in Texas |
+| Homepage, `/by-state/` | the live city and state counts | site name; page title |
+| Blog post | its manual excerpt, else the first sentences of the content | post title |
+| Blog index | a fixed sentence | posts page title |
+| Any other page | its manual excerpt, else no description | page title |
+
+The image is the post's featured image, else the Site Icon (Customize > Site
+Identity, 512px), else none. It is never the SVG favicon.
+
+It stands down when Yoast, Rank Math, All in One SEO, SEOPress, The SEO
+Framework, Jetpack's Open Graph output or DoS Toolkit's SEO module (when enabled) is active. Filters:
+`dos_agents_head_meta` (false turns it off), `dos_agents_meta_description`
+(`$text`, `$post`, `$kind`), `dos_agents_meta_description_max` (155),
+`dos_agents_og_title` and `dos_agents_og_image` (`url`, `width`, `height`, `alt`).
 
 ## Settings
 

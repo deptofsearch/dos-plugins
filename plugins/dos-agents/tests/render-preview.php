@@ -30,7 +30,7 @@ $fixture['agents'][0]['summary_parts'] = array(
 	'sellers'       => 'Sellers mention accurate pricing and a quick sale.',
 	'working_style' => 'Calm, responsive and well prepared.',
 );
-$fixture['agents'][1]['summary_parts'] = array( 'working_style' => 'Direct and organised.' );
+$fixture['agents'][1]['summary_parts'] = array( 'working_style' => 'Direct and organized.' );
 $fixture['agents'][2]['last_review']   = '2022-05-09';
 $res     = dos_agents_rest_upsert( new WP_REST_Request( $fixture ) );
 if ( is_wp_error( $res ) ) {

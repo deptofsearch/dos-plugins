@@ -88,7 +88,7 @@ function dos_agents_rest_upsert( $request ) {
 }
 
 function dos_agents_rest_get( $request ) {
-	// dos_agents_get() runs the stored copy back through the sanitiser, so only the schema leaves.
+	// dos_agents_get() runs the stored copy back through the sanitizer, so only the schema leaves.
 	$stored = dos_agents_get( (string) $request['slug'] );
 	if ( null === $stored ) {
 		return new WP_Error( 'breanm_agents_not_found', 'No agents are stored for that city.', array( 'status' => 404 ) );

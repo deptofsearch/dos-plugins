@@ -5,6 +5,11 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.1
+
+### Fixed
+- **/blog/ printed no description.** On the live site it is an ordinary page holding a posts module, not WordPress's posts page, so `is_home()` never matched it and it fell through to "any other page", which gets a description only from its own excerpt (it had none). A top-level page with the slug `blog` is now treated as the blog index: it gets "Articles from {site} about working with a real estate agent." unless it has its own excerpt, which wins. Its og:title and og:url are the page's own. A child page that happens to be called "blog" is still an ordinary page. Found by the live check of 0.3.0.
+
 ## 0.3.0
 
 Meta descriptions and social sharing tags, which the site had almost none of.

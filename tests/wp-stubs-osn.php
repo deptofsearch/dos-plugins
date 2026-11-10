@@ -10,7 +10,7 @@ define( 'ABSPATH', '/tmp/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'WEEK_IN_SECONDS', 604800 );
-define( 'OSN\\VERSION', '0.6.18' );
+define( 'OSN\\VERSION', '0.6.19' );
 define( 'OSN\\PLUGIN_FILE', dirname( __DIR__ ) . '/plugins/dos-outdoor-seating/dos-outdoor-seating.php' );
 
 $GLOBALS['osn']    = array();

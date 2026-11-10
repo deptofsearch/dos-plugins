@@ -327,6 +327,17 @@ $a = Cards::view( get_term_by( 'slug', 'testville-tx', 'osn_city' ), null, null,
 $b = Cards::view( get_term_by( 'slug', 'testville-tx', 'osn_city' ) );
 check( 'the memo is keyed by limit', 5 === count( $a['ids'] ) && 12 === count( $b['ids'] ) );
 
+echo "\n--- the dead closing as it is really stored ---\n";
+ci_world( 12 );
+ci_state_page();
+$raw = "<h3 style=\"text-align: center;\">List of Outdoor & Patio Seating in Testville</h3>\r\n<p style=\"text-align: center;\">The city of Testville offers a great deal of sunshine and some great places to sit, eat, and drink while enjoying that sunshine.</p>\r\n<p style=\"text-align: center;\">If you're looking for a place to sit on a deck, patio, or just any outdoor seating you can find, here is your list:</p>\r\n<p style=\"text-align: center;\">" . CI_TABLE . "</p>\r\n<h3 style=\"text-align: center;\">Outdoor Seating in Testville</h3>\r\n<p style=\"text-align: center;\">If you're open to other parts of the area for finding outdoor seating on patio or deck, there are plenty of options.\r\n";
+$out = ci_run( $raw );
+check( 'an unclosed dead closing at the end (the stored form on the live site) is replaced', false === strpos( $out, 'plenty of options' ) && false === strpos( $out, '>Outdoor Seating in Testville<' ) && false !== strpos( $out, CI_MORE ), $out );
+$out = ci_run( str_replace( "plenty of options.\r\n", "plenty of options.\r\n<p>Something else.</p>", $raw ) );
+check( 'an unclosed dead closing followed by another paragraph is replaced and the paragraph kept', false === strpos( $out, 'plenty of options' ) && false !== strpos( $out, '<p>Something else.</p>' ) && false !== strpos( $out, CI_MORE ), $out );
+$out = ci_run( str_replace( 'plenty of options.', 'plenty of options like <a href="https://example.com/x/">X</a>.', $raw ) );
+check( 'an unclosed closing with links is kept', false !== strpos( $out, 'plenty of options like <a' ) && false === strpos( $out, 'osn-intro--more' ), $out );
+
 echo "\n--- only the page body ---\n";
 ci_world( 12 );
 ci_state_page();

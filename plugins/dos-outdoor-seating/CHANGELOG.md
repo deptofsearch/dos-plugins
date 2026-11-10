@@ -7,6 +7,16 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.19
+
+The dead "there are plenty of options." ending is replaced by the state link on the pages 0.6.18 missed.
+
+Why. Checked on the live site after 0.6.18: the new intros were in place, but 29 of 140 sampled city pages still
+ended with the dead sentence and had no state link. Their stored content ends with that paragraph and no `</p>`
+(wpautop adds it later, after this filter runs), and the 0.6.18 pattern required one. The test fixtures had been
+built from rendered pages, where the tag is always closed. The pattern now accepts the paragraph closed, followed
+by another tag, or at the end of the content.
+
 ## 0.6.18
 
 City pages with listings show an intro written from their own data. The stock intro blocks pasted into city pages are

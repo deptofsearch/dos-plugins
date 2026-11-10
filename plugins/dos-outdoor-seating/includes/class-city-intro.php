@@ -126,7 +126,9 @@ final class City_Intro {
 
 	private static function pattern_dead_closing() {
 		$head = self::H3_OPEN . '\s*' . self::loose( 'Outdoor Seating in ' ) . self::NAME . '\s*</h3>\s*';
-		$dead = self::P_OPEN . '\s*' . self::loose( "If you're open to other parts of the area for finding outdoor seating on patio or deck, there are plenty of options." ) . '\s*</p>';
+		$dead = self::P_OPEN . '\s*' . self::loose( "If you're open to other parts of the area for finding outdoor seating on patio or deck, there are plenty of options." ) . '\s*(?:</p>|(?=<)|$)';
+		// Unclosed is the common case: on the live site this paragraph is the last thing in the stored content and has
+		// no </p> (wpautop closes it later), so requiring </p> missed every one of them in 0.6.18.
 		return '~(?:' . $head . ')?' . $dead . '~i';
 	}
 

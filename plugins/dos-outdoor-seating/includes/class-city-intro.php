@@ -8,11 +8,17 @@
  * (how many places, the common categories and amenities, the busiest neighborhoods) and replaces the dead closing
  * with a link to the state page. It works on the filtered output only: the stored content is never changed.
  *
+ * Neighborhood and district landing pages (children of a city page, linked to an osn_hood term) have no opening text
+ * at all, so they get a paragraph written from their own listings, the same way, prepended above the grid. A page
+ * with any text of its own is left completely alone, and there is no closing line: hood views already end with a
+ * "Nearby neighborhoods" strip and a link back to the city. Landmark pages stay out of scope. One setting
+ * (osn_city_intro) switches both kinds off.
+ *
  * Priority 7 on the_content: after Page_Title (5) and the state takeover (6), before wpautop and shortcodes (10, 11),
  * so the text is still the raw pasted HTML and the match has to be tolerant of how it was stored.
  *
- * Anything that is not a known stock block exactly is left alone: other wording, pages with no intro, the linked
- * closing sections, neighborhood and landmark pages.
+ * On city pages anything that is not a known stock block exactly is left alone: other wording, pages with no intro,
+ * the linked closing sections.
  *
  * @package OSN
  */
@@ -78,10 +84,13 @@ final class City_Intro {
 		if ( false !== strpos( (string) $content, 'osn-intro' ) ) {
 			return $content;
 		}
-		// City views only. Neighborhood and landmark pages have their own wording and are out of scope.
+		// City and neighborhood views. Landmark pages have their own wording and are out of scope.
 		$ctx = Takeover::context( $post );
-		if ( ! $ctx || empty( $ctx['city'] ) || ! empty( $ctx['hood'] ) || ! empty( $ctx['spot'] ) ) {
+		if ( ! $ctx || empty( $ctx['city'] ) || ! empty( $ctx['spot'] ) ) {
 			return $content;
+		}
+		if ( ! empty( $ctx['hood'] ) ) {
+			return self::hood_page( (string) $content, $post, $ctx['city'], $ctx['hood'] );
 		}
 		$view = Cards::view( $ctx['city'] ); // Memoized: the grid renders from the same view.
 		if ( empty( $view['ids'] ) ) {
@@ -92,6 +101,35 @@ final class City_Intro {
 			Assets::enqueue(); // .osn-intro is in osn.css; the grid usually enqueues it, but not on every path.
 		}
 		return $out;
+	}
+
+	/**
+	 * A neighborhood or district page: when its stored content has no text of its own, the summary goes on top.
+	 * Never a closing line (the hood view ends with its own nearby strip and a link to the city).
+	 */
+	private static function hood_page( $content, \WP_Post $post, \WP_Term $city, \WP_Term $hood ) {
+		$view = Cards::view( $city, $hood ); // Memoized: the grid renders from the same view.
+		if ( empty( $view['ids'] ) || self::has_own_text( (string) $post->post_content ) ) {
+			return $content;
+		}
+		$filter = Page_Title::filter_from_content( (string) $post->post_content );
+		$label  = Hoods::page_hood_name( $filter, $hood ); // The name the page's H1 prints.
+		Assets::enqueue(); // .osn-intro is in osn.css; the grid usually enqueues it, but not on every path.
+		$para = '<p class="osn-intro">' . self::sentences( $city, $view, $hood, $label ) . '</p>' . "\n";
+		// Page_Title (priority 5) has already put the H1 on top of $content: the intro goes under it, not above it.
+		if ( preg_match( '~^\s*<h1 class="osn-page-title"[^>]*>.*?</h1>\s*~s', $content, $m ) ) {
+			return $m[0] . $para . substr( $content, strlen( $m[0] ) );
+		}
+		return $para . $content;
+	}
+
+	/** Is there anything but shortcodes, tags and whitespace in the stored content? */
+	private static function has_own_text( $stored ) {
+		$text = strip_shortcodes( $stored );
+		$text = preg_replace( '~\[/?table\b[^\]]*\]~i', '', (string) $text ); // The grid shortcode even if it is not registered.
+		$text = html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES, 'UTF-8' );
+		$text = preg_replace( '~[\s\x{00A0}\x{00AD}\x{200B}-\x{200D}\x{FEFF}]+~u', '', (string) $text ); // Invisible characters are not text.
+		return '' !== (string) $text;
 	}
 
 	/* ---------------------------------------------------------------- matching */
@@ -262,14 +300,19 @@ final class City_Intro {
 	 * The summary as escaped HTML text (sentences joined by a space, no wrapping tag). Every fact comes from the
 	 * city view and the term cache view() primed: no query per venue.
 	 *
-	 * @param \WP_Term $term City term.
-	 * @param array    $view Cards::view() result for the city.
+	 * @param \WP_Term      $term  City term.
+	 * @param array         $view  Cards::view() result (the whole city, or one hood view).
+	 * @param \WP_Term|null $hood  The neighborhood or district the page is for; null on a city page.
+	 * @param string        $label Name the sentences use for the area; '' = the city name (city page) or the hood name.
 	 */
-	public static function sentences( \WP_Term $term, array $view ) {
+	public static function sentences( \WP_Term $term, array $view, $hood = null, $label = '' ) {
 		$d    = 'dos-outdoor-seating';
 		$ids  = $view['ids'];
 		$n    = count( $ids );
-		$city = esc_html( Util::city_label( $term->name ) );
+		if ( '' === (string) $label ) {
+			$label = $hood ? $hood->name : Util::city_label( $term->name );
+		}
+		$city = esc_html( $label );
 
 		$amen = array();
 		$cats = array();
@@ -346,18 +389,30 @@ final class City_Intro {
 				$out[] = self::join_and( $parts ) . '.';
 			}
 
-			// Neighborhoods: districts with a venue count, only when there are at least two.
-			$dist = array();
-			foreach ( (array) ( $view['tree']['districts'] ?? array() ) as $row ) {
+			// Areas: a city page ranks its districts, a district page ranks its neighborhoods, a neighborhood page has none.
+			$rows = array();
+			if ( ! $hood ) {
+				$src = (array) ( $view['tree']['districts'] ?? array() );
+			} elseif ( ! $hood->parent ) {
+				$src = (array) ( $view['tree']['districts'][ $hood->term_id ]['hoods'] ?? array() );
+			} else {
+				$src = array();
+			}
+			foreach ( $src as $row ) {
 				if ( ! empty( $row['count'] ) && isset( $row['term'] ) ) {
-					$dist[] = array( 'name' => $row['term']->name, 'count' => (int) $row['count'] );
+					$rows[] = array( 'name' => $row['term']->name, 'count' => (int) $row['count'] );
 				}
 			}
-			if ( count( $dist ) >= 2 ) {
-				$out[] = sprintf( /* translators: %s: list like "Downtown (12) and Old Town (8)" */ __( 'By area, %s have the most.', $d ), self::join_and( self::ranked( $dist, 'name' ) ) );
+			if ( count( $rows ) >= 2 ) {
+				if ( ! $hood ) {
+					$out[] = sprintf( /* translators: %s: list like "Downtown (12) and Old Town (8)" */ __( 'By area, %s have the most.', $d ), self::join_and( self::ranked( $rows, 'name' ) ) );
+				} else {
+					$out[] = sprintf( /* translators: %s: list like "Old Town (8) and Uptown (4)" */ __( 'By neighborhood, %s have the most.', $d ), self::join_and( self::ranked( $rows, 'name' ) ) );
+				}
 			}
 		}
-		$out[] = __( 'Each place has its own page with the address and directions.', $d ); // True of every listing; hours and phone are not always known.
+		// True of every listing; hours and phone are not always known.
+		$out[] = 1 === $n ? __( 'It has its own page with the address and directions.', $d ) : __( 'Each place has its own page with the address and directions.', $d );
 
 		// Pieces that came from data were escaped where they were built; the fixed English has no markup characters.
 		return implode( ' ', $out );

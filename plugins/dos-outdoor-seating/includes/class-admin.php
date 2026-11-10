@@ -266,11 +266,11 @@ final class Admin {
 </td>
 </tr>
 <tr>
-<th scope="row"><?php esc_html_e( 'City page intros', 'dos-outdoor-seating' ); ?></th>
+<th scope="row"><?php esc_html_e( 'City and neighborhood page intros', 'dos-outdoor-seating' ); ?></th>
 <td>
 <input type="hidden" name="<?php echo esc_attr( City_Intro::OPTION ); ?>" value="0">
-<label><input type="checkbox" name="<?php echo esc_attr( City_Intro::OPTION ); ?>" value="1"<?php checked( '0' !== (string) get_option( City_Intro::OPTION, '1' ) ); ?>> <?php esc_html_e( 'Write city page intros from listing data', 'dos-outdoor-seating' ); ?></label>
-<p class="description"><?php esc_html_e( 'On a city page that has listings, the stock intro and the dead "plenty of options" ending are shown as a short summary of that city (how many places, the common categories and amenities, the busiest neighborhoods) plus a link to the state page. The stored page text is never edited; unchecking restores it exactly. Pages with other wording, or none, are left alone.', 'dos-outdoor-seating' ); ?></p>
+<label><input type="checkbox" name="<?php echo esc_attr( City_Intro::OPTION ); ?>" value="1"<?php checked( '0' !== (string) get_option( City_Intro::OPTION, '1' ) ); ?>> <?php esc_html_e( 'Write city and neighborhood page intros from listing data', 'dos-outdoor-seating' ); ?></label>
+<p class="description"><?php esc_html_e( 'On a city page that has listings, the stock intro and the dead "plenty of options" ending are shown as a short summary of that city (how many places, the common categories and amenities, the busiest neighborhoods) plus a link to the state page. A neighborhood or district page with no text of its own gets an opening paragraph written the same way. The stored page text is never edited; unchecking restores it exactly. City pages with other wording, or none, and neighborhood pages with their own text, are left alone.', 'dos-outdoor-seating' ); ?></p>
 </td>
 </tr>
 <tr>

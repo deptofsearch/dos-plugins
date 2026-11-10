@@ -8,7 +8,7 @@
  * whether or not the card takeover is on for that city.
  *
  * Numbered pages (/city-st/page/2/): the H1, the document title and the meta description say which page it is, so
- * the paged URLs are not duplicates of page 1 (they canonicalise to themselves; the Toolkit already does that).
+ * the paged URLs are not duplicates of page 1 (they canonicalize to themselves; the Toolkit already does that).
  *
  * @package OSN
  */

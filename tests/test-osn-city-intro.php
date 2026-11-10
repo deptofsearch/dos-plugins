@@ -15,6 +15,7 @@ const CI_STOCK = 'Below is every place we have listed with a patio, deck, roofto
 const CI_DEAD  = "If you're open to other parts of the area for finding outdoor seating on patio or deck, there are plenty of options.";
 const CI_MORE  = '<p class="osn-intro osn-intro--more">More places nearby: <a href="https://example.com/texas/">every city in Texas with outdoor seating</a>.</p>';
 const CI_TAIL  = 'Each place has its own page with the address and directions.';
+const CI_ONE   = 'It has its own page with the address and directions.';
 
 /**
  * A city of $n venues. $spec(k) returns array( 'cat' => name|null, 'am' => slugs, 'dist' => district term|null ) for
@@ -158,7 +159,7 @@ check( 'districts tie by name', false !== strpos( $g, 'By area, Uptown (5) and D
 echo "\n--- the generated text: 1 to 3 places ---\n";
 ci_world( 1 );
 $g = ci_gen();
-check( 'one place', 'Testville has one place listed here: Place 1. It confirms outdoor seating. ' . CI_TAIL === $g, $g );
+check( 'one place', 'Testville has one place listed here: Place 1. It confirms outdoor seating. ' . CI_ONE === $g, $g );
 echo "  EXAMPLE N=1: $g\n";
 ci_world( 3, function ( $k ) { return array( 'am' => 3 === $k ? array() : array( 'outdoor-seating' ) ); } );
 $g = ci_gen();
@@ -175,7 +176,7 @@ echo "\n--- escaping ---\n";
 ci_world( 1, function ( $k ) { return array( 'am' => array( 'outdoor-seating' ) ); } );
 $p = osn_post( 1001, 'v1', '' );
 $p->post_title = 'Fish &lt;3 Chips &amp; Co';
-check( 'a venue name with < and & is escaped once', 'Testville has one place listed here: Fish &lt;3 Chips &amp; Co. It confirms outdoor seating. ' . CI_TAIL === ci_gen(), ci_gen() );
+check( 'a venue name with < and & is escaped once', 'Testville has one place listed here: Fish &lt;3 Chips &amp; Co. It confirms outdoor seating. ' . CI_ONE === ci_gen(), ci_gen() );
 ci_world( 6, function ( $k ) { return array( 'cat' => $k <= 3 ? 'Bar & Grill' : 'Cafe <b>' ); } );
 check( 'category names with markup characters are escaped', false !== strpos( ci_gen(), 'Bar &amp; Grill (3) and Cafe &lt;b&gt; (3)' ), ci_gen() );
 

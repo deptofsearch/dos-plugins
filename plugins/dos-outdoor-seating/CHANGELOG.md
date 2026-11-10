@@ -7,6 +7,36 @@ Versions are the plugin's, tagged `dos-outdoor-seating-v<version>`. Releases
 up to 0.6.3 are described in `readme.txt`, which was this plugin's changelog
 before it moved here.
 
+## 0.6.20
+
+Neighborhood and district landing pages with no text of their own get an opening paragraph written from their own
+listings. Until now the H1 ("Outdoor Seating in Edgewater, Chicago") went straight into the filter bar and the card
+grid. The paragraph is the same kind of summary the city pages got in 0.6.18: how many places and how many confirm
+outdoor seating (or, with three or fewer, their names), the most common categories, the most common amenities, and
+the line that each place has its own page with the address and directions. A district page also names its busiest
+neighborhoods ("By neighborhood, ..."); a neighborhood page has no area sentence. It is added to `City_Intro`, which
+now also takes the hood path, and `sentences()` is shared by both.
+
+Why only pages with no text. About 379 neighborhood pages across seven cities are empty above the grid. A page with
+any text of its own (shortcodes, tags and whitespace do not count) is left exactly as stored, so a hand-written
+intro always wins. There is no closing or state link line: hood views already end with a "Nearby neighborhoods"
+strip and a link back to the city. Landmark pages are still out of scope. The name in the text is the one the page's
+H1 prints.
+
+Placement. The paragraph goes under the H1, not above it: Page_Title (priority 5) has already put the H1 at the top
+of the content when this filter runs at 7, so a plain prepend would print the intro above the page's heading. The
+first build did exactly that; its tests fed the stored content straight to the filter. The test now runs Page_Title
+first, as WordPress does.
+
+One place. A page with a single listing now ends "It has its own page with the address and directions." instead of
+"Each place has its own page ...", on city pages too.
+
+Rollback. The same setting as the city intros (Tools > Outdoor Seating, "Write city and neighborhood page intros from
+listing data", option `osn_city_intro`) switches both off. The stored content is never changed, only the page output,
+so unchecking restores every page exactly. City page output is identical to 0.6.19 except the one-place closing.
+
+Also: British spellings in comments and docs changed to American ("behavior", "canonicalize").
+
 ## 0.6.19
 
 The dead "there are plenty of options." ending is replaced by the state link on the pages 0.6.18 missed.
@@ -215,7 +245,7 @@ What changed, and what it costs:
   longer read.
 - What still marks every state: a city term created, edited or deleted, any
   published page saved or a page published or unpublished (existing
-  behaviour, broader than it needs to be), a city's landing page or state
+  behavior, broader than it needs to be), a city's landing page or state
   changed, and the register-cities route. A venue batch no longer does. It
   used to reach `State_Cities::flush()` a second time through
   `City_Index::flush()` whenever a venue was created or changed status or
@@ -269,7 +299,7 @@ past the limit, the lowest-ranked venues on the biggest pages were never
 read at all. Real numbered pages put every venue in server-rendered HTML on
 some page, each one well under the limit (240 cards is about 0.5 MB), and
 they link to each other with plain anchors so a crawler can walk them. They
-canonicalise to themselves, so they are not duplicates of page 1. DoS Toolkit
+canonicalize to themselves, so they are not duplicates of page 1. DoS Toolkit
 builds that canonical with core's `get_pagenum_link()`, which keeps the
 request's query string, so `/city/page/2/?utm_source=x` would have named
 itself canonical; a `get_pagenum_link` filter here returns the clean

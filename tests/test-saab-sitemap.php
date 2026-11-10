@@ -104,6 +104,13 @@ check( 'the author sitemap is dropped (the archive is noindex)', false === SAAB_
 check( 'posts stay', $provider === SAAB_Sitemap::filter_provider( $provider, 'posts' ) );
 check( 'taxonomies stay', $provider === SAAB_Sitemap::filter_provider( $provider, 'taxonomies' ) );
 
+echo "--- post types ---\n";
+check( 'filters the sitemap post types', isset( $GLOBALS['hooks']['wp_sitemaps_post_types'] ) );
+$types = array( 'post' => 1, 'page' => 1, 'tbuilder_layout' => 1, 'tbuilder_layout_part' => 1, 'saab_restaurant' => 1 );
+$kept  = array_keys( SAAB_Sitemap::filter_post_types( $types ) );
+check( 'Themify Builder layouts are dropped, everything else stays', array( 'post', 'page', 'saab_restaurant' ) === $kept, json_encode( $kept ) );
+check( 'a site without the builder is unchanged', array( 'post' => 1 ) === SAAB_Sitemap::filter_post_types( array( 'post' => 1 ) ) );
+
 echo "--- flush ---\n";
 SAAB_Sitemap::maybe_flush_rewrite_rules();
 SAAB_Sitemap::maybe_flush_rewrite_rules();

@@ -5,6 +5,19 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-saab-toolkit-v<version>`.
 
+## 0.9.7
+
+**Themify Builder layouts are out of the sitemap.** With the index readable
+again (0.9.6), it listed `wp-sitemap-posts-tbuilder_layout-1.xml`: two saved
+builder layouts, `/tbuilder-layout/tc-best/` and `/tbuilder-layout/tc-best-2/`.
+Themify registers them as a public post type, so core lists them, but they are
+templates, not pages. Ryan: "drop the Themify Builder layouts from the
+sitemap". `wp_sitemaps_post_types` now removes `tbuilder_layout` (and
+`tbuilder_layout_part`, should it ever be public).
+
+This only takes them out of the sitemap. The two URLs still load and are not
+marked noindex.
+
 ## 0.9.6
 
 **The sitemap index works again.** Ryan: "I need a sitemap for this". The site

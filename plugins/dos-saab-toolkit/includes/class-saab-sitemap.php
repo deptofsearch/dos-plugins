@@ -31,6 +31,7 @@ class SAAB_Sitemap {
 	public static function init() {
 		add_action( 'parse_request', array( __CLASS__, 'route' ) );
 		add_filter( 'wp_sitemaps_add_provider', array( __CLASS__, 'filter_provider' ), 10, 2 );
+		add_filter( 'wp_sitemaps_post_types', array( __CLASS__, 'filter_post_types' ) );
 
 		// After every plugin has registered its rules (the restaurants module flushes at 999 for the same reason).
 		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrite_rules' ), 1000 );
@@ -74,6 +75,19 @@ class SAAB_Sitemap {
 	 */
 	public static function filter_provider( $provider, $name ) {
 		return 'users' === $name ? false : $provider;
+	}
+
+	/**
+	 * Leave Themify Builder's saved layouts out. They are templates the builder registers as public post types
+	 * (/tbuilder-layout/tc-best/), not pages anyone should land on from search. Layout parts are listed too in
+	 * case that type is ever made public.
+	 *
+	 * @param WP_Post_Type[] $post_types Keyed by post type name.
+	 */
+	public static function filter_post_types( $post_types ) {
+		unset( $post_types['tbuilder_layout'], $post_types['tbuilder_layout_part'] );
+
+		return $post_types;
 	}
 
 	public static function maybe_flush_rewrite_rules() {

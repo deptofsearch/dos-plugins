@@ -157,24 +157,24 @@ $hub = meta_page( 'in-texas', 'A table of every city.', 'in Texas' );
 meta_view( $hub );
 $out = meta_out();
 echo '  example description: ' . mv( $out, 'description' ) . "\n  example og:title: " . mv( $out, 'og:title' ) . "\n";
-check( 'hub description: state, count of cities with cards, the three with the most agents', 'Real estate agents in Texas: 3 cities with agent cards, including Houston, Dallas and Abilene. Pick a city to compare local agents.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
+check( 'hub description: state, count of cities with cards, the three with the most agents', 'Real estate agents in Texas: 3 cities with agent lists, including Houston, Dallas and Abilene. Pick a city to compare local agents.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
 check( 'hub og:title', 'Real Estate Agents in Texas' === mv( $out, 'og:title' ) );
 // Four cities: the smallest is the one left out.
 meta_city( 'Austin', 'TX', 1 );
 meta_view( $hub );
-check( 'with four cities the smallest is left out of the sample', false === strpos( (string) mv( meta_out(), 'description' ), 'Austin' ) && 0 === strpos( (string) mv( meta_out(), 'description' ), 'Real estate agents in Texas: 4 cities with agent cards, including Houston, Dallas and Abilene. Pick a city to compare local agents.' ) );
+check( 'with four cities the smallest is left out of the sample', false === strpos( (string) mv( meta_out(), 'description' ), 'Austin' ) && 0 === strpos( (string) mv( meta_out(), 'description' ), 'Real estate agents in Texas: 4 cities with agent lists, including Houston, Dallas and Abilene. Pick a city to compare local agents.' ) );
 // Two, one, none.
 agents_reset();
 meta_city( 'Houston', 'TX', 7 );
 meta_city( 'Dallas', 'TX', 5 );
 $hub = meta_page( 'in-texas', 'x', 'in Texas' );
 meta_view( $hub );
-check( 'two cities', 'Real estate agents in Texas: 2 cities with agent cards: Houston and Dallas. Pick a city to compare local agents and what reviewers say about them.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
+check( 'two cities', 'Real estate agents in Texas: 2 cities with agent lists: Houston and Dallas. Pick a city to compare local agents and what reviewers say about them.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
 agents_reset();
 meta_city( 'Houston', 'TX', 7 );
 $hub = meta_page( 'in-texas', 'x', 'in Texas' );
 meta_view( $hub );
-check( 'one city', 'Real estate agents in Texas: 1 city with agent cards: Houston. Pick the city to compare local agents and what reviewers say about them.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
+check( 'one city', 'Real estate agents in Texas: 1 city with an agent list: Houston. Pick the city to compare local agents and what reviewers say about them.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
 agents_reset();
 $hub = meta_page( 'in-texas', 'x', 'in Texas' );
 meta_view( $hub );
@@ -185,7 +185,7 @@ meta_city( 'Albuquerque', 'NM', 4 );
 meta_city( 'Boise', 'ID', 9 );
 $hub = meta_page( 'in-new-mexico', 'x', 'in New Mexico' );
 meta_view( $hub );
-check( 'a two-word state counts only its own cities', 0 === strpos( (string) mv( meta_out(), 'description' ), 'Real estate agents in New Mexico: 1 city with agent cards: Albuquerque.' ), (string) mv( meta_out(), 'description' ) );
+check( 'a two-word state counts only its own cities', 0 === strpos( (string) mv( meta_out(), 'description' ), 'Real estate agents in New Mexico: 1 city with an agent list: Albuquerque.' ), (string) mv( meta_out(), 'description' ) );
 
 echo "\n--- Homepage and /by-state/ ---\n";
 meta_seed();
@@ -201,7 +201,7 @@ $GLOBALS['wp']['front'] = false;
 meta_view( $bs );
 $out = meta_out();
 echo '  example by-state description: ' . mv( $out, 'description' ) . "\n  example by-state og:title: " . mv( $out, 'og:title' ) . "\n";
-check( '/by-state/ description uses the live counts', 'Browse real estate agents by state: 2 states and 4 cities with agent cards. Pick a state, then a city, to compare local agents.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
+check( '/by-state/ description uses the live counts', 'Browse real estate agents by state: 2 states and 4 cities with agent lists. Pick a state, then a city, to compare local agents.' === mv( $out, 'description' ), (string) mv( $out, 'description' ) );
 check( '/by-state/ og:title is the page title', 'By state' === mv( $out, 'og:title' ) );
 agents_reset();
 $front = meta_page( 'home', '[breanm_city_search]', 'Home' );
@@ -219,7 +219,7 @@ $hub = meta_page( 'in-texas', 'x', 'in Texas' );
 meta_view( $hub );
 $d = (string) mv( meta_out(), 'description' );
 echo '  example long hub description: ' . $d . "\n";
-check( 'a long hub sentence fits 155, drops the call to action rather than cutting it', dos_agents_head_len( $d ) <= 155 && false !== strpos( $d, '43 cities with agent cards, including San Antonio Heights, Corpus Christi Bay and Wichita Falls Junction.' ) && '.' === substr( $d, -1 ) && false === strpos( $d, "\xe2\x80\xa6" ), $d );
+check( 'a long hub sentence fits 155, drops the call to action rather than cutting it', dos_agents_head_len( $d ) <= 155 && false !== strpos( $d, '43 cities with agent lists, including San Antonio Heights, Corpus Christi Bay and Wichita Falls Junction.' ) && '.' === substr( $d, -1 ) && false === strpos( $d, "\xe2\x80\xa6" ), $d );
 
 echo "\n--- One city, one state; queried object; protected titles; latest-posts front page ---\n";
 agents_reset();
@@ -231,10 +231,10 @@ check( '1 city across 1 state reads right on the homepage', 'Compare real estate
 $GLOBALS['wp']['front'] = false;
 $bs = meta_page( 'by-state', '[breanm_state_index layout="grid"]', 'By state' );
 meta_view( $bs );
-check( '1 state and 1 city read right on /by-state/', 'Browse real estate agents by state: 1 state and 1 city with agent cards. Pick a state, then a city, to compare local agents.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
+check( '1 state and 1 city read right on /by-state/', 'Browse real estate agents by state: 1 state and 1 city with an agent list. Pick a state, then a city, to compare local agents.' === mv( meta_out(), 'description' ), (string) mv( meta_out(), 'description' ) );
 meta_city( 'Meridian', 'ID', 2 );
 meta_view( $bs );
-check( '1 state with 2 cities', false !== strpos( (string) mv( meta_out(), 'description' ), '1 state and 2 cities with agent cards' ) );
+check( '1 state with 2 cities', false !== strpos( (string) mv( meta_out(), 'description' ), '1 state and 2 cities with agent lists' ) );
 
 agents_reset();
 $real  = meta_post( 'real', 'The real one', '', 'Real excerpt.' );
@@ -438,6 +438,6 @@ check( 'and prints again once the view is a post', '' !== meta_out()['raw'] );
 
 echo "\n--- Wiring ---\n";
 check( 'hooked on wp_head at priority 1', in_array( 'dos_agents_head_meta', $GLOBALS['actions']['wp_head'][1] ?? array(), true ) );
-check( 'version is 0.3.6 in the constant and the header', '0.3.6' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.6' ) );
+check( 'version is 0.3.7 in the constant and the header', '0.3.7' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.7' ) );
 
 finish();

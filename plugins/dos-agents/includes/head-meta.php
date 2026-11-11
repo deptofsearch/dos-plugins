@@ -420,7 +420,7 @@ function dos_agents_head_description( $kind, $post ) {
 			// city in the state, so the count has to say it is the ones with cards.
 			$lead = sprintf(
 				/* translators: 1: state name, 2: number of cities, 3: the city list, already punctuated */
-				_n( 'Real estate agents in %1$s: %2$s city with agent cards%3$s.', 'Real estate agents in %1$s: %2$s cities with agent cards%3$s.', $n, 'dos-agents' ),
+				_n( 'Real estate agents in %1$s: %2$s city with an agent list%3$s.', 'Real estate agents in %1$s: %2$s cities with agent lists%3$s.', $n, 'dos-agents' ),
 				$name,
 				number_format_i18n( $n ),
 				$pick
@@ -455,7 +455,7 @@ function dos_agents_head_description( $kind, $post ) {
 			} else {
 				$text = sprintf(
 					/* translators: 1: "3 states", 2: "12 cities" */
-					__( 'Browse real estate agents by state: %1$s and %2$s with agent cards. Pick a state, then a city, to compare local agents.', 'dos-agents' ),
+					_n( 'Browse real estate agents by state: %1$s and %2$s with an agent list. Pick a state, then a city, to compare local agents.', 'Browse real estate agents by state: %1$s and %2$s with agent lists. Pick a state, then a city, to compare local agents.', $cities, 'dos-agents' ),
 					dos_agents_head_states( $states ),
 					dos_agents_head_cities( $cities )
 				);

@@ -90,7 +90,7 @@ function dos_agents_city_search_shortcode( $atts ) {
 	?>
 <section class="breanm-home breanm-home__search" data-api="<?php echo esc_url( dos_agents_cities_url() ); ?>"
 	data-msg-many="<?php esc_attr_e( 'More than one city matches. Pick one.', 'dos-agents' ); ?>"
-	data-msg-none="<?php esc_attr_e( 'No city with agent cards matches that yet. Try a nearby city, or browse by state below.', 'dos-agents' ); ?>"
+	data-msg-none="<?php esc_attr_e( 'No city with an agent list matches that yet. Try a nearby city, or browse by state below.', 'dos-agents' ); ?>"
 	<?php if ( null !== $inline ) : ?>
 	data-cities="<?php echo esc_attr( (string) wp_json_encode( $inline ) ); ?>"
 	<?php endif; ?>
@@ -164,8 +164,8 @@ function dos_agents_render_states( $grid = false ) {
 	$note   = sprintf(
 		/* translators: 1: number of cities, 2: number of states */
 		_n(
-			'%1$s city across %2$s states has agent cards so far, and more are added every day. Pick a state to see which of its cities are ready.',
-			'%1$s cities across %2$s states have agent cards so far, and more are added every day. Pick a state to see which of its cities are ready.',
+			'%1$s city across %2$s states has an agent list so far, and more are added every day. Pick a state to see which of its cities are ready.',
+			'%1$s cities across %2$s states have agent lists so far, and more are added every day. Pick a state to see which of its cities are ready.',
 			$cities,
 			'dos-agents'
 		),
@@ -221,7 +221,7 @@ function dos_agents_render_hub( $state ) {
 			. esc_html(
 				sprintf(
 					/* translators: %s: state name */
-					__( 'No city in %s has agent cards yet. They are added city by city; check back soon.', 'dos-agents' ),
+					__( 'No city in %s has an agent list yet. They are added city by city; check back soon.', 'dos-agents' ),
 					$name
 				)
 			)
@@ -240,7 +240,7 @@ function dos_agents_render_hub( $state ) {
 
 	$heading = sprintf(
 		/* translators: 1: number of cities, 2: state name */
-		_n( '%1$s city in %2$s with agent cards', '%1$s cities in %2$s with agent cards', count( $rows ), 'dos-agents' ),
+		_n( '%1$s city in %2$s with an agent list', '%1$s cities in %2$s with agent lists', count( $rows ), 'dos-agents' ),
 		number_format_i18n( count( $rows ) ),
 		$name
 	);

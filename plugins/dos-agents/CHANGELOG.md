@@ -5,6 +5,24 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.7
+
+State hubs say what their agent lists hold and who compiles them. "Agent cards" is gone from visitor-facing text.
+
+### Added
+- **A facts paragraph under each hub's heading** (`includes/hub-facts.php`). Why: the SEO audit of 2026-11-10 (P5) judged the hubs thin, a list of cities and a stock paragraph with nothing original. Every number is one the site holds: the city pages the hub lists (read from its own "All Cities in {State} (N)" heading, so the two agree), the cities with an agent list, the distinct agents across them, the three cities with the most, how many have a review from the last 12 months (the same cutoff as the cards' filter), how many are teams, and when the state's lists were most recently updated (the newest `generated_at`, as a site-local date; "most recently" because the lists are refreshed one city at a time). The top three use the same counts as the city boxes below them. Example: "Washington has 470 city pages on this site. 14 of them have agent lists so far, with {N} different agents who have recorded sales in those cities. ..."
+  - **Agents are counted once per state, by profile ID.** The same agent is listed in several cities (Meridian, Boise and Kuna list 215, 169 and 130, with heavy overlap), so adding up the city counts would claim agents the state does not have.
+  - Singular and zero cases have their own wording ("with 1 agent who has", "1 of the 9 has", "All 5 have", "None of the 2 has", "1 of the 5 is a team", no team sentence when there are none). A state with no lists gets no paragraph, because the hub block already says so.
+  - Cached 12 hours per state (`breanm_agents_hub_facts_v1_<st>`, an empty state cached as zero) and cleared by `dos_agents_index_touch()` after the index is written (so a hub view cannot cache facts from the old index), so every push and page save the sweep makes in that state refreshes it. `dos_agents_index_rebuild()` clears every state.
+- **A "How this list works." line under the city boxes**: "Compiled by {site name} from public agent profiles and reviews. Information only, not a ranking or endorsement, and we are not a brokerage. Each city page explains how its list is built." It does not name the profile site, as Ryan asked (2026-11-11); each city page's disclosure does. Filter `dos_agents_hub_source_text`.
+- `dos_agents_hub_facts` (false) turns both off. Neither is written into the pages. Styles are in `breanm-brand.css`, scoped under `body.breanm-brand` like the hub heading.
+
+### Changed
+- **"Agent cards" is now "agent list(s)" in everything a visitor reads**, at Ryan's request (2026-11-11): the hub heading over the city boxes ("14 cities in Washington with agent lists"), the hub's no-cities message, the "Browse by state" note on the homepage and `/by-state/`, the homepage search's no-match message, and the hub and `/by-state/` meta descriptions (singular when there is one city). Code, comments and CSS class names keep "cards".
+
+### Unchanged
+- The hubs' stored text, including the closing marketing paragraphs, which Ryan chose to leave for now.
+
 ## 0.3.6
 
 State hubs link the city pages their city table was missing.

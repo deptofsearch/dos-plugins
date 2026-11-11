@@ -136,6 +136,16 @@ order, and the count in its heading follows. A hub with nothing missing is
 printed as stored. Empty city pages are not added. See `includes/hub-cities.php`;
 `dos_agents_hub_add_missing` (false) turns it off.
 
+## State hubs: facts and source line
+
+Under each hub's heading, a paragraph of facts from the site's own data: city
+pages listed, cities with an agent list, distinct agents (counted once per
+state), the top three cities, agents reviewed in the last 12 months, teams, and
+when the lists were last updated. Under the city boxes, a "How this list works."
+line saying who compiles the lists and that they are not a ranking. Cached 12 h
+per state and refreshed on every push or page save in that state. See
+`includes/hub-facts.php`; `dos_agents_hub_facts` (false) turns both off.
+
 ## Head tags: description and social sharing
 
 `includes/head-meta.php` prints one `<meta name="description">`, Open Graph and

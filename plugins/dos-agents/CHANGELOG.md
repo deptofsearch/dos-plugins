@@ -5,6 +5,18 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.6
+
+State hubs link the city pages their city table was missing.
+
+### Added
+- **A hub's "All Cities in {State}" table also links the state's published city pages it does not list** (`includes/hub-cities.php`, from the hub's `the_content` filter). Why: each table was written into the hub when the hub was made, so a city page published or renamed later is in none. The 343 pages renamed from `__trashed` on 2026-11-10 were linked from no hub, so only the sitemap and the 0.3.3 redirects reached them. A sitemap-against-hub check of all 51 hubs that day found exactly those pages missing (297 AL, 26 MA, 14 NH, 5 RI) and nothing else.
+- **Nothing is written into the hub.** The table is rebuilt at render time only when something is missing, and a hub that already links every city page is printed exactly as stored. The rebuilt table reuses the stored `<table>`, `<td>` and `<a>` tags (copied from the first cell), keeps every link it had, and keeps the stored order, alphabetical down three columns. The "All Cities in {State} (N)" count follows the new total.
+- **A city page counts** when it is a published, top-level Page whose slug is `in-<city>-<st>` and whose title is "in {City} {ST}" (the title gives the link text). Empty city pages (0.3.4, noindex) are not added. The links a hub already has to them are kept.
+- **One scan per state**, `post_name LIKE 'in-%-<st>'`, cached 12 hours in the transient `breanm_agents_hub_cities_v1_<st>`. It is cleared when a page of that state is saved, renamed (`post_updated`, old and new slug) or deleted. A failed scan adds nothing and is not cached. Filters: `dos_agents_hub_add_missing` (false turns it off), `dos_agents_pre_hub_city_pages` (short-circuits the scan).
+- **Cheap when nothing is missing**, which is 47 of the 51 hubs: the empty-page scan (0.3.4) runs only when the hub lacks a city page, so a hub view never pays for it otherwise. If the count in the heading cannot be updated, the merged table is still printed and the hub is never blanked.
+- The table is found with `strpos`, not a regex over the page: the largest hubs are 500 to 600 KB, and the class name also appears in each hub's own `<style>` block. Merging one city into Texas or Pennsylvania takes about 4 ms.
+
 ## 0.3.5
 
 Hub and city pages are titled by their headings.

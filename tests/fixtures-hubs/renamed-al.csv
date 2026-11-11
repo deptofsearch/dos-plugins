@@ -1,0 +1,299 @@
+page_id,slug,city
+20581,in-abernant-al,Abernant
+20546,in-addison-al,Addison
+20580,in-akron-al,Akron
+20627,in-alabaster-al,Alabaster
+20440,in-albertville-al,Albertville
+20351,in-alexandria-al,Alexandria
+20579,in-aliceville-al,Aliceville
+20439,in-altoona-al,Altoona
+20506,in-anderson-al,Anderson
+20352,in-anniston-al,Anniston
+20475,in-ardmore-al,Ardmore
+20545,in-arley-al,Arley
+20350,in-ashland-al,Ashland
+20438,in-ashville-al,Ashville
+20505,in-athens-al,Athens
+20437,in-attalla-al,Attalla
+20409,in-autaugaville-al,Autaugaville
+20408,in-banks-al,Banks
+20544,in-bankston-al,Bankston
+20543,in-bear-creek-al,Bear Creek
+20542,in-beaverton-al,Beaverton
+20541,in-belk-al,Belk
+20504,in-belle-mina-al,Belle Mina
+20540,in-berry-al,Berry
+20407,in-billingsley-al,Billingsley
+20582,in-birmingham-al,Birmingham
+20436,in-boaz-al,Boaz
+20578,in-boligee-al,Boligee
+20406,in-booth-al,Booth
+20405,in-brantley-al,Brantley
+20474,in-bridgeport-al,Bridgeport
+20539,in-brilliant-al,Brilliant
+20577,in-brookwood-al,Brookwood
+20473,in-brownsboro-al,Brownsboro
+20404,in-brundidge-al,Brundidge
+20435,in-bryant-al,Bryant
+20576,in-buhl-al,Buhl
+20349,in-bynum-al,Bynum
+20472,in-capshaw-al,Capshaw
+20538,in-carbon-hill-al,Carbon Hill
+20575,in-carrollton-al,Carrollton
+20403,in-cecil-al,Cecil
+20434,in-cedar-bluff-al,Cedar Bluff
+20433,in-centre-al,Centre
+20402,in-chapman-al,Chapman
+20503,in-cherokee-al,Cherokee
+20348,in-choccolocco-al,Choccolocco
+20401,in-clayton-al,Clayton
+20574,in-clinton-al,Clinton
+20400,in-clio-al,Clio
+20502,in-cloverdale-al,Cloverdale
+20573,in-coaling-al,Coaling
+20572,in-coker-al,Coker
+20432,in-collinsville-al,Collinsville
+20399,in-coosada-al,Coosada
+20537,in-cordova-al,Cordova
+20571,in-cottondale-al,Cottondale
+20501,in-courtland-al,Courtland
+20347,in-cragford-al,Cragford
+20431,in-crossville-al,Crossville
+20500,in-danville-al,Danville
+20346,in-daviston-al,Daviston
+20430,in-dawson-al,Dawson
+20398,in-deatsville-al,Deatsville
+20476,in-decatur-al,Decatur
+20536,in-delmar-al,Delmar
+20535,in-detroit-al,Detroit
+20534,in-double-springs-al,Double Springs
+20429,in-douglas-al,Douglas
+20393,in-dozier-al,Dozier
+20570,in-duncanville-al,Duncanville
+20471,in-dutton-al,Dutton
+20569,in-echola-al,Echola
+20397,in-eclectic-al,Eclectic
+20533,in-eldridge-al,Eldridge
+20499,in-elkmont-al,Elkmont
+20396,in-elmore-al,Elmore
+20568,in-elrod-al,Elrod
+20567,in-emelle-al,Emelle
+20566,in-epes-al,Epes
+20395,in-equality-al,Equality
+20470,in-estillfork-al,Estillfork
+20565,in-ethelsville-al,Ethelsville
+20394,in-eufaula-al,Eufaula
+20564,in-eutaw-al,Eutaw
+20498,in-eva-al,Eva
+20469,in-fackler-al,Fackler
+20497,in-falkville-al,Falkville
+20532,in-fayette-al,Fayette
+20392,in-fitzpatrick-al,Fitzpatrick
+20428,in-flat-rock-al,Flat Rock
+20496,in-florence-al,Florence
+20391,in-forest-home-al,Forest Home
+20390,in-fort-davis-al,Fort Davis
+20389,in-fort-deposit-al,Fort Deposit
+20427,in-fort-payne-al,Fort Payne
+20563,in-fosters-al,Fosters
+20426,in-fyffe-al,Fyffe
+20441,in-gadsden-al,Gadsden
+20562,in-gainesville-al,Gainesville
+20425,in-gallant-al,Gallant
+20383,in-gantt-al,Gantt
+20424,in-gaylesville-al,Gaylesville
+20388,in-georgiana-al,Georgiana
+20423,in-geraldine-al,Geraldine
+20531,in-glen-allen-al,Glen Allen
+20387,in-glenwood-al,Glenwood
+20530,in-goodsprings-al,Goodsprings
+20561,in-gordo-al,Gordo
+20386,in-goshen-al,Goshen
+20385,in-grady-al,Grady
+20468,in-grant-al,Grant
+20645,in-graysville-al,Graysville
+20644,in-green-pond-al,Green Pond
+20422,in-groveoak-al,Groveoak
+20529,in-guin-al,Guin
+20421,in-guntersville-al,Guntersville
+20467,in-gurley-al,Gurley
+20528,in-hackleburg-al,Hackleburg
+20527,in-haleyville-al,Haleyville
+20526,in-hamilton-al,Hamilton
+20643,in-hanceville-al,Hanceville
+20382,in-hardaway-al,Hardaway
+20642,in-harpersville-al,Harpersville
+20495,in-hartselle-al,Hartselle
+20466,in-harvest-al,Harvest
+20641,in-hayden-al,Hayden
+20381,in-hayneville-al,Hayneville
+20465,in-hazel-green-al,Hazel Green
+20640,in-helena-al,Helena
+20420,in-henagar-al,Henagar
+20419,in-higdon-al,Higdon
+20380,in-highland-home-al,Highland Home
+20494,in-hillsboro-al,Hillsboro
+20525,in-hodges-al,Hodges
+20639,in-hollins-al,Hollins
+20638,in-holly-pond-al,Holly Pond
+20464,in-hollytree-al,Hollytree
+20463,in-hollywood-al,Hollywood
+20379,in-honoraville-al,Honoraville
+20378,in-hope-hull-al,Hope Hull
+20418,in-horton-al,Horton
+20524,in-houston-al,Houston
+20443,in-huntsville-al,Huntsville
+20417,in-ider-al,Ider
+20547,in-jasper-al,Jasper
+20637,in-jemison-al,Jemison
+20636,in-joppa-al,Joppa
+20523,in-kansas-al,Kansas
+20635,in-kellyton-al,Kellyton
+20522,in-kennedy-al,Kennedy
+20493,in-killen-al,Killen
+20634,in-kimberly-al,Kimberly
+20560,in-knoxville-al,Knoxville
+20462,in-laceys-spring-al,Laceys Spring
+20461,in-langston-al,Langston
+20633,in-leeds-al,Leeds
+20416,in-leesburg-al,Leesburg
+20492,in-leighton-al,Leighton
+20491,in-lester-al,Lester
+20377,in-letohatchee-al,Letohatchee
+20490,in-lexington-al,Lexington
+20632,in-lincoln-al,Lincoln
+20559,in-livingston-al,Livingston
+20631,in-locust-fork-al,Locust Fork
+20630,in-logan-al,Logan
+20376,in-louisville-al,Louisville
+20375,in-luverne-al,Luverne
+20521,in-lynn-al,Lynn
+20460,in-madison-al,Madison
+20374,in-marbury-al,Marbury
+20628,in-margaret-al,Margaret
+20373,in-mathews-al,Mathews
+20558,in-mc-shan-al,Mc Shan
+20629,in-mccalla-al,McCalla
+20415,in-mentone-al,Mentone
+20459,in-meridianville-al,Meridianville
+20372,in-midway-al,Midway
+20371,in-millbrook-al,Millbrook
+20520,in-millport-al,Millport
+20626,in-montevallo-al,Montevallo
+20354,in-montgomery-al,Montgomery
+20489,in-mooresville-al,Mooresville
+20625,in-morris-al,Morris
+20488,in-moulton-al,Moulton
+20557,in-moundville-al,Moundville
+20487,in-mount-hope-al,Mount Hope
+20370,in-mount-meigs-al,Mount Meigs
+20624,in-mount-olive-al,Mount Olive
+20623,in-mulga-al,Mulga
+20483,in-muscle-shoals-al,Muscle Shoals
+20519,in-natural-bridge-al,Natural Bridge
+20518,in-nauvoo-al,Nauvoo
+20622,in-new-castle-al,New Castle
+20458,in-new-hope-al,New Hope
+20457,in-new-market-al,New Market
+20456,in-normal-al,Normal
+20556,in-northport-al,Northport
+20517,in-oakman-al,Oakman
+20621,in-odenville-al,Odenville
+20620,in-oneonta-al,Oneonta
+20455,in-owens-cross-roads-al,Owens Cross Roads
+20353,in-oxford-al,Oxford
+20454,in-paint-rock-al,Paint Rock
+20619,in-palmerdale-al,Palmerdale
+20555,in-panola-al,Panola
+20516,in-parrish-al,Parrish
+20618,in-pelham-al,Pelham
+20615,in-pell-city-al,Pell City
+20369,in-perote-al,Perote
+20554,in-peterson-al,Peterson
+20515,in-phil-campbell-al,Phil Campbell
+20368,in-pike-road-al,Pike Road
+20617,in-pinson-al,Pinson
+20453,in-pisgah-al,Pisgah
+20616,in-pleasant-grove-al,Pleasant Grove
+20367,in-prattville-al,Prattville
+20452,in-princeton-al,Princeton
+20614,in-quinton-al,Quinton
+20613,in-ragland-al,Ragland
+20442,in-rainbow-city-al,Rainbow City
+20414,in-rainsville-al,Rainsville
+20553,in-ralph-al,Ralph
+20366,in-ramer-al,Ramer
+20514,in-red-bay-al,Red Bay
+20552,in-reform-al,Reform
+20612,in-remlap-al,Remlap
+20611,in-riverside-al,Riverside
+20610,in-rockford-al,Rockford
+20486,in-rogersville-al,Rogersville
+20485,in-russellville-al,Russellville
+20365,in-rutledge-al,Rutledge
+20451,in-ryland-al,Ryland
+20609,in-saginaw-al,Saginaw
+20551,in-samantha-al,Samantha
+20364,in-sasser-al,Sasser
+20608,in-sayre-al,Sayre
+20450,in-scottsboro-al,Scottsboro
+20449,in-section-al,Section
+20607,in-shannon-al,Shannon
+20484,in-sheffield-al,Sheffield
+20606,in-shelby-al,Shelby
+20363,in-shorter-al,Shorter
+20605,in-siluria-al,Siluria
+20513,in-sipsey-al,Sipsey
+20482,in-somerville-al,Somerville
+20604,in-springville-al,Springville
+20512,in-spruce-pine-al,Spruce Pine
+20413,in-steele-al,Steele
+20603,in-sterrett-al,Sterrett
+20448,in-stevenson-al,Stevenson
+20511,in-sulligent-al,Sulligent
+20602,in-sumiton-al,Sumiton
+20601,in-sycamore-al,Sycamore
+20600,in-sylacauga-al,Sylacauga
+20412,in-sylvania-al,Sylvania
+20599,in-talladega-al,Talladega
+20362,in-tallassee-al,Tallassee
+20481,in-tanner-al,Tanner
+20598,in-thorsby-al,Thorsby
+20361,in-titus-al,Titus
+20447,in-toney-al,Toney
+20480,in-town-creek-al,Town Creek
+20510,in-townley-al,Townley
+20597,in-trafford-al,Trafford
+20446,in-trenton-al,Trenton
+20479,in-trinity-al,Trinity
+20360,in-troy-al,Troy
+20596,in-trussville-al,Trussville
+20550,in-tuscaloosa-al,Tuscaloosa
+20478,in-tuscumbia-al,Tuscumbia
+20359,in-tuskegee-al,Tuskegee
+20358,in-tuskegee-institute-al,Tuskegee Institute
+20595,in-union-grove-al,Union Grove
+20357,in-union-springs-al,Union Springs
+20445,in-valhermoso-springs-al,Valhermoso Springs
+20411,in-valley-head-al,Valley Head
+20594,in-vandiver-al,Vandiver
+20356,in-verbena-al,Verbena
+20509,in-vernon-al,Vernon
+20508,in-vina-al,Vina
+20593,in-vincent-al,Vincent
+20592,in-vinemont-al,Vinemont
+20410,in-walnut-grove-al,Walnut Grove
+20591,in-warrior-al,Warrior
+20477,in-waterloo-al,Waterloo
+20590,in-watson-al,Watson
+20589,in-wattsville-al,Wattsville
+20588,in-weogufka-al,Weogufka
+20587,in-west-blocton-al,West Blocton
+20548,in-west-greene-al,West Greene
+20586,in-westover-al,Westover
+20355,in-wetumpka-al,Wetumpka
+20585,in-wilsonville-al,Wilsonville
+20584,in-wilton-al,Wilton
+20507,in-winfield-al,Winfield
+20583,in-woodstock-al,Woodstock
+20444,in-woodville-al,Woodville

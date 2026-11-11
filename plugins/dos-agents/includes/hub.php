@@ -78,5 +78,5 @@ function dos_agents_hub_the_content( $content ) {
 
 	return '<h1 class="breanm-hub-title">' . esc_html( $heading ) . '</h1>'
 		. dos_agents_render_hub( $state )
-		. $content;
+		. dos_agents_hub_merge_cities( $content, $state );
 }

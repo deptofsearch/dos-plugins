@@ -3,7 +3,7 @@
  * Plugin Name: DoS - Agents
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Filterable real-estate agent cards for a city page on Best Real Estate Agents Near Me, plus the homepage city search and "Browse by state" carousel and the site's brand layer. Agent data is pushed to a REST endpoint and stored per city; [breanm_agents city="boise-id"] renders the cards, search, filters and sort.
- * Version: 0.3.7
+ * Version: 0.3.8
  * Author: Department of Search
  * Text Domain: dos-agents
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_AGENTS_VERSION', '0.3.7' );
+define( 'DOS_AGENTS_VERSION', '0.3.8' );
 define( 'DOS_AGENTS_FILE', __FILE__ );
 // One option per city, never autoloaded: a city holds up to 500 agents and only its own page reads it.
 define( 'DOS_AGENTS_OPTION_PREFIX', 'breanm_agents_' );
@@ -36,6 +36,7 @@ require_once __DIR__ . '/includes/home.php';
 require_once __DIR__ . '/includes/hub.php';
 require_once __DIR__ . '/includes/hub-cities.php';
 require_once __DIR__ . '/includes/hub-facts.php';
+require_once __DIR__ . '/includes/hub-copy.php';
 require_once __DIR__ . '/includes/brand.php';
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/includes/head-meta.php';
@@ -77,6 +78,9 @@ add_action( 'template_redirect', 'dos_agents_search_fallback', 1 );
 
 // The renamed __trashed-NN city pages. Priority 1 so it answers before redirect_canonical's 404 guess.
 add_action( 'template_redirect', 'dos_agents_old_slug_redirect', 1 );
+
+// The blog index gets an H1 and a description, put in after Themify has built the page (includes/hub-copy.php).
+add_action( 'template_redirect', 'dos_agents_blog_start_buffer', 2 );
 
 // Brand layer, site-wide. Priority 5 only so the brand paints early; it prints BEFORE the theme's
 // stylesheet, so order is not what wins. Every rule is scoped under body.breanm-brand, and that

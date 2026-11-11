@@ -105,6 +105,13 @@ body.breanm-brand .breanm-hub-title { font-weight: 600; font-size: clamp(30px, 4
 body.breanm-brand .breanm-hub-facts { margin: 8px 0 0; max-width: 72ch; font-size: 17px; line-height: 1.6; color: var(--breanm-ink, #0F1115); }
 body.breanm-brand .breanm-hub-source { margin: 16px 0 32px; max-width: 72ch; font-size: 15px; line-height: 1.55; color: var(--breanm-ink-muted, #5A606B); }
 body.breanm-brand .breanm-hub-source strong { color: var(--breanm-ink, #0F1115); font-weight: 600; }
+body.breanm-brand .breanm-hub-next { margin: 8px 0 0; max-width: 72ch; font-size: 17px; line-height: 1.6; color: var(--breanm-ink, #0F1115); }
+body.breanm-brand .breanm-hub-next a { color: var(--breanm-blue, #2B55D6); }
+#all-cities { scroll-margin-top: 24px; }
+/* Blog index heading (includes/hub-copy.php): Themify hides the page title there. */
+body.breanm-brand .breanm-blog-head { margin: 0 0 28px; }
+body.breanm-brand .breanm-blog-title { font-weight: 600; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.07; letter-spacing: -.02em; margin: 0 0 10px; text-wrap: balance; color: var(--breanm-ink, #0F1115); }
+body.breanm-brand .breanm-blog-intro { margin: 0; max-width: 72ch; font-size: 17px; line-height: 1.6; color: var(--breanm-ink-muted, #5A606B); }
 body.breanm-brand.breanm-hub-page .entry-content h3[style] {
 	font-family: var(--breanm-font) !important; color: var(--breanm-ink) !important;
 	font-size: 21px !important; font-weight: 600 !important; letter-spacing: -.01em !important;

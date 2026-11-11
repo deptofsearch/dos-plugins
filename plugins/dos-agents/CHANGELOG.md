@@ -5,6 +5,21 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.8
+
+The re-audit's copy fixes: no "trusted agents" claim on the state pages, a next step on each, and a heading on the blog index.
+
+### Changed
+- **The hubs' stock paragraph "At Best Real Estate Agents Near Me, we help connect you with trusted real estate agents in {State}..." is left out** (`includes/hub-copy.php`, from the hub's `the_content` filter). Why: it contradicts the source line added in 0.3.7 ("Information only, not a ranking or endorsement"), and 50 of the 51 hubs carry it (Oregon twice). Ryan chose to drop only that paragraph (2026-11-11). The "Finding the best real estate agent in {State}" and "Some of the top cities in {State}" paragraphs stay, since they carry the wording people search for.
+- **A second "Some of the top cities in {State}" paragraph is left out.** Oregon has its whole closing block twice; it goes from 6 closing paragraphs to 3.
+- Both work on `<p>` paragraphs and on plain blank-line paragraphs (the form wpautop turns into `<p>` later). A dry run on all 51 live hubs removed exactly those 52 paragraphs and nothing else. The pages are not edited.
+
+### Added
+- **A next step under each hub's facts:** "Pick a city below to compare its agents, or find yours among all 470 cities in Washington." The second half links to the hub's city table, which gets `id="all-cities"`. Why: the re-audit judged 49 state pages to lack a clear next step (all flagged to verify). States with no agent list get none.
+- **An H1 and a description on the blog index:** "Articles on choosing a real estate agent", then one sentence on what the articles cover. Themify Magazine hides that page's title, so the page had no H1 (re-audit JEV-008). Added to the finished HTML after `<div class="page-content entry-content">` inside `<main id="content">`, by a buffer on that page only; the page is returned untouched if that markup is missing or its main content already has an H1.
+- Filters: `dos_agents_hub_copy` (false turns off the hub changes), `dos_agents_blog_head` (false turns off the blog heading).
+- **Fixed before release (independent review):** the plain-paragraph removal stopped only at a blank line, so a stored stock paragraph followed on the next line by a `<p>`, heading or the city table would have taken them too. It now also stops at any block tag, and a match over 2,000 characters is left alone. The table anchor no longer mistakes `data-id=` for an id, and the blog heading is only added when the buffer holds the whole page.
+
 ## 0.3.7
 
 State hubs say what their agent lists hold and who compiles them. "Agent cards" is gone from visitor-facing text.

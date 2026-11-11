@@ -76,13 +76,16 @@ function dos_agents_hub_the_content( $content ) {
 		dos_agents_state_name( $state )
 	);
 
+	$content = dos_agents_hub_trim_copy( $content, $state );
 	$content = dos_agents_hub_merge_cities( $content, $state );
+	$content = dos_agents_hub_table_anchor( $content );
 	// The facts open with the number of city pages the hub lists, read from its own "All Cities in {State} (N)"
 	// heading after the merge, so the two numbers on the page always agree.
 	$pages = preg_match( '/All Cities in ' . preg_quote( dos_agents_state_name( $state ), '/' ) . '\s*\(([\d,]+)\)/', $content, $m ) ? (int) str_replace( ',', '', $m[1] ) : null;
 
 	return '<h1 class="breanm-hub-title">' . esc_html( $heading ) . '</h1>'
 		. dos_agents_render_hub_facts( $state, $pages )
+		. dos_agents_render_hub_next( $state, $pages, false !== strpos( $content, 'id="all-cities"' ) )
 		. dos_agents_render_hub( $state )
 		. dos_agents_render_hub_source()
 		. $content;

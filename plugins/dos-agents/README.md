@@ -127,6 +127,15 @@ Three filters turn it off without a release: `dos_agents_brand` (the whole
 layer), `dos_agents_brand_logo` (the header wordmark alone) and
 `dos_agents_page_layout` (the city-page layout).
 
+## State hubs: missing cities
+
+Each hub's "All Cities in {State}" table is stored in the page. When a published
+city page of the state is not in it (a page published or renamed later), the
+table is rebuilt at render time with that page added, in the stored markup and
+order, and the count in its heading follows. A hub with nothing missing is
+printed as stored. Empty city pages are not added. See `includes/hub-cities.php`;
+`dos_agents_hub_add_missing` (false) turns it off.
+
 ## Head tags: description and social sharing
 
 `includes/head-meta.php` prints one `<meta name="description">`, Open Graph and

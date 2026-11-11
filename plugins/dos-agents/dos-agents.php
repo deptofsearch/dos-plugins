@@ -3,7 +3,7 @@
  * Plugin Name: DoS - Agents
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Filterable real-estate agent cards for a city page on Best Real Estate Agents Near Me, plus the homepage city search and "Browse by state" carousel and the site's brand layer. Agent data is pushed to a REST endpoint and stored per city; [breanm_agents city="boise-id"] renders the cards, search, filters and sort.
- * Version: 0.3.5
+ * Version: 0.3.6
  * Author: Department of Search
  * Text Domain: dos-agents
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_AGENTS_VERSION', '0.3.5' );
+define( 'DOS_AGENTS_VERSION', '0.3.6' );
 define( 'DOS_AGENTS_FILE', __FILE__ );
 // One option per city, never autoloaded: a city holds up to 500 agents and only its own page reads it.
 define( 'DOS_AGENTS_OPTION_PREFIX', 'breanm_agents_' );
@@ -34,6 +34,7 @@ require_once __DIR__ . '/includes/rest.php';
 require_once __DIR__ . '/includes/render.php';
 require_once __DIR__ . '/includes/home.php';
 require_once __DIR__ . '/includes/hub.php';
+require_once __DIR__ . '/includes/hub-cities.php';
 require_once __DIR__ . '/includes/brand.php';
 require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/includes/head-meta.php';
@@ -94,6 +95,11 @@ add_filter( 'document_title_parts', 'dos_agents_head_document_title_parts' );
 // State hubs get the cities-with-cards block without the 49 pages being rewritten. Priority 9 so it
 // runs before wpautop (10), which would otherwise wrap the block's markup in stray paragraphs.
 add_filter( 'the_content', 'dos_agents_hub_the_content', 9 );
+
+// The hub's city table also links city pages published or renamed after the hub was written (includes/hub-cities.php).
+add_action( 'save_post', 'dos_agents_hub_cities_on_save', 10, 2 );
+add_action( 'post_updated', 'dos_agents_hub_cities_on_update', 10, 3 );
+add_action( 'deleted_post', 'dos_agents_hub_cities_on_save', 10, 2 );
 
 // City pages and state hubs render as Pages, not posts: no sidebar, no post meta.
 add_filter( 'get_post_metadata', 'dos_agents_layout_meta', 10, 4 );

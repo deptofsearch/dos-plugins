@@ -5,6 +5,18 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.4
+
+City pages with no agents: noindex, follow, and out of the sitemap.
+
+### Added
+- **An empty city page is `noindex, follow`** (`includes/empty-cities.php`, on `wp_robots` at priority 99). Why: 876 published city pages (a full REST search on 2026-11-10) hold only "Real Estate Agents in {City}, {ST}" and "There are no agents we have found that service this area", with no cards and no brokerage summary. Google reports an empty page that returns 200 as a soft 404, and pages like these dilute every crawl. The other robots directives core prints (`max-image-preview:large`) are kept.
+- **"Empty" is read live from the page's stored content:** a published Page that holds that sentence and no `[breanm_agents]` shortcode. No list decides it, so a stale cache can never noindex a page that has cards. When the sweep gives a city cards, it rewrites the page with the shortcode, and the page is indexable again at its next view.
+- **The same pages are left out of the core Pages sitemap** (`wp_sitemaps_posts_query_args`, `post__not_in`), which also keeps the sitemap's page count right. The IDs come from one LIKE scan over published pages, cached for 12 hours in the transient `breanm_agents_empty_ids_v1`. The cache is cleared only when a saved or deleted page crosses between empty and not empty, so the sweep's hourly page edits do not force a rescan. A failed scan leaves every page in the sitemap rather than caching the failure. Filter `dos_agents_pre_empty_city_ids` (return an array of IDs) short-circuits the scan.
+
+### Unchanged
+- The page's own text, so a visitor who lands on one still sees what they did before. The pages still return 200 and are not removed from the state hubs. No description is added: there is nothing on the page to describe.
+
 ## 0.3.3
 
 301s for the 343 city pages that were published as `__trashed-NN`.

@@ -8,11 +8,13 @@
  * display. Where there is nothing true to say, nothing is printed: a missing description is better
  * than a weak one, because search engines write their own from the page anyway.
  *
- * The <title> is not touched. This file only adds tags.
- *
  * It stands down completely when another layer already prints these tags (Yoast, Rank Math, AIOSEO,
  * SEOPress, The SEO Framework, Jetpack's Open Graph, or DoS Toolkit's SEO module), so a site never gets two descriptions or
  * two og:title tags, and `dos_agents_head_meta` turns it off without a release.
+ *
+ * Since 0.3.5 the <title> of hub and city pages is the page's heading too (dos_agents_head_document_title_parts()).
+ * Only the title part changes: WordPress still adds the separator and the site name, and every other page keeps
+ * the title WordPress gives it.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -87,7 +89,8 @@ function dos_agents_head_queried() {
  * What kind of page this is, and its post: array( kind, post|null ), or null for a view that gets
  * nothing (404, search, feeds, archives, attachments, admin).
  *
- * Kinds: home, by-state, hub, city, brokerages (an older city page), blog (the posts page), post, page.
+ * Kinds: home, by-state, hub, city, brokerages (an older city page), empty (a city page with no agents),
+ * blog (the posts page), post, page.
  */
 function dos_agents_head_meta_view() {
 	if ( is_admin() || is_feed() || is_embed() || is_404() || is_search() ) {
@@ -131,7 +134,31 @@ function dos_agents_head_meta_view() {
 	if ( null !== dos_agents_head_meta_brokerages( $post ) ) {
 		return array( 'brokerages', $post );
 	}
+	if ( null !== dos_agents_head_meta_empty( $post ) ) {
+		return array( 'empty', $post );
+	}
 	return array( 'page', $post );
+}
+
+/**
+ * The city of an empty city page (includes/empty-cities.php): array( city, ST ), or null.
+ *
+ * Read off the page's own heading, "Real Estate Agents in {City}, {ST}", which all 876 of them open with, so
+ * the title says exactly what the page says. No heading in that form, no kind: the page stays an ordinary page.
+ */
+function dos_agents_head_meta_empty( $post ) {
+	if ( ! dos_agents_is_empty_city_content( $post->post_content ) ) {
+		return null;
+	}
+	if ( ! preg_match( '/<h[1-6]\b[^>]*>((?:(?!<\/h[1-6]>).)*Real Estate Agents in(?:(?!<\/h[1-6]>).)*)<\/h[1-6]>/is', (string) $post->post_content, $h ) ) {
+		return null;
+	}
+	$heading = html_entity_decode( wp_strip_all_tags( $h[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$heading = trim( (string) preg_replace( '/[\s\x{00A0}]+/u', ' ', $heading ) );
+	if ( ! preg_match( '/^Real Estate Agents in (.+?)\s*,\s*([A-Za-z]{2})$/iu', $heading, $m ) || '' === trim( $m[1] ) ) {
+		return null;
+	}
+	return array( trim( $m[1] ), strtoupper( $m[2] ) );
 }
 
 /**
@@ -477,27 +504,49 @@ function dos_agents_head_post_title( $post ) {
 	return trim( html_entity_decode( wp_strip_all_tags( $title ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 }
 
-/** The Open Graph title: a clean one, not the WordPress document title. */
-function dos_agents_head_og_title( $kind, $post ) {
-	$title = '';
+/**
+ * The heading a hub or city page shows, as a title ("Real Estate Agents in Boise, ID"), or '' for any
+ * other kind. The share title and the document title both use it, so the two never drift apart.
+ */
+function dos_agents_head_heading_title( $kind, $post ) {
 	switch ( $kind ) {
 		case 'city':
 			$city = dos_agents_head_meta_city( $post );
 			if ( null !== $city ) {
 				/* translators: %s: city and state, e.g. "Boise, ID" (the page's H1) */
-				$title = sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), $city[1] . ', ' . $city[2] );
+				return sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), $city[1] . ', ' . $city[2] );
+			}
+			break;
+		case 'empty':
+			$e = dos_agents_head_meta_empty( $post );
+			if ( null !== $e ) {
+				/* translators: %s: city and state, e.g. "Vesta, GA" (the page's heading) */
+				return sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), $e[0] . ', ' . $e[1] );
 			}
 			break;
 		case 'brokerages':
 			$b = dos_agents_head_meta_brokerages( $post );
 			if ( null !== $b ) {
 				/* translators: %s: city and state, e.g. "Boise, ID" */
-				$title = sprintf( __( 'Real Estate Brokerages in %s', 'dos-agents' ), $b[0] . ', ' . $b[1] );
+				return sprintf( __( 'Real Estate Brokerages in %s', 'dos-agents' ), $b[0] . ', ' . $b[1] );
 			}
 			break;
 		case 'hub':
 			/* translators: %s: state name (the hub's H1) */
-			$title = sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), dos_agents_state_name( dos_agents_hub_state( $post->ID ) ) );
+			return sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), dos_agents_state_name( dos_agents_hub_state( $post->ID ) ) );
+	}
+	return '';
+}
+
+/** The Open Graph title: a clean one, not the WordPress document title. */
+function dos_agents_head_og_title( $kind, $post ) {
+	$title = '';
+	switch ( $kind ) {
+		case 'city':
+		case 'empty':
+		case 'brokerages':
+		case 'hub':
+			$title = dos_agents_head_heading_title( $kind, $post );
 			break;
 		case 'home':
 			$title = dos_agents_head_site_name();
@@ -634,4 +683,35 @@ function dos_agents_head_meta() {
 		echo '<meta name="twitter:image" content="' . esc_url( $image['url'] ) . "\">\n";
 	}
 	echo "<!-- /DoS Agents head meta -->\n";
+}
+
+/**
+ * document_title_parts: the <title> of a hub or city page is its heading, so "in Abilene TX – Best Real Estate
+ * Agents Near Me" becomes "Real Estate Agents in Abilene, TX – Best Real Estate Agents Near Me".
+ *
+ * Why: the pages are named after their slugs, so WordPress titled them "in Abilene TX", which says less than the
+ * heading and is the kind of title Google rewrites, usually from the heading. Only the 'title' part is replaced,
+ * so the separator, the site name and any "Page 2" part stay WordPress's. Every other page is left alone.
+ *
+ * Stands down for an SEO plugin or DoS Toolkit's SEO module, which own the title, but not for Jetpack, which
+ * prints share tags and no title. The filter `dos_agents_document_title` turns it off without a release.
+ */
+function dos_agents_head_document_title_parts( $parts ) {
+	if ( ! is_array( $parts ) || ! apply_filters( 'dos_agents_document_title', true ) ) {
+		return $parts;
+	}
+	$layer = dos_agents_head_meta_other_layer();
+	if ( '' !== $layer && 'Jetpack' !== $layer ) {
+		return $parts;
+	}
+	$view = dos_agents_head_meta_view();
+	if ( null === $view ) {
+		return $parts;
+	}
+	list( $kind, $post ) = $view;
+	$title = dos_agents_head_heading_title( $kind, $post );
+	if ( '' !== $title ) {
+		$parts['title'] = $title;
+	}
+	return $parts;
 }

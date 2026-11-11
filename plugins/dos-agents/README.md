@@ -131,12 +131,14 @@ layer), `dos_agents_brand_logo` (the header wordmark alone) and
 
 `includes/head-meta.php` prints one `<meta name="description">`, Open Graph and
 Twitter Card tags in `<head>` on pages, posts, the front page and the posts
-page. It never changes the `<title>`.
+page.
 
 | Page | Description built from | `og:title` |
 |---|---|---|
 | City page | the stored agent count and the city ("Compare 12 real estate agents in Abilene, TX: ...") | Real Estate Agents in Abilene, TX |
 | State hub | the number of cities with agent cards and the three with the most agents | Real Estate Agents in Texas |
+| Older city page (brokerage summary) | the number of brokerages it lists | Real Estate Brokerages in Bancroft, WI |
+| Empty city page (no agents) | none | Real Estate Agents in Vesta, GA |
 | Homepage, `/by-state/` | the live city and state counts | site name; page title |
 | Blog post | its manual excerpt, else the first sentences of the content | post title |
 | Blog index | a fixed sentence | posts page title |
@@ -150,6 +152,16 @@ Framework, Jetpack's Open Graph output or DoS Toolkit's SEO module (when enabled
 `dos_agents_head_meta` (false turns it off), `dos_agents_meta_description`
 (`$text`, `$post`, `$kind`), `dos_agents_meta_description_max` (155),
 `dos_agents_og_title` and `dos_agents_og_image` (`url`, `width`, `height`, `alt`).
+
+### Document title (0.3.5)
+
+On the four kinds of hub and city page above, the `<title>` is the same text as
+`og:title`, through `document_title_parts`: only the title part is replaced,
+so WordPress keeps its separator and the site name ("Real Estate Agents in
+Abilene, TX – Best Real Estate Agents Near Me"). Every other page keeps the
+title WordPress gives it. It stands down for the same SEO plugins and DoS
+Toolkit's SEO module, but not for Jetpack, which prints no title.
+`dos_agents_document_title` (false) turns it off.
 
 ## Settings
 

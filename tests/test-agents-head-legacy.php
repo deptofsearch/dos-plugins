@@ -168,7 +168,14 @@ $GLOBALS['filters']['dos_agents_og_title'] = array( function ( $t ) { return 'br
 check( 'the og_title filter applies to this kind', 'brokerages:Real Estate Brokerages in ' . $long . ', TX' === lv( leg_out(), 'og:title' ) );
 $GLOBALS['filters'] = array();
 
-echo "\n--- Title untouched ---\n";
-check( 'head-meta does not hook the document title', false === strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/includes/head-meta.php' ), 'document_title' ) && false === strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/includes/head-meta.php' ), 'pre_get_document_title' ) );
+echo "\n--- Title: only the title part ---\n";
+// Since 0.3.5 the title part of a hub or city page is its heading (tests/test-agents-title.php). The whole title is
+// still never replaced, so WordPress keeps the separator and the site name.
+check( 'head-meta never replaces the whole document title', false === strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/includes/head-meta.php' ), 'pre_get_document_title' ) );
+agents_reset();
+$p = leg_page( 'in-bancroft-wi', (string) file_get_contents( __DIR__ . '/fixtures-legacy/in-bancroft-wi.html' ) );
+leg_view( $p );
+$parts = dos_agents_head_document_title_parts( array( 'title' => 'in Bancroft WI', 'site' => 'Best Real Estate Agents Near Me' ) );
+check( 'a brokerage page is titled by its heading, site name kept', array( 'title' => 'Real Estate Brokerages in Bancroft, WI', 'site' => 'Best Real Estate Agents Near Me' ) === $parts, json_encode( $parts ) );
 
 finish();

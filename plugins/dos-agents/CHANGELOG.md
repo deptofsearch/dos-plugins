@@ -5,6 +5,19 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.2
+
+Meta descriptions for the older city pages, which are most of the site.
+
+### Added
+- **A description and og:title for the older brokerage-summary city pages** (new page kind `brokerages`). Why: a live sample of 200 random sitemap pages found 191 are older city pages that do not hold `[breanm_agents]`, so they were kind `page` and got no description at all (about 27,000 of 28,718 pages). Each holds a brokerage summary headed "Top-Rated Real Estate Brokerages in {City}, {ST}: ...", with each brokerage's sales, rating, review count and a client summary.
+- **The description says only what the page shows.** Two or more entries: "Compare 5 real estate brokerages in Bancroft, WI by sales, rating and what clients say about them." One entry: "A real estate brokerage serving Tunnelton, WV: its sales, rating and what clients say about it." A heading with no entries: "Real estate brokerages in {City}, {ST}: sales, ratings and what clients say." The count is the number of entries showing "(Sales:" in the stored content. A very long city name falls back to a shorter sentence instead of being cut mid-sentence. `og:title` is "Real Estate Brokerages in {City}, {ST}"; `og:url` is the page's own canonical.
+- **Detection uses the heading in the stored content, not the slug.** 343 of these pages are published under broken slugs like `__trashed-83`, so a slug rule would miss them. The heading is matched tolerantly (wpautop output or raw content, entity forms such as `&#8217;` and `&amp;`, extra whitespace, tags inside the h3), in one regex pass over `post_content` with no queries. A page that also holds `[breanm_agents]` stays a city page, and a page without the heading still gets no description.
+- `$kind` in the `dos_agents_meta_description` and `dos_agents_og_title` filters can now also be `brokerages`.
+
+### Unchanged
+- **The `<title>` is not touched.** These pages still have the WordPress default titles ("in Alexander NY - Best Real Estate Agents Near Me"); fixing them is a separate change.
+
 ## 0.3.1
 
 ### Fixed

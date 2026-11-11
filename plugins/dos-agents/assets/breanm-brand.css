@@ -101,6 +101,10 @@ body.breanm-brand .breanm-disclosure p { max-width: none; margin: 0; }
    font-family and color. Inline styles beat a stylesheet, so this is the one place !important is
    the only tool that works; it is scoped to hub pages so nothing else is touched. */
 body.breanm-brand .breanm-hub-title { font-weight: 600; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.07; letter-spacing: -.02em; margin: 0 0 8px; text-wrap: balance; }
+/* Hub facts (above the city cards) and the "How this list works" line (below them), includes/hub-facts.php. */
+body.breanm-brand .breanm-hub-facts { margin: 8px 0 0; max-width: 72ch; font-size: 17px; line-height: 1.6; color: var(--breanm-ink, #0F1115); }
+body.breanm-brand .breanm-hub-source { margin: 16px 0 32px; max-width: 72ch; font-size: 15px; line-height: 1.55; color: var(--breanm-ink-muted, #5A606B); }
+body.breanm-brand .breanm-hub-source strong { color: var(--breanm-ink, #0F1115); font-weight: 600; }
 body.breanm-brand.breanm-hub-page .entry-content h3[style] {
 	font-family: var(--breanm-font) !important; color: var(--breanm-ink) !important;
 	font-size: 21px !important; font-weight: 600 !important; letter-spacing: -.01em !important;

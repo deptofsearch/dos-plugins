@@ -120,6 +120,9 @@ function dos_agents_index_touch( $slug ) {
 		$index[ $slug ] = $row;
 	}
 	dos_agents_index_put( $index );
+	// After the index is written, so a hub view in between cannot cache facts from the old index. Always, even
+	// when the row did not change: a push can change the agents (and so the facts) without changing the count.
+	dos_agents_hub_facts_flush( $slug );
 }
 
 /**
@@ -160,6 +163,7 @@ function dos_agents_index_rebuild() {
 		wp_cache_delete( $name, 'options' );
 	}
 	dos_agents_index_put( $index );
+	dos_agents_hub_facts_flush_all();
 	return count( $index );
 }
 

@@ -584,7 +584,31 @@ function dos_agents_head_is_svg( $url ) {
 }
 
 /**
- * The share image: the post's featured image, else the Site Icon at 512px, else none.
+ * The plugin's own 1200x630 share card (assets/brand/breanm-share-1200x630.png), or array() when it is turned
+ * off with the `dos_agents_share_image` filter or the file is missing.
+ *
+ * Why: state hubs, city pages and the blog index have no featured image, so they all shared the square Site Icon
+ * as a small "summary" card. A wide image gets the large preview on every network (0.3.9).
+ */
+function dos_agents_head_share_image() {
+	if ( ! apply_filters( 'dos_agents_share_image', true ) ) {
+		return array();
+	}
+	$rel = 'assets/brand/breanm-share-1200x630.png';
+	if ( ! file_exists( dirname( DOS_AGENTS_FILE ) . '/' . $rel ) ) {
+		return array();
+	}
+	return array(
+		'url'    => plugin_dir_url( DOS_AGENTS_FILE ) . $rel,
+		'width'  => 1200,
+		'height' => 630,
+		'alt'    => dos_agents_head_site_name(),
+	);
+}
+
+/**
+ * The share image: the post's featured image, else the plugin's 1200x630 share card, else the Site Icon at
+ * 512px, else none.
  *
  * Never the plugin's SVG favicon (assets/brand/breanm-favicon.svg): Open Graph readers do not render
  * SVG. A filter result that points at one is dropped for the same reason.
@@ -605,6 +629,9 @@ function dos_agents_head_image( $kind, $post ) {
 				'alt'    => '' !== $alt ? $alt : dos_agents_head_post_title( $post ),
 			);
 		}
+	}
+	if ( ! $image ) {
+		$image = dos_agents_head_share_image();
 	}
 	if ( ! $image ) {
 		$icon = (string) get_site_icon_url( 512 );

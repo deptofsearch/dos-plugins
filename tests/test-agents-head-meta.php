@@ -35,6 +35,10 @@ if ( $standdown ) {
 
 require dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php';
 
+const SHARE = 'https://example.com/wp-content/plugins/dos-agents/assets/brand/breanm-share-1200x630.png';
+/** Turns the plugin's share card off, so the Site Icon fallback can be tested. */
+function meta_no_share() { $GLOBALS['filters']['dos_agents_share_image'] = array( function () { return false; } ); }
+
 /** Stores a city with a published page holding the shortcode, the normal live state. */
 function meta_city( $city, $state, $agents = 2 ) {
 	$slug = dos_agents_city_slug( $city, $state );
@@ -259,7 +263,7 @@ $GLOBALS['wp']['home']  = true;
 $GLOBALS['wp']['singular'] = false;
 $GLOBALS['wp']['post']  = null;
 $out = meta_out();
-check( 'front page set to latest posts: kind home, root URL, site name title, Site Icon image', 'Best Real Estate Agents Near Me' === mv( $out, 'og:title' ) && 'https://example.com/' === mv( $out, 'og:url' ) && 'https://example.com/wp-content/uploads/icon-512.png' === mv( $out, 'og:image' ) && 'website' === mv( $out, 'og:type' ) && 'summary' === mv( $out, 'twitter:card' ) && null !== mv( $out, 'description' ), $out['raw'] );
+check( 'front page set to latest posts: kind home, root URL, site name title, the share card image', 'Best Real Estate Agents Near Me' === mv( $out, 'og:title' ) && 'https://example.com/' === mv( $out, 'og:url' ) && SHARE === mv( $out, 'og:image' ) && 'website' === mv( $out, 'og:type' ) && 'summary_large_image' === mv( $out, 'twitter:card' ) && null !== mv( $out, 'description' ), $out['raw'] );
 $GLOBALS['wp']['front'] = false;
 $GLOBALS['wp']['home']  = false;
 
@@ -362,11 +366,18 @@ agents_reset();
 $p = meta_post( 'pic', 'Pic', '', 'Has a picture.' );
 meta_view( $p );
 $out = meta_out();
-check( 'no featured image and no Site Icon: no image tags at all', ! isset( $out['og:image'] ) && ! isset( $out['og:image:width'] ) && ! isset( $out['twitter:image'] ), $out['raw'] );
+check( 'no featured image: the 1200x630 share card, as a large card', SHARE === mv( $out, 'og:image' ) && '1200' === mv( $out, 'og:image:width' ) && '630' === mv( $out, 'og:image:height' ) && 'Best Real Estate Agents Near Me' === mv( $out, 'og:image:alt' ) && SHARE === mv( $out, 'twitter:image' ) && 'summary_large_image' === mv( $out, 'twitter:card' ), $out['raw'] );
+check( 'the share card file ships with the plugin', file_exists( dirname( __DIR__ ) . '/plugins/dos-agents/assets/brand/breanm-share-1200x630.png' ) );
+$GLOBALS['wp']['site_icon'] = true;
+check( 'the share card wins over the Site Icon', SHARE === mv( meta_out(), 'og:image' ) );
+$GLOBALS['wp']['site_icon'] = false;
+meta_no_share();
+$out = meta_out();
+check( 'share card off, no featured image and no Site Icon: no image tags at all', ! isset( $out['og:image'] ) && ! isset( $out['og:image:width'] ) && ! isset( $out['twitter:image'] ), $out['raw'] );
 check( 'and the plain summary card', 'summary' === mv( $out, 'twitter:card' ) );
 $GLOBALS['wp']['site_icon'] = true;
 $out = meta_out();
-check( 'Site Icon at 512px when there is no featured image', 'https://example.com/wp-content/uploads/icon-512.png' === mv( $out, 'og:image' ) && '512' === mv( $out, 'og:image:width' ) && '512' === mv( $out, 'og:image:height' ) && 'Best Real Estate Agents Near Me' === mv( $out, 'og:image:alt' ) );
+check( 'share card off: Site Icon at 512px when there is no featured image', 'https://example.com/wp-content/uploads/icon-512.png' === mv( $out, 'og:image' ) && '512' === mv( $out, 'og:image:width' ) && '512' === mv( $out, 'og:image:height' ) && 'Best Real Estate Agents Near Me' === mv( $out, 'og:image:alt' ) );
 check( 'the brand SVG favicon is never offered', false === strpos( $out['raw'], '.svg' ) );
 $GLOBALS['wp']['thumbs'][ $p->ID ] = array( 77, 'https://example.com/wp-content/uploads/hero.jpg', 1200, 630, 'A kitchen "island"' );
 $out = meta_out();
@@ -438,6 +449,6 @@ check( 'and prints again once the view is a post', '' !== meta_out()['raw'] );
 
 echo "\n--- Wiring ---\n";
 check( 'hooked on wp_head at priority 1', in_array( 'dos_agents_head_meta', $GLOBALS['actions']['wp_head'][1] ?? array(), true ) );
-check( 'version is 0.3.8 in the constant and the header', '0.3.8' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.8' ) );
+check( 'version is 0.3.9 in the constant and the header', '0.3.9' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.9' ) );
 
 finish();

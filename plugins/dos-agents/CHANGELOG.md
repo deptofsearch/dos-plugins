@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.3
+
+301s for the 343 city pages that were published as `__trashed-NN`.
+
+### Added
+- **A 301 from each old `/__trashed-NN/` URL to the page's proper `/in-<city>-<st>/` URL** (`includes/old-slugs.php`, map in `includes/old-slugs-map.php`). Why: 343 published city pages (298 AL, 26 MA, 14 NH, 5 RI) lost their slugs in a bulk trash and restore in September 2026 and are being renamed to the `in-<city>-<st>` pattern. Core keeps old-slug redirects for posts only (`wp_check_for_changed_slugs` skips hierarchical types), and the site has no redirect plugin, so without this every old URL would 404.
+- **It acts only on a 404**, at `template_redirect` priority 1, before `redirect_canonical` makes its own guess. So it does nothing while a page still holds its old slug, and this release can go live before the renames, with no gap between the two.
+- **The target is read from the page ID, not stored as a URL**, so a later slug change still lands. No redirect when the page is missing, not published, or still holds the old slug (which would loop). Only a single-segment path that starts `__trashed` and is in the map is considered; the map is not read on any other request.
+
 ## 0.3.2
 
 Meta descriptions for the older city pages, which are most of the site.

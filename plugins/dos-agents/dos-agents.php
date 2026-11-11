@@ -3,7 +3,7 @@
  * Plugin Name: DoS - Agents
  * Plugin URI: https://github.com/deptofsearch/dos-plugins
  * Description: Filterable real-estate agent cards for a city page on Best Real Estate Agents Near Me, plus the homepage city search and "Browse by state" carousel and the site's brand layer. Agent data is pushed to a REST endpoint and stored per city; [breanm_agents city="boise-id"] renders the cards, search, filters and sort.
- * Version: 0.3.8
+ * Version: 0.3.9
  * Author: Department of Search
  * Text Domain: dos-agents
  * Update URI: https://github.com/deptofsearch/dos-plugins
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_AGENTS_VERSION', '0.3.8' );
+define( 'DOS_AGENTS_VERSION', '0.3.9' );
 define( 'DOS_AGENTS_FILE', __FILE__ );
 // One option per city, never autoloaded: a city holds up to 500 agents and only its own page reads it.
 define( 'DOS_AGENTS_OPTION_PREFIX', 'breanm_agents_' );
@@ -42,6 +42,7 @@ require_once __DIR__ . '/includes/layout.php';
 require_once __DIR__ . '/includes/head-meta.php';
 require_once __DIR__ . '/includes/old-slugs.php';
 require_once __DIR__ . '/includes/empty-cities.php';
+require_once __DIR__ . '/includes/sitemap-tidy.php';
 
 // Not behind is_admin(): WP-Cron and the REST API run the update check too.
 require_once __DIR__ . '/includes/class-dos-github-updater.php';
@@ -72,6 +73,11 @@ add_filter( 'wp_robots', 'dos_agents_empty_robots', 99 );
 add_filter( 'wp_sitemaps_posts_query_args', 'dos_agents_empty_sitemap_args', 10, 2 );
 add_action( 'save_post', 'dos_agents_empty_on_save', 10, 2 );
 add_action( 'deleted_post', 'dos_agents_empty_on_delete', 10, 2 );
+
+// Author and tag archives: out of the core sitemap and noindex, follow (includes/sitemap-tidy.php).
+add_filter( 'wp_sitemaps_add_provider', 'dos_agents_sitemap_providers', 10, 2 );
+add_filter( 'wp_sitemaps_taxonomies', 'dos_agents_sitemap_taxonomies' );
+add_filter( 'wp_robots', 'dos_agents_sitemap_robots', 99 );
 
 // The homepage search without JavaScript: one match goes straight to the city.
 add_action( 'template_redirect', 'dos_agents_search_fallback', 1 );

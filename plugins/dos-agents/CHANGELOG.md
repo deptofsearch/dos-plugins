@@ -5,6 +5,14 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.9
+
+Share previews and the sitemap: a wide share image for pages without one, and no thin archives in the sitemap.
+
+### Added
+- **A 1200x630 share card** (`assets/brand/breanm-share-1200x630.png`): the site name, mark and one line, in the brand blue. It is the `og:image` and `twitter:image` for any page without a featured image, which includes the state hubs, the city pages and the blog index. Those pages now get the large preview card. Why: they all shared the square 512px Site Icon, which networks show as a small thumbnail. Order: featured image, then the share card, then the Site Icon. The filter `dos_agents_share_image` (false) turns the card off. The source is `bestrealestateagentsnearme/design/share-image/` in the Claude repo, rendered with headless Chrome.
+- **The core sitemap is tidied** (`includes/sitemap-tidy.php`). The users sitemap (one author archive, `/author/<login>/`, which also showed the WordPress login name) and the post tag sitemap (22 tag archives) are gone. Author and tag archives are now `noindex, follow`. Why: they are thin lists of the old generic posts, and nobody searches for them. Categories stay, because "Agent Lists by State" and "Buying and Selling News" are real sections. The filter `dos_agents_sitemap_tidy` (false) turns it all off.
+
 ## 0.3.8
 
 The re-audit's copy fixes: no "trusted agents" claim on the state pages, a next step on each, and a heading on the blog index.

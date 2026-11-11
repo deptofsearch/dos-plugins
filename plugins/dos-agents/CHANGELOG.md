@@ -5,6 +5,21 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-agents-v<version>`.
 
+## 0.3.5
+
+Hub and city pages are titled by their headings.
+
+### Changed
+- **The `<title>` of a state hub or city page is its heading** (`dos_agents_head_document_title_parts()` in `includes/head-meta.php`, on `document_title_parts`). Why: the pages are named after their slugs, so WordPress titled them "in Abilene TX – Best Real Estate Agents Near Me" and "in Alabama – …" (one hub, "In Washington"), while the headings say "Real Estate Agents in Abilene, TX". Google may rewrite a title it finds unhelpful, usually from the main heading, and the SEO audit of 2026-11-10 flagged this (P4). The text is the share title the pages have had since 0.3.0, so the two cannot drift apart.
+  - City pages with cards and state hubs: "Real Estate Agents in {City}, {ST}" / "Real Estate Agents in {State}".
+  - Older brokerage-summary pages, including the 343 renamed `__trashed` pages: "Real Estate Brokerages in {City}, {ST}".
+  - Empty city pages: "Real Estate Agents in {City}, {ST}", read off their own heading.
+- **Only the title part changes.** WordPress still adds the separator, the site name and any page number. The whole title is never replaced (`pre_get_document_title` is not used). The homepage, `/by-state/`, the blog, posts and other pages keep their titles.
+- **It stands down for Yoast, Rank Math, All in One SEO, SEOPress, The SEO Framework and DoS Toolkit's SEO module**, which own the title. It does not stand down for Jetpack, which prints share tags and no title. The filter `dos_agents_document_title` (false) turns it off.
+
+### Added
+- **A page kind `empty`** for the empty city pages from 0.3.4, recognized by the empty-page sentence plus a heading "Real Estate Agents in {City}, {ST}". Their `og:title` was "in Vesta GA" and is now the heading. They still get no description. A page with the sentence but no such heading stays an ordinary page.
+
 ## 0.3.4
 
 City pages with no agents: noindex, follow, and out of the sitemap.

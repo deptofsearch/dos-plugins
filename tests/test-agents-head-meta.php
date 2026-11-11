@@ -438,6 +438,6 @@ check( 'and prints again once the view is a post', '' !== meta_out()['raw'] );
 
 echo "\n--- Wiring ---\n";
 check( 'hooked on wp_head at priority 1', in_array( 'dos_agents_head_meta', $GLOBALS['actions']['wp_head'][1] ?? array(), true ) );
-check( 'version is 0.3.4 in the constant and the header', '0.3.4' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.4' ) );
+check( 'version is 0.3.5 in the constant and the header', '0.3.5' === DOS_AGENTS_VERSION && false !== strpos( (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' ), 'Version: 0.3.5' ) );
 
 finish();

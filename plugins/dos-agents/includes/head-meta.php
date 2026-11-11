@@ -87,7 +87,7 @@ function dos_agents_head_queried() {
  * What kind of page this is, and its post: array( kind, post|null ), or null for a view that gets
  * nothing (404, search, feeds, archives, attachments, admin).
  *
- * Kinds: home, by-state, hub, city, blog (the posts page), post, page.
+ * Kinds: home, by-state, hub, city, brokerages (an older city page), blog (the posts page), post, page.
  */
 function dos_agents_head_meta_view() {
 	if ( is_admin() || is_feed() || is_embed() || is_404() || is_search() ) {
@@ -126,7 +126,39 @@ function dos_agents_head_meta_view() {
 	if ( null !== dos_agents_head_meta_city( $post ) ) {
 		return array( 'city', $post );
 	}
+	// The older city pages hold a brokerage summary instead of the shortcode. Detected by the heading
+	// in the stored content, never the slug: hundreds of them are published under broken slugs.
+	if ( null !== dos_agents_head_meta_brokerages( $post ) ) {
+		return array( 'brokerages', $post );
+	}
 	return array( 'page', $post );
+}
+
+/**
+ * The city of an older brokerage-summary page: array( city, ST, brokerages ), or null.
+ *
+ * Reads the stored content once, with no queries. The page is recognized by its heading, "Top-Rated
+ * Real Estate Brokerages in {City}, {ST}: ...", which survives wpautop, entity forms and tags inside
+ * the h3. The count is the number of entries showing "(Sales:", which is what the page lists.
+ */
+function dos_agents_head_meta_brokerages( $post ) {
+	static $memo = array();
+	$key = spl_object_id( $post );
+	if ( isset( $memo[ $key ] ) && $memo[ $key ][0] === $post->post_content ) {
+		return $memo[ $key ][1] ?: null;
+	}
+	$content = (string) $post->post_content;
+	$found   = false;
+	if ( false !== stripos( $content, 'Top-Rated' ) && ! has_shortcode( $content, 'breanm_agents' )
+		&& preg_match( '/<h3\b[^>]*>((?:(?!<\/h3>).)*Top-Rated(?:(?!<\/h3>).)*)<\/h3>/is', $content, $h ) ) {
+		$heading = html_entity_decode( wp_strip_all_tags( $h[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$heading = (string) preg_replace( '/[\s\x{00A0}]+/u', ' ', $heading );
+		if ( preg_match( '/Top-Rated Real Estate Brokerages in (.+?)\s*,\s*([A-Za-z]{2})\s*:/iu', $heading, $m ) && '' !== trim( $m[1] ) ) {
+			$found = array( trim( $m[1] ), strtoupper( $m[2] ), preg_match_all( '/\(\s*Sales\s*:/i', $content ) );
+		}
+	}
+	$memo[ $key ] = array( $content, $found );
+	return $found ?: null;
 }
 
 /**
@@ -280,6 +312,47 @@ function dos_agents_head_description( $kind, $post ) {
 			}
 			break;
 
+		case 'brokerages':
+			$b = dos_agents_head_meta_brokerages( $post );
+			if ( null === $b ) {
+				break;
+			}
+			$place = $b[0] . ', ' . $b[1];
+			if ( $b[2] >= 2 ) {
+				$full  = sprintf(
+					/* translators: 1: number of brokerages, 2: city and state, e.g. "Boise, ID" */
+					__( 'Compare %1$s real estate brokerages in %2$s by sales, rating and what clients say about them.', 'dos-agents' ),
+					number_format_i18n( $b[2] ),
+					$place
+				);
+				$short = sprintf(
+					/* translators: 1: number of brokerages, 2: city and state */
+					__( 'Compare %1$s real estate brokerages in %2$s.', 'dos-agents' ),
+					number_format_i18n( $b[2] ),
+					$place
+				);
+			} elseif ( 1 === $b[2] ) {
+				/* translators: %s: city and state */
+				$full  = sprintf( __( 'A real estate brokerage serving %s: its sales, rating and what clients say about it.', 'dos-agents' ), $place );
+				/* translators: %s: city and state */
+				$short = sprintf( __( 'A real estate brokerage serving %s.', 'dos-agents' ), $place );
+			} else {
+				/* translators: %s: city and state */
+				$full  = sprintf( __( 'Real estate brokerages in %s: sales, ratings and what clients say.', 'dos-agents' ), $place );
+				/* translators: %s: city and state */
+				$short = sprintf( __( 'Real estate brokerages in %s.', 'dos-agents' ), $place );
+			}
+			// A very long city name pushes the full sentence past the limit; use the short one rather
+			// than let the trim cut mid-sentence.
+			$text = $short;
+			foreach ( array( $full, $short ) as $candidate ) {
+				if ( dos_agents_head_len( $candidate ) <= dos_agents_head_meta_max() ) {
+					$text = $candidate;
+					break;
+				}
+			}
+			break;
+
 		case 'hub':
 			$state = dos_agents_hub_state( $post->ID );
 			$name  = dos_agents_state_name( $state );
@@ -413,6 +486,13 @@ function dos_agents_head_og_title( $kind, $post ) {
 			if ( null !== $city ) {
 				/* translators: %s: city and state, e.g. "Boise, ID" (the page's H1) */
 				$title = sprintf( __( 'Real Estate Agents in %s', 'dos-agents' ), $city[1] . ', ' . $city[2] );
+			}
+			break;
+		case 'brokerages':
+			$b = dos_agents_head_meta_brokerages( $post );
+			if ( null !== $b ) {
+				/* translators: %s: city and state, e.g. "Boise, ID" */
+				$title = sprintf( __( 'Real Estate Brokerages in %s', 'dos-agents' ), $b[0] . ', ' . $b[1] );
 			}
 			break;
 		case 'hub':

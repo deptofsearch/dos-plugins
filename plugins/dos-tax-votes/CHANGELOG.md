@@ -5,6 +5,31 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.3.0
+
+The first backfilled biennium, 2023-24, and a way to move between bienniums
+(Ryan's call: one post that gains each biennium, rather than a post per
+biennium).
+
+- **2023-24 data** (`data/2023-24.json`): 23 counted bills, 6 increases and
+  17 cuts, from Ryan's review. Gov. Jay Inslee.
+- **Session switch** at the top of the block: plain links
+  (`?biennium=2023-24#eoa-tax-votes`), so each biennium is a crawlable page
+  view and works without JavaScript. The URL wins over the shortcode's
+  `biennium` attribute; an unknown value is ignored. `switcher="no"` hides it.
+  An unknown `biennium` attribute now falls back to the newest instead of
+  rendering nothing.
+- **Maps by biennium.** `data/wa-districts-<biennium>.json`: 2025-26 uses the
+  Census Bureau's 2024 file (with the 2024 court-ordered redraw around
+  Yakima), 2023-24 the 2023 file (the 2022 map those lawmakers were elected
+  under). Falls back to the newest outlines.
+- **Method notes by biennium.** The general rules stay in the plugin; the
+  bill-specific exceptions (bills counted without an estimate, SHB 1756
+  counted just under the $1 million threshold, ESHB 2711 left out) come from
+  each data file's `notes`, so one biennium's exceptions don't show on another.
+- With cuts in 2023-24, the cuts meter and chart return for that biennium on
+  their own.
+
 ## 0.2.2
 
 The two reference sections at the bottom, "The bills counted" and "How we

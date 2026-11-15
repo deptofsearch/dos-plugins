@@ -14,6 +14,7 @@ plugins/
   dos-agents/         Agent cards, homepage and brand layer (Best Real Estate Agents Near Me)
   dos-saab-home/      Homepage search and category cards (Shot and a Beer)
   dos-saab-toolkit/   SEO, images and restaurant pages (Shot and a Beer)
+  dos-tax-votes/      Tax vote records for Washington lawmakers (Elected or Appointed)
 themes/               Site themes, kept here for source control (not released)
 shared/               Code every plugin vendors a copy of (the GitHub updater)
 tools/                Scripts that support a plugin and never ship in it
@@ -33,6 +34,7 @@ tests/                Stubbed-WordPress tests, run on every release
 | DoS - Agents | `plugins/dos-agents` | `dos-agents-v<version>` | Best Real Estate Agents Near Me: filterable agent cards (`[breanm_agents]`) fed by `breanm/v1` REST upserts from n8n, the homepage city search and state carousel (`[breanm_city_search]`, `[breanm_state_index]`), the block the 49 state hubs get through a content filter, and the site's brand layer. Local build script `tools/dos-agents/build-zip.sh`. |
 | DoS Shot and a Beer Home | `plugins/dos-saab-home` | `dos-saab-home-v<version>` | shotandabeer.com homepage: search that suggests restaurants, cuisines, dishes and cities from the review taxonomies, category cards, latest reviews. A front-page takeover; off restores the page. |
 | DoS SAAB Toolkit | `plugins/dos-saab-toolkit` | `dos-saab-toolkit-v<version>` | shotandabeer.com: SEO tags, responsive images, and the restaurant pages (`saab_restaurant`) the n8n syncs fill, with their dish board. Formerly `saab-toolkit`; the copy under `legacy/` is the older SEO/Images-only version the DoS Toolkit absorbed. |
+| DoS Tax Votes | `plugins/dos-tax-votes` | `dos-tax-votes-v<version>` | Elected or Appointed: `[eoa_tax_votes]`, how each Washington legislator and the governor voted on bills that raise or cut taxes, from data files written by `electedorappointed/tax-votes/export_public.py` in the Claude repo. |
 | `themes/` | `themes/*` | not released | departmentofsearch.com themes: `dos-department` (block theme) and `dos-magazine-child`. shotandabeer.com: `dos-saab-child` (Themify Magazine child, white/black/grey). |
 | `legacy/` | `legacy/*` | not released | Reference only: the plugins the Toolkit absorbed, and `dos-ohi-city-search`, the Open Houses In city search as shipped. City Search 2.0.0 replaces it. |
 

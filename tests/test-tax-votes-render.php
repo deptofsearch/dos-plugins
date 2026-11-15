@@ -118,6 +118,10 @@ check( '2023-24 names its own governor', false !== strpos( $h23, 'Gov. Jay Insle
 check( 'each biennium carries its own method notes', false !== strpos( $h23, 'SHB 1756' ) && false === strpos( $h23, 'ESHB 2711' ) && false !== strpos( dos_tax_votes_render( $data ), 'ESHB 2711' ) );
 $g23 = dos_tax_votes_geo( '2023-24' ); $g25 = dos_tax_votes_geo( '2025-26' );
 check( 'each biennium gets its own district outlines', $g23 && $g25 && false !== strpos( $g23['source'], 'cb_2023' ) && false !== strpos( $g25['source'], 'cb_2024' ) );
+$d21 = dos_tax_votes_data( '2021-22' );
+check( '2021-22 loads, with its own map and a veto counted for the governor', $d21 && false !== strpos( dos_tax_votes_geo( '2021-22' )['source'], 'cb_2020' ) && 13 === (int) $d21['governor']['split']['cutsSigned'] && 14 === (int) $d21['governor']['split']['cuts'] );
+$sw = dos_tax_votes_switcher( '2025-26' );
+check( 'the switcher shows the current biennium and links the other two', 1 === substr_count( $sw, 'aria-current="page">2025–26' ) && 2 === substr_count( $sw, 'href="?biennium=' ) && false !== strpos( $sw, '?biennium=2021-22' ) );
 check( 'an unknown biennium falls back to the newest outlines', false !== strpos( dos_tax_votes_geo( '1999-00' )['source'], 'cb_2024' ) );
 
 echo "\n--- money ---\n";

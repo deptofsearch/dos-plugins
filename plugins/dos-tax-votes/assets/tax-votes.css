@@ -1,11 +1,12 @@
-/* DoS Tax Votes. Inherits the site theme's fonts and colors: every color here is the theme's
-   text color (currentColor) at some strength, so the block reads as part of any theme, light or
-   dark. A theme can set --eoa-tv-up and --eoa-tv-down to give the two meters their own colors. */
+/* DoS Tax Votes. Inherits the site theme's fonts and text color. Two colors mark the data:
+   orange for bills that raise taxes, teal for bills that cut them. Not red and blue, which would
+   read as party colors. Both are mid-tones that hold up on light and dark backgrounds; they color
+   fills, borders and tints, never body text. A theme can override --eoa-tv-up and --eoa-tv-down. */
 .eoa-tv {
 	--eoa-tv-line: color-mix(in srgb, currentColor 16%, transparent);
 	--eoa-tv-soft: color-mix(in srgb, currentColor 6%, transparent);
-	--eoa-tv-up: currentColor;
-	--eoa-tv-down: currentColor;
+	--eoa-tv-up: #e0661b;
+	--eoa-tv-down: #12968a;
 	display: grid;
 	gap: 1.25em;
 	font: inherit;
@@ -14,7 +15,10 @@
 .eoa-tv-lede { margin: 0; max-width: 70ch; }
 .eoa-tv-h { margin: .5em 0 0; }
 .eoa-tv-muted { opacity: .72; font-size: .9em; }
-.eoa-tv-gov { border: 1px solid var(--eoa-tv-line); padding: .9em 1.1em; display: grid; gap: .3em; }
+.eoa-tv-gov { border: 1px solid var(--eoa-tv-line); border-left: 4px solid var(--eoa-tv-up); padding: .9em 1.1em; display: grid; gap: .3em; background: var(--eoa-tv-soft); }
+.eoa-tv-tag { display: inline-block; font-size: .82em; line-height: 1.3; padding: .1em .5em; border: 1px solid; border-left-width: 3px; white-space: nowrap; }
+.eoa-tv-tag--up { border-color: var(--eoa-tv-up); background: color-mix(in srgb, var(--eoa-tv-up) 14%, transparent); }
+.eoa-tv-tag--down { border-color: var(--eoa-tv-down); background: color-mix(in srgb, var(--eoa-tv-down) 14%, transparent); }
 .eoa-tv-gov p, .eoa-tv-gov h3 { margin: 0; }
 
 .eoa-tv-controls { display: flex; flex-wrap: wrap; gap: .6em 1.1em; align-items: end; }
@@ -26,7 +30,7 @@
 .eoa-tv-seg { display: flex; flex-wrap: wrap; border: 1px solid var(--eoa-tv-line); }
 .eoa-tv-seg button { font: inherit; font-size: .9em; color: inherit; background: transparent; border: 0; border-right: 1px solid var(--eoa-tv-line); padding: .45em .8em; min-height: 2.4em; cursor: pointer; }
 .eoa-tv-seg button:last-child { border-right: 0; }
-.eoa-tv-seg button[aria-pressed="true"] { background: color-mix(in srgb, currentColor 14%, transparent); font-weight: 600; }
+.eoa-tv-seg button[aria-pressed="true"] { background: color-mix(in srgb, currentColor 14%, transparent); font-weight: 600; box-shadow: inset 0 -3px 0 var(--eoa-tv-up); }
 .eoa-tv :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 .eoa-tv-people { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--eoa-tv-line); }
@@ -43,9 +47,12 @@
 .eoa-tv-who { display: grid; gap: .1em; min-width: 0; }
 .eoa-tv-name { font-weight: 600; }
 .eoa-tv-count { display: grid; gap: .25em; min-width: 0; }
-.eoa-tv-count__label { font-size: .8em; text-transform: uppercase; letter-spacing: .06em; opacity: .72; }
+.eoa-tv-count__label { font-size: .8em; text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; gap: .45em; }
+.eoa-tv-count__label::before { content: ""; width: .75em; height: .75em; flex: none; }
+.eoa-tv-count--up .eoa-tv-count__label::before { background: var(--eoa-tv-up); }
+.eoa-tv-count--down .eoa-tv-count__label::before { background: repeating-linear-gradient(135deg, var(--eoa-tv-down) 0 2px, transparent 2px 4px); border: 1px solid var(--eoa-tv-down); }
 .eoa-tv-count__text b { font-variant-numeric: tabular-nums; }
-.eoa-tv-meter { display: block; height: .5em; background: var(--eoa-tv-soft); border: 1px solid var(--eoa-tv-line); }
+.eoa-tv-meter { display: block; height: .6em; background: var(--eoa-tv-soft); border: 1px solid var(--eoa-tv-line); }
 .eoa-tv-meter i { display: block; height: 100%; }
 .eoa-tv-count--up .eoa-tv-meter i { background: var(--eoa-tv-up); }
 /* Cuts get a hatched fill, so the two meters differ without relying on color. */
@@ -71,4 +78,6 @@
 }
 @supports not (color: color-mix(in srgb, red 10%, transparent)) {
 	.eoa-tv { --eoa-tv-line: rgba(128, 128, 128, .35); --eoa-tv-soft: rgba(128, 128, 128, .12); }
+	.eoa-tv-tag--up { background: rgba(224, 102, 27, .14); }
+	.eoa-tv-tag--down { background: rgba(18, 150, 138, .14); }
 }

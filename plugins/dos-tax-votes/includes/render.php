@@ -138,7 +138,7 @@ function dos_tax_votes_person( $p, $bills_by_key ) {
 		$rows .= '<li data-cat="' . esc_attr( $b['category'] ) . '" data-dir="' . esc_attr( $b['direction'] ) . '">'
 			. '<span class="eoa-tv-vote eoa-tv-vote--' . esc_attr( strtolower( $v ) ) . '">' . esc_html( dos_tax_votes_vote_word( $v ) ) . '</span> '
 			. dos_tax_votes_bill_link( $b ) . ' <span class="eoa-tv-billtitle">' . esc_html( (string) $b['title'] ) . '</span>'
-			. ' <span class="eoa-tv-muted">(' . esc_html( $dir ) . ')</span></li>';
+			. ' <span class="eoa-tv-tag eoa-tv-tag--' . ( 'increase' === $b['direction'] ? 'up' : 'down' ) . '">' . esc_html( $dir ) . '</span></li>';
 	}
 
 	$spons = array();
@@ -261,7 +261,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 			$note = ! empty( $b['fiscalNoteUrl'] ) ? ' <a href="' . esc_url( $b['fiscalNoteUrl'] ) . '" rel="noopener">' . esc_html__( 'fiscal note', 'dos-tax-votes' ) . '</a>' : '';
 			$html .= '<tr><th scope="row">' . dos_tax_votes_bill_link( $b ) . '</th>'
 				. '<td>' . esc_html( (string) $b['description'] ) . '</td>'
-				. '<td>' . esc_html( $counted ) . '<br><span class="eoa-tv-muted">' . esc_html( (string) $b['taxType'] ) . '</span></td>'
+				. '<td><span class="eoa-tv-tag eoa-tv-tag--' . ( 'increase' === $b['direction'] ? 'up' : 'down' ) . '">' . esc_html( $counted ) . '</span><br><span class="eoa-tv-muted">' . esc_html( (string) $b['taxType'] ) . '</span></td>'
 				. '<td class="eoa-tv-num">' . esc_html( dos_tax_votes_money( $b['revenue6yr'] ) ?: '—' ) . $note . '</td>'
 				. '<td class="eoa-tv-num">' . $tally( $b['house'] ) . '</td>'
 				. '<td class="eoa-tv-num">' . $tally( $b['senate'] ) . '</td>'

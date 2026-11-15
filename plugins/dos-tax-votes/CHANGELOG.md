@@ -5,6 +5,22 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.1.1
+
+Color, so the two kinds of bills are easy to tell apart (Ryan asked for it
+after seeing 0.1.0 on the site). Orange marks bills that raise taxes and teal
+marks bills that cut them: the meters, a swatch beside each count's label,
+tags on every vote and in the bill table, and the governor's box.
+
+- Not red and blue. Those read as Republican and Democrat, and the page has
+  to stay neutral about party.
+- Both are mid-tones picked to hold up on a light or a dark theme. They color
+  fills, borders and light tints only; text keeps the theme's own color, so
+  contrast is never worse than the theme's.
+- The cuts meter stays hatched, so the two still differ for readers who
+  can't tell orange from teal.
+- A theme can still set `--eoa-tv-up` and `--eoa-tv-down` on `.eoa-tv`.
+
 ## 0.1.0
 
 First version, for electedorappointed.com: the `[eoa_tax_votes]` shortcode

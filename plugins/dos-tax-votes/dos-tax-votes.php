@@ -3,7 +3,7 @@
  * Plugin Name: DoS Tax Votes
  * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: Elected or Appointed: how each Washington legislator and the governor voted on bills that raise or cut taxes. Shortcode [eoa_tax_votes].
- * Version:     0.5.0
+ * Version:     0.6.0
  * Requires at least: 6.6
  * Requires PHP: 8.1
  * Author:      Department of Search
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_TAX_VOTES_VERSION', '0.5.0' );
+define( 'DOS_TAX_VOTES_VERSION', '0.6.0' );
 define( 'DOS_TAX_VOTES_DIR', __DIR__ );
 
 // Not behind is_admin(): WP-Cron and the REST API run the update check too.

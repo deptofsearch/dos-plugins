@@ -23,7 +23,7 @@ Installing adds a top-level **DoS Tools** menu:
 | `images` | Images & Media | JPEG quality and upload scaling, compression of new uploads, a quality finder that measures the trade-off on your own photographs, a weight audit, responsive `srcset`/`sizes` on bare theme images, an alt-text audit that reports and never invents, clearing of filename-derived titles, media usage scanning and deletion of unreferenced images. |
 | `links` | Internal Links | Keyword phrases linked to chosen pages, written into the content behind a dry run. Capped at ten links per page by default, with the allowance given to the least-used phrases first. Never links inside headings, bold, lists, tables, existing links, code or shortcodes, never links a page to itself, and throttles a phrase by percentage so one does not carry the whole profile. |
 | `redirects` | Redirects & 404s | Logs requests that hit nothing and redirects the ones worth keeping, with one-click creation from a logged 404. Renaming a published page redirects its old URL automatically. Imports enabled exact-URL rules from Redirection. Exact paths only. |
-| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, next/previous navigation in the editor, permalink flush, settings export/import. |
+| `utilities` | Utilities | Plugin ZIP download, tag support for Pages, a sortable Last Updated column and front-end updated dates, next/previous navigation in the editor, leaving the home page out of search results, permalink flush, settings export/import. |
 
 A module is *available* when its file exists under `modules/`, and *active* when
 it is both available and enabled. The shell can therefore be deployed before

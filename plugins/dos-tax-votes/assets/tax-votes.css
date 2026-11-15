@@ -158,3 +158,10 @@
 .eoa-tv-fold > summary .eoa-tv-h { margin: 0; display: inline; }
 .eoa-tv-fold > :not(summary) { margin-bottom: 1em; }
 .eoa-tv-fold .eoa-tv-method { margin-bottom: .8em; }
+
+/* Session switcher at the top. Plain links, one per biennium. */
+.eoa-tv-bien { display: flex; flex-wrap: wrap; align-items: center; gap: .4em; font-size: .92em; }
+.eoa-tv-bien > span.eoa-tv-muted { margin-right: .3em; }
+.eoa-tv-bien a, .eoa-tv-bien__on { padding: .35em .8em; border: 1px solid var(--eoa-tv-line); text-decoration: none; color: inherit; }
+.eoa-tv-bien__on { font-weight: 600; background: color-mix(in srgb, currentColor 14%, transparent); box-shadow: inset 0 -3px 0 var(--eoa-tv-up); }
+.eoa-tv-bien a:hover { background: var(--eoa-tv-soft); }

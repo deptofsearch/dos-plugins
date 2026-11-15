@@ -26,6 +26,7 @@ function esc_html__( $s, $d = null ) { return esc_html( $s ); }
 function esc_attr__( $s, $d = null ) { return esc_attr( $s ); }
 function esc_url( $u ) { return preg_match( '#^https?://#', (string) $u ) ? esc_attr( $u ) : ''; }
 function wp_kses( $html, $allowed ) { return $html; }
+function wp_unslash( $v ) { return $v; }
 function current_user_can( $c ) { return false; }
 function shortcode_atts( $defaults, $atts, $tag = '' ) { return array_merge( $defaults, array_intersect_key( (array) $atts, $defaults ) ); }
 $GLOBALS['enqueued'] = array();
@@ -93,8 +94,31 @@ check( 'show="bills" opens the bills section', false !== strpos( dos_tax_votes_r
 echo "\n--- shortcode ---\n";
 $out = dos_tax_votes_shortcode( array() );
 check( 'the bare shortcode renders the newest biennium and enqueues its assets', false !== strpos( $out, 'data-eoa-tax-votes' ) && in_array( 'script:dos-tax-votes', $GLOBALS['enqueued'], true ) );
-check( 'an unknown biennium renders nothing for visitors', '' === dos_tax_votes_shortcode( array( 'biennium' => '1999-00' ) ) );
+check( 'an unknown biennium attribute falls back to the newest instead of leaving a blank spot', false !== strpos( dos_tax_votes_shortcode( array( 'biennium' => '1999-00' ) ), 'aria-current="page">2025–26' ) );
 check( 'show="method" renders only the method', false === strpos( dos_tax_votes_shortcode( array( 'show' => 'method' ) ), 'data-eoa-person' ) );
+
+echo "\n--- bienniums ---\n";
+check( 'both shipped bienniums are listed, newest first', array( '2025-26', '2023-24' ) === array_slice( dos_tax_votes_bienniums(), 0, 2 ) );
+$_GET = array();
+check( 'with no ?biennium the shortcode attribute wins', '2023-24' === dos_tax_votes_pick_biennium( '2023-24' ) );
+check( 'with neither, the newest is shown', '2025-26' === dos_tax_votes_pick_biennium( '' ) );
+$_GET = array( 'biennium' => '2023-24' );
+check( '?biennium picks a shipped biennium over the attribute', '2023-24' === dos_tax_votes_pick_biennium( '2025-26' ) );
+$_GET = array( 'biennium' => '../2025-26' );
+check( 'an unknown ?biennium is ignored', '2025-26' === dos_tax_votes_pick_biennium( '2025-26' ) );
+$_GET = array( 'biennium' => '2023-24' );
+$out = dos_tax_votes_shortcode( array( 'biennium' => '2025-26' ) );
+check( 'the page shows the switcher, with 2023-24 current and a link to 2025-26', false !== strpos( $out, 'class="eoa-tv-bien"' ) && false !== strpos( $out, 'aria-current="page">2023–24' ) && false !== strpos( $out, 'href="?biennium=2025-26#eoa-tax-votes"' ) );
+check( 'switcher="no" leaves it out', false === strpos( dos_tax_votes_shortcode( array( 'switcher' => 'no' ) ), 'eoa-tv-bien' ) );
+$_GET = array();
+$d23 = dos_tax_votes_data( '2023-24' );
+$h23 = dos_tax_votes_render( $d23 );
+check( '2023-24 has cuts, so every row has a cuts meter and both charts show', count( $d23['legislators'] ) === substr_count( $h23, 'eoa-tv-count--down' ) && 2 === substr_count( $h23, 'class="eoa-tv-chart"' ) );
+check( '2023-24 names its own governor', false !== strpos( $h23, 'Gov. Jay Inslee' ) );
+check( 'each biennium carries its own method notes', false !== strpos( $h23, 'SHB 1756' ) && false === strpos( $h23, 'ESHB 2711' ) && false !== strpos( dos_tax_votes_render( $data ), 'ESHB 2711' ) );
+$g23 = dos_tax_votes_geo( '2023-24' ); $g25 = dos_tax_votes_geo( '2025-26' );
+check( 'each biennium gets its own district outlines', $g23 && $g25 && false !== strpos( $g23['source'], 'cb_2023' ) && false !== strpos( $g25['source'], 'cb_2024' ) );
+check( 'an unknown biennium falls back to the newest outlines', false !== strpos( dos_tax_votes_geo( '1999-00' )['source'], 'cb_2024' ) );
 
 echo "\n--- money ---\n";
 check( 'billions', '+$8.46B' === dos_tax_votes_money( 8462700000 ) );

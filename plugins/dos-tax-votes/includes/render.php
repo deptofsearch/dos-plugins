@@ -32,18 +32,56 @@ function dos_tax_votes_data( $biennium ) {
 	return $data;
 }
 
+/** Every biennium shipped with the plugin, newest first. */
+function dos_tax_votes_bienniums() {
+	static $names = null;
+	if ( null === $names ) {
+		$names = array();
+		foreach ( (array) glob( DOS_TAX_VOTES_DIR . '/data/*.json' ) as $f ) {
+			$b = basename( $f, '.json' );
+			if ( preg_match( '/^\d{4}-\d{2}$/', $b ) ) {
+				$names[] = $b;
+			}
+		}
+		rsort( $names );
+	}
+	return $names;
+}
+
 /** The newest biennium shipped with the plugin. */
 function dos_tax_votes_latest_biennium() {
-	$files = glob( DOS_TAX_VOTES_DIR . '/data/*.json' );
-	$names = array();
-	foreach ( (array) $files as $f ) {
-		$b = basename( $f, '.json' );
-		if ( preg_match( '/^\d{4}-\d{2}$/', $b ) ) {
-			$names[] = $b;
-		}
-	}
-	rsort( $names );
+	$names = dos_tax_votes_bienniums();
 	return $names ? $names[0] : '';
+}
+
+/**
+ * Which biennium to show: a ?biennium=YYYY-YY in the URL when it names a shipped data file,
+ * else the shortcode's biennium attribute, else the newest.
+ */
+function dos_tax_votes_pick_biennium( $attr ) {
+	$names = dos_tax_votes_bienniums();
+	$req   = isset( $_GET['biennium'] ) ? (string) wp_unslash( $_GET['biennium'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput
+	if ( '' !== $req && in_array( $req, $names, true ) ) {
+		return $req;
+	}
+	$attr = (string) $attr;
+	return ( '' !== $attr && in_array( $attr, $names, true ) ) ? $attr : dos_tax_votes_latest_biennium();
+}
+
+/** Links between bienniums. Plain links (?biennium=...), so each biennium is its own crawlable page view. */
+function dos_tax_votes_switcher( $current ) {
+	$names = dos_tax_votes_bienniums();
+	if ( count( $names ) < 2 ) {
+		return '';
+	}
+	$out = '<nav class="eoa-tv-bien" aria-label="' . esc_attr__( 'Legislative session', 'dos-tax-votes' ) . '"><span class="eoa-tv-muted">' . esc_html__( 'Session', 'dos-tax-votes' ) . '</span>';
+	foreach ( $names as $b ) {
+		$label = dos_tax_votes_biennium_label( $b );
+		$out  .= $b === $current
+			? '<span class="eoa-tv-bien__on" aria-current="page">' . esc_html( $label ) . '</span>'
+			: '<a href="' . esc_attr( '?biennium=' . rawurlencode( $b ) . '#eoa-tax-votes' ) . '">' . esc_html( $label ) . '</a>';
+	}
+	return $out . '</nav>';
 }
 
 function dos_tax_votes_party_name( $p ) {
@@ -175,15 +213,20 @@ function dos_tax_votes_person( $p, $bills_by_key, $has_cuts = true ) {
 
 /** Shortcode: [eoa_tax_votes biennium="2025-26" show="all|legislators|bills|method"]. */
 function dos_tax_votes_shortcode( $atts ) {
-	$atts = shortcode_atts( array( 'biennium' => '', 'show' => 'all' ), $atts, 'eoa_tax_votes' );
-	$bien = $atts['biennium'] ? (string) $atts['biennium'] : dos_tax_votes_latest_biennium();
+	$atts = shortcode_atts( array( 'biennium' => '', 'show' => 'all', 'switcher' => 'yes' ), $atts, 'eoa_tax_votes' );
+	$bien = dos_tax_votes_pick_biennium( $atts['biennium'] );
 	$data = dos_tax_votes_data( $bien );
 	if ( ! $data ) {
 		return current_user_can( 'edit_posts' ) ? '<p>' . esc_html__( 'DoS Tax Votes: no data for that biennium.', 'dos-tax-votes' ) . '</p>' : '';
 	}
 	wp_enqueue_style( 'dos-tax-votes' );
 	wp_enqueue_script( 'dos-tax-votes' );
-	return dos_tax_votes_render( $data, (string) $atts['show'] );
+	$html = dos_tax_votes_render( $data, (string) $atts['show'] );
+	if ( 'no' !== $atts['switcher'] ) {
+		$nav  = dos_tax_votes_switcher( $bien );
+		$html = preg_replace_callback( '/^<div class="eoa-tv[^"]*" id="eoa-tax-votes" data-eoa-tax-votes>/', static function ( $m ) use ( $nav ) { return $m[0] . $nav; }, $html, 1 );
+	}
+	return $html;
 }
 
 function dos_tax_votes_render( $data, $show = 'all' ) {
@@ -196,7 +239,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 	$n_up   = (int) ( $data['counts']['increases'] ?? 0 );
 	$n_down = (int) ( $data['counts']['cuts'] ?? 0 );
 
-	$html = '<div class="eoa-tv' . ( $n_down > 0 ? '' : ' eoa-tv--nocuts' ) . '" data-eoa-tax-votes>';
+	$html = '<div class="eoa-tv' . ( $n_down > 0 ? '' : ' eoa-tv--nocuts' ) . '" id="eoa-tax-votes" data-eoa-tax-votes>';
 
 	if ( 'all' === $show || 'legislators' === $show ) {
 		$lede = $n_down > 0
@@ -297,15 +340,19 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 		$items = array(
 			__( 'Bills counted: every bill in the biennium that changed state tax law (RCW Title 82 or 84) and passed at least one chamber, then classified by its fiscal note from the state Office of Financial Management.', 'dos-tax-votes' ),
 			__( 'A bill counts as raising or cutting taxes by its net effect on state revenue over six years, as the Department of Revenue estimated it. Bills with no change in what taxpayers owe, such as technical fixes, budgets and changes to how existing tax money is spent, are not counted.', 'dos-tax-votes' ),
-			__( 'Bills that change state revenue by less than $1 million over six years are not counted. Their tax effect is usually a small part of a bill passed for another purpose. Two bills without a published state estimate are counted as tax increases: HB 2367, which ends a sales tax exemption for coal burned to make electricity (the estimate is withheld because it would reveal one taxpayer\'s tax), and ESHB 2049, which raises the cap on local school levies.', 'dos-tax-votes' ),
+			__( 'Bills that change state revenue by less than $1 million over six years are not counted. Their tax effect is usually a small part of a bill passed for another purpose.', 'dos-tax-votes' ),
 			__( 'Property tax exemptions are not counted. Under Washington\'s property tax levy limits, an exemption mostly shifts the tax onto other property owners rather than lowering the total.', 'dos-tax-votes' ),
 			__( 'Only final passage votes count, not votes on amendments or procedural motions. When a member voted on a bill more than once, such as on passage and again on the other chamber\'s changes, their last vote counts.', 'dos-tax-votes' ),
 			__( 'Business taxes are taxes a business pays, such as the business and occupation tax. Individual taxes are those people pay directly, such as the capital gains, estate and motor vehicle taxes. Sales tax extended to services both businesses and households buy counts in both.', 'dos-tax-votes' ),
-			__( 'Packages that raise some taxes and cut others are not counted when the two sides are comparable, such as ESHB 2711, a 2026 transportation bill. A bill whose net effect is a large increase is counted as one, and the bill list shows its revenue estimate so you can judge.', 'dos-tax-votes' ),
+			__( 'Packages that raise some taxes and cut others are not counted when the two sides are comparable. A bill whose net effect is a large increase is counted as one, and the bill list shows its revenue estimate so you can judge.', 'dos-tax-votes' ),
 			__( 'For the governor, signing a bill (including with a partial veto) is counted as a yes and a full veto as a no.', 'dos-tax-votes' ),
 		);
 		$html .= '<details class="eoa-tv-fold"' . ( 'method' === $show ? ' open' : '' ) . '><summary><h3 class="eoa-tv-h">' . esc_html__( 'How we counted', 'dos-tax-votes' ) . '</h3>'
 			. '<span class="eoa-tv-muted">' . esc_html__( 'Which bills count, and why', 'dos-tax-votes' ) . '</span></summary><ul class="eoa-tv-method">';
+		// Exceptions and judgment calls for this biennium, from its data file.
+		foreach ( (array) ( $data['notes'] ?? array() ) as $note ) {
+			$items[] = (string) $note;
+		}
 		foreach ( $items as $i ) {
 			$html .= '<li>' . esc_html( $i ) . '</li>';
 		}
@@ -439,22 +486,33 @@ function dos_tax_votes_party_section( $data ) {
 		. '</section>';
 }
 
-/** District outlines, loaded once. */
-function dos_tax_votes_geo() {
-	static $geo = false;
-	if ( false === $geo ) {
-		$file = DOS_TAX_VOTES_DIR . '/data/wa-districts.json';
-		$geo  = is_readable( $file ) ? json_decode( (string) file_get_contents( $file ), true ) : null;
-		if ( ! is_array( $geo ) || empty( $geo['districts'] ) ) {
-			$geo = null;
+/**
+ * District outlines for a biennium: the map its lawmakers were elected under
+ * (data/wa-districts-<biennium>.json). Falls back to the newest outlines shipped.
+ */
+function dos_tax_votes_geo( $biennium = '' ) {
+	static $cache = array();
+	$biennium = preg_match( '/^\d{4}-\d{2}$/', (string) $biennium ) ? (string) $biennium : '';
+	if ( ! array_key_exists( $biennium, $cache ) ) {
+		$files = $biennium ? array( DOS_TAX_VOTES_DIR . '/data/wa-districts-' . $biennium . '.json' ) : array();
+		$all   = (array) glob( DOS_TAX_VOTES_DIR . '/data/wa-districts-*.json' );
+		rsort( $all );
+		$geo = null;
+		foreach ( array_merge( $files, $all ) as $file ) {
+			$g = is_readable( $file ) ? json_decode( (string) file_get_contents( $file ), true ) : null;
+			if ( is_array( $g ) && ! empty( $g['districts'] ) ) {
+				$geo = $g;
+				break;
+			}
 		}
+		$cache[ $biennium ] = $geo;
 	}
-	return $geo;
+	return $cache[ $biennium ];
 }
 
 /** The hoverable district map. Districts are colored by their delegation's party mix. */
 function dos_tax_votes_map( $data ) {
-	$geo = dos_tax_votes_geo();
+	$geo = dos_tax_votes_geo( $data['biennium'] ?? '' );
 	if ( ! $geo ) {
 		return '';
 	}

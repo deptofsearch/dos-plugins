@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.2.2
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,13 +18,18 @@ Adds the `[eoa_tax_votes]` shortcode. For one biennium it shows:
 * the bills counted, with revenue estimates, floor tallies and links to the bill and its fiscal note
 * how the counting works
 
-Attributes: `biennium="2025-26"` (default: the newest data file shipped) and `show="all|legislators|bills|method"`.
+Attributes: `biennium="2025-26"` (default: the newest data file shipped), `show="all|legislators|bills|method"` and `switcher="no"` to hide the Session switch. A `?biennium=2023-24` in the URL picks a shipped biennium.
 
 The page is rendered on the server; the small script only filters, sorts and switches categories. Styling inherits the theme's fonts and text color. A theme can set `--eoa-tv-up` and `--eoa-tv-down` on `.eoa-tv` to color the two meters.
 
 Data lives in `data/<biennium>.json`, written by `electedorappointed/tax-votes/export_public.py` in the deptofsearch/Claude repository from reviewed bill classifications.
 
 == Changelog ==
+
+= 0.3.0 =
+* 2023-24 added. A Session switch at the top moves between bienniums (?biennium=2023-24 links).
+* Each biennium's map uses the districts its lawmakers were elected under.
+* Bill-specific method notes now come from each biennium's data file.
 
 = 0.2.2 =
 * "The bills counted" and "How we counted" fold: closed on the full page, open when shown on their own.

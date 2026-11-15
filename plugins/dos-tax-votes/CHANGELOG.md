@@ -5,6 +5,18 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.4.0
+
+2021-22 added (`data/2021-22.json`): 16 counted bills, 2 increases (the
+capital gains tax, ESSB 5096, and SHB 1155) and 14 cuts, from Ryan's review.
+Gov. Jay Inslee, who vetoed one cut (HB 1495), so his record shows 13 of 14
+cuts signed. Its map (`data/wa-districts-2021-22.json`) comes from the Census
+Bureau's 2020 file, which carries the 2012 districts those lawmakers were
+elected under. The method notes for 2021-22 say that the WA Cares premium
+(Title 50B) and the 2022 vehicle fees (Title 46) are outside this record, which
+counts only Titles 82 and 84. No code changes: the Session switch lists every
+shipped biennium.
+
 ## 0.3.0
 
 The first backfilled biennium, 2023-24, and a way to move between bienniums

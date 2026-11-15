@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.1.1
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,7 +26,9 @@ Data lives in `data/<biennium>.json`, written by `electedorappointed/tax-votes/e
 
 == Changelog ==
 
-= 0.1.1 =
+= 0.2.0 =
+* A party chart near the top, and a map of the 49 districts: hover to see a district's lawmakers and their records, select it to filter the list.
+* Each lawmaker links to their official page and their district map.
 * Color: orange marks bills that raise taxes, teal marks bills that cut them.
 
 = 0.1.0 =

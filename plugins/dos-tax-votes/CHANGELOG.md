@@ -5,7 +5,35 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
-## 0.1.1
+## 0.2.0
+
+Three things Ryan asked for after seeing 0.1.0 on the site.
+
+**A party chart near the top.** Two small diverging bar charts, one for bills
+that raise taxes and one for bills that cut them: Democrats above the line,
+Republicans below, counted by the share of the bills put to them that each
+lawmaker voted yes on (none, under 25%, 25-49%, 50-74%, 75-99%, all). Shares,
+not raw counts, because members who served part of the biennium voted on
+fewer bills. Both chambers and all taxes; the switcher below does not change
+it. A text version sits alongside for screen readers.
+
+**A district map.** The 49 districts from the Census Bureau's 2024
+cartographic boundary file (`cb_2024_53_sldu_500k`, which includes the 2024
+court-ordered redraw), simplified to about 65 KB and shipped as
+`data/wa-districts.json`; built by `electedorappointed/tax-votes/build_map.py`
+in the Claude repo. Districts are shaded by delegation: all Democrat, all
+Republican, or split. Hover, focus or tap shows the senator and both
+representatives with their counts (following the all / business / individual
+switch); selecting a district filters the list to them. A Puget Sound zoom
+helps with the small Seattle-area districts. Party colors are muted blue,
+red and purple, used only in the chart and map, apart from the orange and
+teal that mark increases and cuts.
+
+**Links on each lawmaker.** Their page on leg.wa.gov and their district's
+map in the Legislature's District Finder. The member-page slugs were checked
+for all 148 members.
+
+### Color (first planned as 0.1.1, never released on its own)
 
 Color, so the two kinds of bills are easy to tell apart (Ryan asked for it
 after seeing 0.1.0 on the site). Orange marks bills that raise taxes and teal

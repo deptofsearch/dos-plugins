@@ -159,7 +159,11 @@ function dos_tax_votes_person( $p, $bills_by_key ) {
 		. '<div class="eoa-tv-who"><span class="eoa-tv-name">' . esc_html( $title . ' ' . $name ) . '</span>'
 		. '<span class="eoa-tv-muted">' . esc_html( dos_tax_votes_party_name( $p['party'] ) ) . ' · '
 		/* translators: %d: legislative district number */
-		. esc_html( sprintf( __( 'District %d', 'dos-tax-votes' ), (int) $p['district'] ) ) . ' · ' . esc_html( $chamber ) . '</span></div>'
+		. esc_html( sprintf( __( 'District %d', 'dos-tax-votes' ), (int) $p['district'] ) ) . ' · ' . esc_html( $chamber ) . '</span>'
+		. '<span class="eoa-tv-links">'
+		. ( ! empty( $p['page'] ) ? '<a href="' . esc_url( $p['page'] ) . '" rel="noopener">' . esc_html__( 'Official page', 'dos-tax-votes' ) . '</a>' : '' )
+		. ( ! empty( $p['districtMap'] ) ? '<a href="' . esc_url( $p['districtMap'] ) . '" rel="noopener">' . esc_html__( 'District map', 'dos-tax-votes' ) . '</a>' : '' )
+		. '</span></div>'
 		. dos_tax_votes_meter( 'up', $s['increasesYes'] ?? 0, $s['increases'] ?? 0 )
 		. dos_tax_votes_meter( 'down', $s['cutsYes'] ?? 0, $s['cuts'] ?? 0 )
 		. '<details class="eoa-tv-details"><summary>' . esc_html__( 'Votes', 'dos-tax-votes' )
@@ -221,6 +225,9 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 				)
 			) . '</p></section>';
 
+		$html .= dos_tax_votes_party_section( $data );
+		$html .= dos_tax_votes_map( $data );
+
 		// Controls (work only with JS; hidden until the script runs).
 		$html .= '<div class="eoa-tv-controls" data-eoa-controls hidden>'
 			. '<div class="eoa-tv-seg" role="group" aria-label="' . esc_attr__( 'Taxes', 'dos-tax-votes' ) . '">'
@@ -232,6 +239,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 			. '<label>' . esc_html__( 'Sort', 'dos-tax-votes' ) . ' <select data-f="sort"><option value="district">' . esc_html__( 'District', 'dos-tax-votes' ) . '</option><option value="name">' . esc_html__( 'Name', 'dos-tax-votes' ) . '</option><option value="up-desc">' . esc_html__( 'Most yes votes on increases', 'dos-tax-votes' ) . '</option><option value="up-asc">' . esc_html__( 'Fewest yes votes on increases', 'dos-tax-votes' ) . '</option></select></label>'
 			. '<label class="eoa-tv-search">' . esc_html__( 'Find', 'dos-tax-votes' ) . ' <input type="search" data-f="q" placeholder="' . esc_attr__( 'Name or district number', 'dos-tax-votes' ) . '"></label>'
 			. '<p class="eoa-tv-muted" data-eoa-shown aria-live="polite"></p>'
+			. '<p class="eoa-tv-districtpick" data-eoa-district hidden><span></span> <button type="button" data-clear-district>' . esc_html__( 'Show everyone', 'dos-tax-votes' ) . '</button></p>'
 			. '</div>';
 
 		$html .= '<ul class="eoa-tv-people" data-eoa-people>';
@@ -294,4 +302,145 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 	}
 
 	return $html . '</div>';
+}
+
+/** Party colors for the chart and map. Muted versions of the conventional blue and red. */
+function dos_tax_votes_party_color( $p ) {
+	return 'D' === $p ? 'var(--eoa-tv-dem)' : ( 'R' === $p ? 'var(--eoa-tv-rep)' : 'var(--eoa-tv-mix)' );
+}
+
+/** Share bins for the party chart: what part of the bills put to them each lawmaker voted yes on. */
+function dos_tax_votes_bins() {
+	return array(
+		array( 0, 0, __( 'None', 'dos-tax-votes' ) ),
+		array( 0.0001, 0.2499, __( 'Under 25%', 'dos-tax-votes' ) ),
+		array( 0.25, 0.4999, '25–49%' ),
+		array( 0.5, 0.7499, '50–74%' ),
+		array( 0.75, 0.9999, '75–99%' ),
+		array( 1, 1, __( 'All', 'dos-tax-votes' ) ),
+	);
+}
+
+/** Count lawmakers per party per bin for increases ('up') or cuts ('down'), all taxes. */
+function dos_tax_votes_histogram( $data, $kind ) {
+	$bins = dos_tax_votes_bins();
+	$out  = array( 'D' => array_fill( 0, count( $bins ), 0 ), 'R' => array_fill( 0, count( $bins ), 0 ) );
+	foreach ( $data['legislators'] as $p ) {
+		$s     = $p['split']['all'] ?? array();
+		$yes   = (int) ( 'up' === $kind ? ( $s['increasesYes'] ?? 0 ) : ( $s['cutsYes'] ?? 0 ) );
+		$total = (int) ( 'up' === $kind ? ( $s['increases'] ?? 0 ) : ( $s['cuts'] ?? 0 ) );
+		$party = (string) $p['party'];
+		if ( $total < 1 || ! isset( $out[ $party ] ) ) {
+			continue;
+		}
+		$share = $yes / $total;
+		foreach ( $bins as $i => $b ) {
+			if ( $share >= $b[0] - 1e-9 && $share <= $b[1] + 1e-9 ) {
+				$out[ $party ][ $i ]++;
+				break;
+			}
+		}
+	}
+	return $out;
+}
+
+/** One diverging bar chart: Democrats above the line, Republicans below. Inline SVG. */
+function dos_tax_votes_party_chart( $data, $kind ) {
+	$bins  = dos_tax_votes_bins();
+	$h     = dos_tax_votes_histogram( $data, $kind );
+	$max   = max( 1, max( $h['D'] ), max( $h['R'] ) );
+	$w     = 360;
+	$colw  = 52;
+	$left  = 28;
+	$half  = 70; // px for the tallest bar
+	$mid   = 92;
+	$total = 'up' === $kind ? (int) $data['counts']['increases'] : (int) $data['counts']['cuts'];
+	$title = 'up' === $kind
+		/* translators: %d: number of bills */
+		? sprintf( __( 'Yes votes on the %d bills that raise taxes', 'dos-tax-votes' ), $total )
+		/* translators: %d: number of bills */
+		: sprintf( __( 'Yes votes on the %d bills that cut taxes', 'dos-tax-votes' ), $total );
+	$svg = '<svg class="eoa-tv-chart" viewBox="0 0 ' . $w . ' 200" role="img" aria-label="' . esc_attr( $title ) . '">';
+	$svg .= '<line x1="' . $left . '" x2="' . ( $left + $colw * count( $bins ) ) . '" y1="' . $mid . '" y2="' . $mid . '" class="eoa-tv-axis"/>';
+	$desc = array();
+	foreach ( $bins as $i => $b ) {
+		$x  = $left + $i * $colw + 6;
+		$bw = $colw - 12;
+		foreach ( array( 'D', 'R' ) as $party ) {
+			$n  = (int) $h[ $party ][ $i ];
+			$bh = $n ? max( 2, round( $half * $n / $max ) ) : 0;
+			$y  = 'D' === $party ? $mid - $bh : $mid;
+			if ( $bh ) {
+				$svg .= '<rect x="' . $x . '" y="' . $y . '" width="' . $bw . '" height="' . $bh . '" style="fill:' . dos_tax_votes_party_color( $party ) . '"><title>' . esc_html( dos_tax_votes_party_name( $party ) . 's, ' . $b[2] . ': ' . $n ) . '</title></rect>';
+			}
+			if ( $n ) {
+				$ty   = 'D' === $party ? $mid - $bh - 4 : $mid + $bh + 12;
+				$svg .= '<text x="' . ( $x + $bw / 2 ) . '" y="' . $ty . '" class="eoa-tv-chart-n">' . $n . '</text>';
+			}
+			$desc[] = dos_tax_votes_party_name( $party ) . 's ' . $b[2] . ': ' . $n;
+		}
+		$svg .= '<text x="' . ( $x + $bw / 2 ) . '" y="196" class="eoa-tv-chart-x">' . esc_html( $b[2] ) . '</text>';
+	}
+	$svg .= '</svg>';
+	return '<figure class="eoa-tv-figure"><figcaption>' . esc_html( $title ) . '</figcaption>' . $svg
+		. '<p class="eoa-tv-sr">' . esc_html( implode( '; ', $desc ) ) . '</p></figure>';
+}
+
+/** Party breakdown: legend plus the two charts. */
+function dos_tax_votes_party_section( $data ) {
+	return '<section class="eoa-tv-party" aria-label="' . esc_attr__( 'By party', 'dos-tax-votes' ) . '">'
+		. '<h3 class="eoa-tv-h">' . esc_html__( 'By party', 'dos-tax-votes' ) . '</h3>'
+		. '<p class="eoa-tv-legend"><span><i style="background:var(--eoa-tv-dem)"></i>' . esc_html__( 'Democrats (above the line)', 'dos-tax-votes' ) . '</span>'
+		. '<span><i style="background:var(--eoa-tv-rep)"></i>' . esc_html__( 'Republicans (below the line)', 'dos-tax-votes' ) . '</span></p>'
+		. '<p class="eoa-tv-muted">' . esc_html__( 'Each bar counts lawmakers by the share of the bills they voted on that they supported. Both chambers, all taxes.', 'dos-tax-votes' ) . '</p>'
+		. '<div class="eoa-tv-charts">' . dos_tax_votes_party_chart( $data, 'up' ) . dos_tax_votes_party_chart( $data, 'down' ) . '</div>'
+		. '</section>';
+}
+
+/** District outlines, loaded once. */
+function dos_tax_votes_geo() {
+	static $geo = false;
+	if ( false === $geo ) {
+		$file = DOS_TAX_VOTES_DIR . '/data/wa-districts.json';
+		$geo  = is_readable( $file ) ? json_decode( (string) file_get_contents( $file ), true ) : null;
+		if ( ! is_array( $geo ) || empty( $geo['districts'] ) ) {
+			$geo = null;
+		}
+	}
+	return $geo;
+}
+
+/** The hoverable district map. Districts are colored by their delegation's party mix. */
+function dos_tax_votes_map( $data ) {
+	$geo = dos_tax_votes_geo();
+	if ( ! $geo ) {
+		return '';
+	}
+	$parties = array();
+	foreach ( $data['legislators'] as $p ) {
+		$parties[ (int) $p['district'] ][] = (string) $p['party'];
+	}
+	$svg = '<svg class="eoa-tv-map" viewBox="' . esc_attr( $geo['viewBox'] ) . '" data-full="' . esc_attr( $geo['viewBox'] ) . '" data-puget="' . esc_attr( $geo['puget'] ) . '" role="group" aria-label="' . esc_attr__( 'Map of Washington legislative districts', 'dos-tax-votes' ) . '">';
+	foreach ( $geo['districts'] as $d => $path ) {
+		$d    = (int) $d;
+		$mix  = isset( $parties[ $d ] ) ? array_unique( $parties[ $d ] ) : array();
+		$fill = 1 === count( $mix ) ? dos_tax_votes_party_color( $mix[0] ) : 'var(--eoa-tv-mix)';
+		/* translators: %d: district number */
+		$label = sprintf( __( 'District %d', 'dos-tax-votes' ), $d );
+		$svg  .= '<path d="' . esc_attr( $path ) . '" data-district="' . $d . '" style="fill:' . $fill . '" tabindex="0" role="button" aria-label="' . esc_attr( $label ) . '"><title>' . esc_html( $label ) . '</title></path>';
+	}
+	$svg .= '</svg>';
+	return '<section class="eoa-tv-mapwrap" aria-label="' . esc_attr__( 'Find your district', 'dos-tax-votes' ) . '">'
+		. '<h3 class="eoa-tv-h">' . esc_html__( 'Find your district', 'dos-tax-votes' ) . '</h3>'
+		. '<p class="eoa-tv-muted">' . esc_html__( 'Hover over or tap a district to see its senator, two representatives and their records. Select it to show only them in the list below. Not sure which district you live in? Use the Legislature\'s District Finder.', 'dos-tax-votes' )
+		. ' <a href="https://app.leg.wa.gov/districtfinder" rel="noopener">' . esc_html__( 'District Finder', 'dos-tax-votes' ) . '</a></p>'
+		. '<p class="eoa-tv-legend"><span><i style="background:var(--eoa-tv-dem)"></i>' . esc_html__( 'All Democrats', 'dos-tax-votes' ) . '</span>'
+		. '<span><i style="background:var(--eoa-tv-rep)"></i>' . esc_html__( 'All Republicans', 'dos-tax-votes' ) . '</span>'
+		. '<span><i style="background:var(--eoa-tv-mix)"></i>' . esc_html__( 'Split delegation', 'dos-tax-votes' ) . '</span></p>'
+		. '<div class="eoa-tv-seg eoa-tv-mapzoom" role="group" aria-label="' . esc_attr__( 'Map view', 'dos-tax-votes' ) . '" hidden>'
+		. '<button type="button" data-zoom="full" aria-pressed="true">' . esc_html__( 'Whole state', 'dos-tax-votes' ) . '</button>'
+		. '<button type="button" data-zoom="puget" aria-pressed="false">' . esc_html__( 'Puget Sound', 'dos-tax-votes' ) . '</button></div>'
+		. '<div class="eoa-tv-mapbox">' . $svg . '<div class="eoa-tv-tip" data-eoa-tip hidden></div></div>'
+		. '<p class="eoa-tv-muted eoa-tv-source">' . esc_html( (string) $geo['source'] ) . '</p>'
+		. '</section>';
 }

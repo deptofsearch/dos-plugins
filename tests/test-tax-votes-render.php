@@ -67,6 +67,16 @@ check( 'a hostile name and party are escaped', false === strpos( $h, '<script>' 
 $h = dos_tax_votes_render( array_merge( $data, array( 'bills' => array( array_merge( $data['bills'][0], array( 'billUrl' => 'javascript:alert(1)', 'title' => '<b>x</b>' ) ) ) ) ) );
 check( 'a non-http bill link is dropped and bill text is escaped', false === strpos( $h, 'javascript:' ) && false === strpos( $h, '<b>x</b>' ) );
 
+echo "\n--- party chart, map, links ---\n";
+check( 'the party section and both charts render', false !== strpos( $html, 'eoa-tv-party' ) && 2 === substr_count( $html, 'class="eoa-tv-chart"' ) );
+$hist = dos_tax_votes_histogram( $data, 'up' );
+$counted = 0;
+foreach ( $data['legislators'] as $lp ) { if ( in_array( $lp['party'], array( 'D', 'R' ), true ) && ( $lp['split']['all']['increases'] ?? 0 ) > 0 ) { $counted++; } }
+check( 'every Democrat and Republican who voted on an increase lands in exactly one bin', $counted === array_sum( $hist['D'] ) + array_sum( $hist['R'] ) );
+check( 'the map draws all 49 districts', 49 === substr_count( $html, '<path d="' ) && false !== strpos( $html, 'data-district="49"' ) );
+check( 'every district on the map has a lawmaker in the data', ! array_diff( range( 1, 49 ), array_map( 'intval', array_unique( array_column( $data['legislators'], 'district' ) ) ) ) );
+check( 'each row links the official page and the district map', count( $data['legislators'] ) === substr_count( $html, 'leg.wa.gov/legislators/member/' ) && count( $data['legislators'] ) === substr_count( $html, 'districtfinder/displaydistrict/' ) );
+
 echo "\n--- shortcode ---\n";
 $out = dos_tax_votes_shortcode( array() );
 check( 'the bare shortcode renders the newest biennium and enqueues its assets', false !== strpos( $out, 'data-eoa-tax-votes' ) && in_array( 'script:dos-tax-votes', $GLOBALS['enqueued'], true ) );

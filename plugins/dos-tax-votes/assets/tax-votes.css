@@ -1,0 +1,74 @@
+/* DoS Tax Votes. Inherits the site theme's fonts and colors: every color here is the theme's
+   text color (currentColor) at some strength, so the block reads as part of any theme, light or
+   dark. A theme can set --eoa-tv-up and --eoa-tv-down to give the two meters their own colors. */
+.eoa-tv {
+	--eoa-tv-line: color-mix(in srgb, currentColor 16%, transparent);
+	--eoa-tv-soft: color-mix(in srgb, currentColor 6%, transparent);
+	--eoa-tv-up: currentColor;
+	--eoa-tv-down: currentColor;
+	display: grid;
+	gap: 1.25em;
+	font: inherit;
+	color: inherit;
+}
+.eoa-tv-lede { margin: 0; max-width: 70ch; }
+.eoa-tv-h { margin: .5em 0 0; }
+.eoa-tv-muted { opacity: .72; font-size: .9em; }
+.eoa-tv-gov { border: 1px solid var(--eoa-tv-line); padding: .9em 1.1em; display: grid; gap: .3em; }
+.eoa-tv-gov p, .eoa-tv-gov h3 { margin: 0; }
+
+.eoa-tv-controls { display: flex; flex-wrap: wrap; gap: .6em 1.1em; align-items: end; }
+.eoa-tv-controls[hidden] { display: none; }
+.eoa-tv-controls label { display: grid; gap: .2em; font-size: .9em; }
+.eoa-tv-controls select, .eoa-tv-controls input { font: inherit; color: inherit; background: transparent; border: 1px solid var(--eoa-tv-line); padding: .35em .5em; min-height: 2.4em; }
+.eoa-tv-search input { min-width: 14em; max-width: 100%; }
+.eoa-tv-controls > p { margin: 0; flex-basis: 100%; }
+.eoa-tv-seg { display: flex; flex-wrap: wrap; border: 1px solid var(--eoa-tv-line); }
+.eoa-tv-seg button { font: inherit; font-size: .9em; color: inherit; background: transparent; border: 0; border-right: 1px solid var(--eoa-tv-line); padding: .45em .8em; min-height: 2.4em; cursor: pointer; }
+.eoa-tv-seg button:last-child { border-right: 0; }
+.eoa-tv-seg button[aria-pressed="true"] { background: color-mix(in srgb, currentColor 14%, transparent); font-weight: 600; }
+.eoa-tv :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.eoa-tv-people { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--eoa-tv-line); }
+.eoa-tv-person {
+	display: grid;
+	grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+	gap: .4em 1.4em;
+	align-items: center;
+	padding: .8em 0;
+	border-bottom: 1px solid var(--eoa-tv-line);
+	margin: 0;
+}
+.eoa-tv-person[hidden] { display: none; }
+.eoa-tv-who { display: grid; gap: .1em; min-width: 0; }
+.eoa-tv-name { font-weight: 600; }
+.eoa-tv-count { display: grid; gap: .25em; min-width: 0; }
+.eoa-tv-count__label { font-size: .8em; text-transform: uppercase; letter-spacing: .06em; opacity: .72; }
+.eoa-tv-count__text b { font-variant-numeric: tabular-nums; }
+.eoa-tv-meter { display: block; height: .5em; background: var(--eoa-tv-soft); border: 1px solid var(--eoa-tv-line); }
+.eoa-tv-meter i { display: block; height: 100%; }
+.eoa-tv-count--up .eoa-tv-meter i { background: var(--eoa-tv-up); }
+/* Cuts get a hatched fill, so the two meters differ without relying on color. */
+.eoa-tv-count--down .eoa-tv-meter i { background: repeating-linear-gradient(135deg, var(--eoa-tv-down) 0 2px, transparent 2px 5px); }
+.eoa-tv-details { grid-column: 1 / -1; }
+.eoa-tv-details summary { cursor: pointer; font-size: .9em; }
+.eoa-tv-votes { margin: .5em 0; padding-left: 1.1em; display: grid; gap: .25em; }
+.eoa-tv-votes li[hidden] { display: none; }
+.eoa-tv-vote { display: inline-block; min-width: 6.5em; font-weight: 600; }
+.eoa-tv-vote--x { font-weight: 400; opacity: .72; }
+
+.eoa-tv-tablewrap { overflow-x: auto; }
+.eoa-tv-bills { border-collapse: collapse; width: 100%; font-size: .92em; }
+.eoa-tv-bills th, .eoa-tv-bills td { text-align: left; vertical-align: top; padding: .5em .8em .5em 0; border-bottom: 1px solid var(--eoa-tv-line); }
+.eoa-tv-bills thead th { font-size: .85em; text-transform: uppercase; letter-spacing: .05em; opacity: .8; }
+.eoa-tv-bills tbody th { white-space: nowrap; }
+.eoa-tv-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.eoa-tv-method { margin: 0; padding-left: 1.2em; display: grid; gap: .4em; max-width: 75ch; }
+
+@media (max-width: 700px) {
+	.eoa-tv-person { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+	.eoa-tv-who { grid-column: 1 / -1; }
+}
+@supports not (color: color-mix(in srgb, red 10%, transparent)) {
+	.eoa-tv { --eoa-tv-line: rgba(128, 128, 128, .35); --eoa-tv-soft: rgba(128, 128, 128, .12); }
+}

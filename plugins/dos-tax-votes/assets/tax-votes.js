@@ -127,7 +127,7 @@
 				item.appendChild(sw);
 				item.appendChild(document.createTextNode((li.getAttribute('data-chamber') === 'Senate' ? 'Sen. ' : 'Rep. ') + li.getAttribute('data-name') + ' (' + li.getAttribute('data-party') + ')'));
 				var rec = document.createElement('span');
-				rec.textContent = 'Tax increases: yes on ' + c[0] + ' of ' + c[1] + ' · Tax cuts: yes on ' + c[2] + ' of ' + c[3];
+				rec.textContent = 'Tax increases: yes on ' + c[0] + ' of ' + c[1] + (c[3] > 0 ? ' · Tax cuts: yes on ' + c[2] + ' of ' + c[3] : '');
 				item.appendChild(rec);
 				ul.appendChild(item);
 			});

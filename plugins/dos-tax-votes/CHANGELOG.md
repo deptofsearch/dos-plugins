@@ -29,6 +29,18 @@ helps with the small Seattle-area districts. Party colors are muted blue,
 red and purple, used only in the chart and map, apart from the orange and
 teal that mark increases and cuts.
 
+**Small and mixed bills are left out.** The party chart showed Republicans
+voting against most tax cuts, but three of the five cuts were bills whose
+state revenue effect was tiny (under $1 million over six years) or a
+transportation package that raised some taxes and cut others; members voted
+on them for other reasons. Ryan's call (2026-11-15): count only bills that
+change state revenue by $1 million or more over six years, and leave out
+packages whose increases and cuts are comparable (ESHB 2711). That left no
+tax cuts for 2025-26, so the cuts meter, the cuts chart and the governor's
+cuts clause now disappear when a biennium has none, and come back on their
+own when one does. The method lists the threshold and the two increases
+counted without a published state estimate (HB 2367, ESHB 2049).
+
 **Links on each lawmaker.** Their page on leg.wa.gov and their district's
 map in the Legislature's District Finder. The member-page slugs were checked
 for all 148 members.

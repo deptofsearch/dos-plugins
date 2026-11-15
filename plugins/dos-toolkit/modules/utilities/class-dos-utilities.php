@@ -11,6 +11,7 @@ require_once __DIR__ . '/class-dos-plugin-download.php';
 require_once __DIR__ . '/class-dos-page-tags.php';
 require_once __DIR__ . '/class-dos-last-updated.php';
 require_once __DIR__ . '/class-dos-editor-nav.php';
+require_once __DIR__ . '/class-dos-search-front.php';
 
 final class DOS_Module_Utilities extends DOS_Module {
 
@@ -34,6 +35,7 @@ final class DOS_Module_Utilities extends DOS_Module {
 		DOS_Page_Tags::init();
 		DOS_Last_Updated::init();
 		DOS_Editor_Nav::init();
+		DOS_Search_Front::init();
 
 		add_action( 'admin_init', array( __CLASS__, 'handle_post' ), 20 );
 		add_action( 'admin_post_dos_export_settings', array( __CLASS__, 'handle_export' ) );
@@ -186,6 +188,7 @@ final class DOS_Module_Utilities extends DOS_Module {
 						'utilities_updated_column' => empty( $_POST['updated_column'] ) ? 0 : 1,
 						'utilities_updated_front'  => empty( $_POST['updated_front'] ) ? 0 : 1,
 						'utilities_editor_nav'     => empty( $_POST['editor_nav'] ) ? 0 : 1,
+						'utilities_search_hide_front' => empty( $_POST['search_hide_front'] ) ? 0 : 1,
 					)
 				);
 				self::log( 'settings_saved', 'Utility settings updated.' );
@@ -305,6 +308,16 @@ final class DOS_Module_Utilities extends DOS_Module {
 							<p class="description">
 								<?php esc_html_e( 'Follows the list you arrived from, filters and sorting included, and adds an “Update and open the next” button. Works in the classic editor; the block editor’s sidebar is built in JavaScript and does not take additions this way.', 'dos-toolkit' ); ?>
 							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Search results', 'dos-toolkit' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="search_hide_front" value="1" <?php checked( DOS_Search_Front::is_enabled() ); ?> />
+								<?php esc_html_e( 'Leave the home page out of search results', 'dos-toolkit' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Only when a static page is set as the home page (Settings, Reading). A home page that sums up the whole site matches almost any search, and its result card just leads back to the home page. The posts page, if one is set, is left out too. Admin searches are not affected.', 'dos-toolkit' ); ?></p>
 						</td>
 					</tr>
 					<tr>

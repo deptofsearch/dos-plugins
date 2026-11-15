@@ -120,8 +120,10 @@ $g23 = dos_tax_votes_geo( '2023-24' ); $g25 = dos_tax_votes_geo( '2025-26' );
 check( 'each biennium gets its own district outlines', $g23 && $g25 && false !== strpos( $g23['source'], 'cb_2023' ) && false !== strpos( $g25['source'], 'cb_2024' ) );
 $d21 = dos_tax_votes_data( '2021-22' );
 check( '2021-22 loads, with its own map and a veto counted for the governor', $d21 && false !== strpos( dos_tax_votes_geo( '2021-22' )['source'], 'cb_2020' ) && 13 === (int) $d21['governor']['split']['cutsSigned'] && 14 === (int) $d21['governor']['split']['cuts'] );
+$d19 = dos_tax_votes_data( '2019-20' );
+check( '2019-20 loads, with seven vetoed cuts and its own notes', $d19 && 10 === (int) $d19['governor']['split']['cutsSigned'] && 17 === (int) $d19['governor']['split']['cuts'] && false !== strpos( dos_tax_votes_render( $d19 ), 'Wayfair' ) );
 $sw = dos_tax_votes_switcher( '2025-26' );
-check( 'the switcher shows the current biennium and links the other two', 1 === substr_count( $sw, 'aria-current="page">2025–26' ) && 2 === substr_count( $sw, 'href="?biennium=' ) && false !== strpos( $sw, '?biennium=2021-22' ) );
+check( 'the switcher shows the current biennium and links every other one', 1 === substr_count( $sw, 'aria-current="page">2025–26' ) && count( dos_tax_votes_bienniums() ) - 1 === substr_count( $sw, 'href="?biennium=' ) && false !== strpos( $sw, '?biennium=2019-20' ) );
 check( 'an unknown biennium falls back to the newest outlines', false !== strpos( dos_tax_votes_geo( '1999-00' )['source'], 'cb_2024' ) );
 
 echo "\n--- money ---\n";

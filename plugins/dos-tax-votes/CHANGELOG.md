@@ -5,6 +5,62 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.2.0
+
+Three things Ryan asked for after seeing 0.1.0 on the site.
+
+**A party chart near the top.** Two small diverging bar charts, one for bills
+that raise taxes and one for bills that cut them: Democrats above the line,
+Republicans below, counted by the share of the bills put to them that each
+lawmaker voted yes on (none, under 25%, 25-49%, 50-74%, 75-99%, all). Shares,
+not raw counts, because members who served part of the biennium voted on
+fewer bills. Both chambers and all taxes; the switcher below does not change
+it. A text version sits alongside for screen readers.
+
+**A district map.** The 49 districts from the Census Bureau's 2024
+cartographic boundary file (`cb_2024_53_sldu_500k`, which includes the 2024
+court-ordered redraw), simplified to about 65 KB and shipped as
+`data/wa-districts.json`; built by `electedorappointed/tax-votes/build_map.py`
+in the Claude repo. Districts are shaded by delegation: all Democrat, all
+Republican, or split. Hover, focus or tap shows the senator and both
+representatives with their counts (following the all / business / individual
+switch); selecting a district filters the list to them. A Puget Sound zoom
+helps with the small Seattle-area districts. Party colors are muted blue,
+red and purple, used only in the chart and map, apart from the orange and
+teal that mark increases and cuts.
+
+**Small and mixed bills are left out.** The party chart showed Republicans
+voting against most tax cuts, but three of the five cuts were bills whose
+state revenue effect was tiny (under $1 million over six years) or a
+transportation package that raised some taxes and cut others; members voted
+on them for other reasons. Ryan's call (2026-11-15): count only bills that
+change state revenue by $1 million or more over six years, and leave out
+packages whose increases and cuts are comparable (ESHB 2711). That left no
+tax cuts for 2025-26, so the cuts meter, the cuts chart and the governor's
+cuts clause now disappear when a biennium has none, and come back on their
+own when one does. The method lists the threshold and the two increases
+counted without a published state estimate (HB 2367, ESHB 2049).
+
+**Links on each lawmaker.** Their page on leg.wa.gov and their district's
+map in the Legislature's District Finder. The member-page slugs were checked
+for all 148 members.
+
+### Color (first planned as 0.1.1, never released on its own)
+
+Color, so the two kinds of bills are easy to tell apart (Ryan asked for it
+after seeing 0.1.0 on the site). Orange marks bills that raise taxes and teal
+marks bills that cut them: the meters, a swatch beside each count's label,
+tags on every vote and in the bill table, and the governor's box.
+
+- Not red and blue. Those read as Republican and Democrat, and the page has
+  to stay neutral about party.
+- Both are mid-tones picked to hold up on a light or a dark theme. They color
+  fills, borders and light tints only; text keeps the theme's own color, so
+  contrast is never worse than the theme's.
+- The cuts meter stays hatched, so the two still differ for readers who
+  can't tell orange from teal.
+- A theme can still set `--eoa-tv-up` and `--eoa-tv-down` on `.eoa-tv`.
+
 ## 0.1.0
 
 First version, for electedorappointed.com: the `[eoa_tax_votes]` shortcode

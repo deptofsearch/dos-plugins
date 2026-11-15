@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.6.0
+
+2017-18 added (`data/2017-18.json`): 12 counted bills, 6 increases (the 2017
+revenue package EHB 2163 and the McCleary property tax law EHB 2242 among them)
+and 6 cuts (the 2018 property tax relief ESSB 6614 among them), from Ryan's
+review. Gov. Jay Inslee signed all twelve. Map: `data/wa-districts-2017-18.json`,
+a copy of the 2019-20 file, because the 2012 districts were in force for both.
+Method notes explain the bills counted without a state estimate.
+
 ## 0.5.0
 
 2019-20 added (`data/2019-20.json`): 32 counted bills, 15 increases (the 2019

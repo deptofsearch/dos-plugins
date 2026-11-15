@@ -196,7 +196,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 	$n_up   = (int) ( $data['counts']['increases'] ?? 0 );
 	$n_down = (int) ( $data['counts']['cuts'] ?? 0 );
 
-	$html = '<div class="eoa-tv" data-eoa-tax-votes>';
+	$html = '<div class="eoa-tv' . ( $n_down > 0 ? '' : ' eoa-tv--nocuts' ) . '" data-eoa-tax-votes>';
 
 	if ( 'all' === $show || 'legislators' === $show ) {
 		$lede = $n_down > 0
@@ -238,8 +238,8 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 					)
 			) . '</p></section>';
 
-		$html .= dos_tax_votes_party_section( $data );
-		$html .= dos_tax_votes_map( $data );
+		// Party chart and map side by side on wide screens; they stack on narrow ones.
+		$html .= '<div class="eoa-tv-overview">' . dos_tax_votes_party_section( $data ) . dos_tax_votes_map( $data ) . '</div>';
 
 		// Controls (work only with JS; hidden until the script runs).
 		$html .= '<div class="eoa-tv-controls" data-eoa-controls hidden>'
@@ -366,15 +366,15 @@ function dos_tax_votes_party_chart( $data, $kind ) {
 	$w     = 360;
 	$colw  = 52;
 	$left  = 28;
-	$half  = 70; // px for the tallest bar
-	$mid   = 92;
+	$half  = 66; // px for the tallest bar
+	$mid   = 84;
 	$total = 'up' === $kind ? (int) $data['counts']['increases'] : (int) $data['counts']['cuts'];
 	$title = 'up' === $kind
 		/* translators: %d: number of bills */
 		? sprintf( __( 'Yes votes on the %d bills that raise taxes', 'dos-tax-votes' ), $total )
 		/* translators: %d: number of bills */
 		: sprintf( __( 'Yes votes on the %d bills that cut taxes', 'dos-tax-votes' ), $total );
-	$svg = '<svg class="eoa-tv-chart" viewBox="0 0 ' . $w . ' 200" role="img" aria-label="' . esc_attr( $title ) . '">';
+	$svg = '<svg class="eoa-tv-chart" viewBox="0 0 ' . $w . ' 186" role="img" aria-label="' . esc_attr( $title ) . '">';
 	$svg .= '<line x1="' . $left . '" x2="' . ( $left + $colw * count( $bins ) ) . '" y1="' . $mid . '" y2="' . $mid . '" class="eoa-tv-axis"/>';
 	$desc = array();
 	foreach ( $bins as $i => $b ) {
@@ -393,11 +393,35 @@ function dos_tax_votes_party_chart( $data, $kind ) {
 			}
 			$desc[] = dos_tax_votes_party_name( $party ) . 's ' . $b[2] . ': ' . $n;
 		}
-		$svg .= '<text x="' . ( $x + $bw / 2 ) . '" y="196" class="eoa-tv-chart-x">' . esc_html( $b[2] ) . '</text>';
+		$svg .= '<text x="' . ( $x + $bw / 2 ) . '" y="182" class="eoa-tv-chart-x">' . esc_html( $b[2] ) . '</text>';
 	}
 	$svg .= '</svg>';
 	return '<figure class="eoa-tv-figure"><figcaption>' . esc_html( $title ) . '</figcaption>' . $svg
 		. '<p class="eoa-tv-sr">' . esc_html( implode( '; ', $desc ) ) . '</p></figure>';
+}
+
+/** "Democrats: typically yes on 17 of 17 · Republicans: typically yes on 2 of 17", medians, all taxes. */
+function dos_tax_votes_party_summary( $data ) {
+	$vals = array( 'D' => array(), 'R' => array() );
+	foreach ( $data['legislators'] as $p ) {
+		$s = $p['split']['all'] ?? array();
+		if ( isset( $vals[ $p['party'] ] ) && ( $s['increases'] ?? 0 ) > 0 ) {
+			$vals[ $p['party'] ][] = (int) $s['increasesYes'];
+		}
+	}
+	$total = (int) $data['counts']['increases'];
+	$parts = array();
+	foreach ( $vals as $party => $v ) {
+		if ( ! $v ) {
+			continue;
+		}
+		sort( $v );
+		$n   = count( $v );
+		$med = $n % 2 ? $v[ intdiv( $n, 2 ) ] : (int) round( ( $v[ $n / 2 - 1 ] + $v[ $n / 2 ] ) / 2 );
+		/* translators: 1: party name (plural), 2: median yes votes, 3: bills, 4: lawmakers in the party */
+		$parts[] = sprintf( __( '%1$s: middle member voted yes on %2$d of %3$d (%4$d lawmakers)', 'dos-tax-votes' ), dos_tax_votes_party_name( $party ) . 's', $med, $total, $n );
+	}
+	return $parts ? '<ul class="eoa-tv-partysum"><li>' . implode( '</li><li>', array_map( 'esc_html', $parts ) ) . '</li></ul>' : '';
 }
 
 /** Party breakdown: legend plus the two charts. */
@@ -408,6 +432,7 @@ function dos_tax_votes_party_section( $data ) {
 		. '<span><i style="background:var(--eoa-tv-rep)"></i>' . esc_html__( 'Republicans (below the line)', 'dos-tax-votes' ) . '</span></p>'
 		. '<p class="eoa-tv-muted">' . esc_html__( 'Each bar counts lawmakers by the share of the bills they voted on that they supported. Both chambers, all taxes.', 'dos-tax-votes' ) . '</p>'
 		. '<div class="eoa-tv-charts">' . dos_tax_votes_party_chart( $data, 'up' ) . ( (int) $data['counts']['cuts'] > 0 ? dos_tax_votes_party_chart( $data, 'down' ) : '' ) . '</div>'
+		. dos_tax_votes_party_summary( $data )
 		. '</section>';
 }
 

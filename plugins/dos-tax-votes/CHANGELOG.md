@@ -5,6 +5,19 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.2.1
+
+Less empty space (Ryan, after seeing 0.2.0 on the site). With only one party
+chart this biennium it sat in a narrow column with the right half of the page
+blank. The party chart and the district map now share a row on screens 900 px
+and wider, chart on the left and map on the right; they stack on narrower
+screens as before. The chart fills its column, its top margin is tighter, and
+a short summary under it gives each party's middle member (median yes votes on
+the increases) and how many lawmakers that covers.
+
+The lawmaker list also takes less room: two columns on wide screens, and when a
+biennium has no tax cuts each row drops the empty third column.
+
 ## 0.2.0
 
 Three things Ryan asked for after seeing 0.1.0 on the site.

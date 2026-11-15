@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,9 @@ The page is rendered on the server; the small script only filters, sorts and swi
 Data lives in `data/<biennium>.json`, written by `electedorappointed/tax-votes/export_public.py` in the deptofsearch/Claude repository from reviewed bill classifications.
 
 == Changelog ==
+
+= 0.2.2 =
+* "The bills counted" and "How we counted" fold: closed on the full page, open when shown on their own.
 
 = 0.2.1 =
 * The party chart and district map sit side by side on wide screens, with a one-line party summary under the chart.

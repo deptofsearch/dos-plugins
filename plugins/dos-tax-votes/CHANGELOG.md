@@ -5,6 +5,17 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.5.0
+
+2019-20 added (`data/2019-20.json`): 32 counted bills, 15 increases (the 2019
+revenue package and the 2020 B&O restructure among them) and 17 cuts, from
+Ryan's review. Gov. Jay Inslee signed every increase and vetoed seven cuts in
+2020. Map: `data/wa-districts-2019-20.json`, the 2012 districts (Census 2020
+file), the same outlines as 2021-22. Method notes explain the bills counted
+without an estimate, the Wayfair nexus law, the heavy equipment rental tax swap,
+the 2020 vetoes and the two large property tax exemptions left out. No code
+changes.
+
 ## 0.4.0
 
 2021-22 added (`data/2021-22.json`): 16 counted bills, 2 increases (the

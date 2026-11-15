@@ -3,7 +3,7 @@ Contributors: departmentofsearch
 Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,9 @@ The page is rendered on the server; the small script only filters, sorts and swi
 Data lives in `data/<biennium>.json`, written by `electedorappointed/tax-votes/export_public.py` in the deptofsearch/Claude repository from reviewed bill classifications.
 
 == Changelog ==
+
+= 0.5.0 =
+* 2019-20 added, with the 2012 district map.
 
 = 0.4.0 =
 * 2021-22 added, with the 2012 district map its lawmakers were elected under.

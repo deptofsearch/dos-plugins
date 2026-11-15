@@ -263,7 +263,9 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 	}
 
 	if ( 'all' === $show || 'bills' === $show ) {
-		$html .= '<h3 class="eoa-tv-h">' . esc_html__( 'The bills counted', 'dos-tax-votes' ) . '</h3>'
+		// Foldable: closed on the full page, open when shown on its own.
+		$html .= '<details class="eoa-tv-fold"' . ( 'bills' === $show ? ' open' : '' ) . '><summary><h3 class="eoa-tv-h">' . esc_html__( 'The bills counted', 'dos-tax-votes' ) . '</h3>'
+			. '<span class="eoa-tv-muted">' . esc_html( sprintf( /* translators: %d: bills */ _n( '%d bill', '%d bills', count( $bills ), 'dos-tax-votes' ), count( $bills ) ) ) . '</span></summary>'
 			. '<div class="eoa-tv-tablewrap"><table class="eoa-tv-bills"><thead><tr>'
 			. '<th scope="col">' . esc_html__( 'Bill', 'dos-tax-votes' ) . '</th>'
 			. '<th scope="col">' . esc_html__( 'What it does', 'dos-tax-votes' ) . '</th>'
@@ -288,7 +290,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 				. '<td class="eoa-tv-num">' . $tally( $b['senate'] ) . '</td>'
 				. '<td>' . esc_html( $gov ) . '</td></tr>';
 		}
-		$html .= '</tbody></table></div>';
+		$html .= '</tbody></table></div></details>';
 	}
 
 	if ( 'all' === $show || 'method' === $show ) {
@@ -302,7 +304,8 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 			__( 'Packages that raise some taxes and cut others are not counted when the two sides are comparable, such as ESHB 2711, a 2026 transportation bill. A bill whose net effect is a large increase is counted as one, and the bill list shows its revenue estimate so you can judge.', 'dos-tax-votes' ),
 			__( 'For the governor, signing a bill (including with a partial veto) is counted as a yes and a full veto as a no.', 'dos-tax-votes' ),
 		);
-		$html .= '<h3 class="eoa-tv-h">' . esc_html__( 'How we counted', 'dos-tax-votes' ) . '</h3><ul class="eoa-tv-method">';
+		$html .= '<details class="eoa-tv-fold"' . ( 'method' === $show ? ' open' : '' ) . '><summary><h3 class="eoa-tv-h">' . esc_html__( 'How we counted', 'dos-tax-votes' ) . '</h3>'
+			. '<span class="eoa-tv-muted">' . esc_html__( 'Which bills count, and why', 'dos-tax-votes' ) . '</span></summary><ul class="eoa-tv-method">';
 		foreach ( $items as $i ) {
 			$html .= '<li>' . esc_html( $i ) . '</li>';
 		}
@@ -312,7 +315,7 @@ function dos_tax_votes_render( $data, $show = 'all' ) {
 				__( 'Sources: Washington State Legislature roll calls and bill records; Office of Financial Management fiscal notes. Updated %s.', 'dos-tax-votes' ),
 				(string) ( $data['updated'] ?? '' )
 			)
-		) . '</p>';
+		) . '</p></details>';
 	}
 
 	return $html . '</div>';

@@ -87,6 +87,9 @@ check( 'the map draws all 49 districts', 49 === substr_count( $html, '<path d="'
 check( 'every district on the map has a lawmaker in the data', ! array_diff( range( 1, 49 ), array_map( 'intval', array_unique( array_column( $data['legislators'], 'district' ) ) ) ) );
 check( 'each row links the official page and the district map', count( $data['legislators'] ) === substr_count( $html, 'leg.wa.gov/legislators/member/' ) && count( $data['legislators'] ) === substr_count( $html, 'districtfinder/displaydistrict/' ) );
 
+check( 'the bills and method sections fold, closed on the full page', 2 === substr_count( $html, '<details class="eoa-tv-fold">' ) );
+check( 'show="bills" opens the bills section', false !== strpos( dos_tax_votes_render( $data, 'bills' ), '<details class="eoa-tv-fold" open>' ) );
+
 echo "\n--- shortcode ---\n";
 $out = dos_tax_votes_shortcode( array() );
 check( 'the bare shortcode renders the newest biennium and enqueues its assets', false !== strpos( $out, 'data-eoa-tax-votes' ) && in_array( 'script:dos-tax-votes', $GLOBALS['enqueued'], true ) );

@@ -147,3 +147,14 @@
 .eoa-tv-districtpick { margin: 0; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: .5em; align-items: center; font-weight: 600; }
 .eoa-tv-districtpick[hidden] { display: none; }
 .eoa-tv-districtpick button { font: inherit; font-weight: 400; color: inherit; background: transparent; border: 1px solid var(--eoa-tv-line); padding: .25em .6em; cursor: pointer; }
+
+/* Foldable sections at the bottom (the bills counted, how we counted). */
+.eoa-tv-fold { border-top: 1px solid var(--eoa-tv-line); border-bottom: 1px solid var(--eoa-tv-line); }
+.eoa-tv-fold + .eoa-tv-fold { border-top: 0; }
+.eoa-tv-fold > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: .3em .9em; padding: .7em 0; }
+.eoa-tv-fold > summary::-webkit-details-marker { display: none; }
+.eoa-tv-fold > summary::before { content: "+"; font-weight: 600; width: 1em; flex: none; color: var(--eoa-tv-up); }
+.eoa-tv-fold[open] > summary::before { content: "−"; }
+.eoa-tv-fold > summary .eoa-tv-h { margin: 0; display: inline; }
+.eoa-tv-fold > :not(summary) { margin-bottom: 1em; }
+.eoa-tv-fold .eoa-tv-method { margin-bottom: .8em; }

@@ -5,6 +5,15 @@ later change quietly undoing a deliberate decision.
 
 Versions are the plugin's, tagged `dos-tax-votes-v<version>`.
 
+## 0.2.2
+
+The two reference sections at the bottom, "The bills counted" and "How we
+counted", now fold (Ryan's request). They start closed on the full page so the
+lawmakers list ends the page, and open when a page shows only one of them with
+`show="bills"` or `show="method"`. Each heading stays visible with a short
+hint (the bill count, "Which bills count, and why"). Native `<details>`, so it
+works without the script and the content stays in the HTML for search engines.
+
 ## 0.2.1
 
 Less empty space (Ryan, after seeing 0.2.0 on the site). With only one party

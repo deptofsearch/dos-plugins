@@ -76,7 +76,7 @@ $sorted = $at;
 sort( $sorted );
 check( 'order: heading, facts, next step, city boxes, source line, table, closing copy', ! in_array( false, $at, true ) && $at === $sorted, json_encode( $at ) );
 check( 'no stock paragraph on the hub', false === stripos( $o, 'we help connect' ) );
-check( 'the next step counts the hub\'s own cities', false !== strpos( $o, 'all 470 cities in Washington' ) );
+check( 'the next step counts the cities left in the list', 1 === preg_match( '/find yours among <a href="#all-cities">the other \d+ (?:cities|city) in Washington<\/a>/', $o ), $o );
 
 echo "\n--- Blog index heading ---\n";
 $blog = hcp( 'blog-page.html' );

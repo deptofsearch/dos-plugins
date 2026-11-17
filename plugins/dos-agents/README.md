@@ -136,6 +136,16 @@ order, and the count in its heading follows. A hub with nothing missing is
 printed as stored. Empty city pages are not added. See `includes/hub-cities.php`;
 `dos_agents_hub_add_missing` (false) turns it off.
 
+## State hubs: cities without an agent list
+
+The hub's stored "All Cities in {State}" table also holds every city that already
+has a box above it. At render time the table is replaced by a plain alphabetical
+list of only the cities without an agent list, under "More cities in {State} (N)",
+so each city page keeps its link and none is shown twice. The facts line still
+says the full number of city pages. With no city left, the list and heading are
+dropped. See `includes/hub-rest.php`; `dos_agents_hub_rest_list` (false) puts
+the full table back.
+
 ## State hubs: facts and source line
 
 Under each hub's heading, a paragraph of facts from the site's own data: city

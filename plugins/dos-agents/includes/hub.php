@@ -78,14 +78,22 @@ function dos_agents_hub_the_content( $content ) {
 
 	$content = dos_agents_hub_trim_copy( $content, $state );
 	$content = dos_agents_hub_merge_cities( $content, $state );
-	$content = dos_agents_hub_table_anchor( $content );
 	// The facts open with the number of city pages the hub lists, read from its own "All Cities in {State} (N)"
-	// heading after the merge, so the two numbers on the page always agree.
+	// heading after the merge and before the list below renames it, so the facts keep the full total.
 	$pages = preg_match( '/All Cities in ' . preg_quote( dos_agents_state_name( $state ), '/' ) . '\s*\(([\d,]+)\)/', $content, $m ) ? (int) str_replace( ',', '', $m[1] ) : null;
+	// The table becomes a list of the cities without an agent list ($rest); the anchor then finds no table to
+	// mark (the list carries the id), and with the filter off it marks the full table as before.
+	$rest    = null;
+	$content = dos_agents_hub_rest_list( $content, $state, $rest );
+	if ( null === $rest ) {
+		// Only when the table is still there (filter off, or no table found). With the list in place a second
+		// breanm-city-table, if a hub ever had one, would otherwise get a second id="all-cities".
+		$content = dos_agents_hub_table_anchor( $content );
+	}
 
 	return '<h1 class="breanm-hub-title">' . esc_html( $heading ) . '</h1>'
 		. dos_agents_render_hub_facts( $state, $pages )
-		. dos_agents_render_hub_next( $state, $pages, false !== strpos( $content, 'id="all-cities"' ) )
+		. dos_agents_render_hub_next( $state, $pages, false !== strpos( $content, 'id="all-cities"' ), $rest )
 		. dos_agents_render_hub( $state )
 		. dos_agents_render_hub_source()
 		. $content;

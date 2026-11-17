@@ -110,14 +110,14 @@ echo "\n--- On the hub ---\n";
 hf_seed();
 $GLOBALS['filters']['dos_agents_pre_empty_city_ids'][] = static function () { return array(); };
 $GLOBALS['filters']['dos_agents_pre_hub_city_pages'][] = static function () { return array(); };
-$stored = '<h3>All Cities in Washington (470)</h3><table class="breanm-city-table"><tr><td><a href="https://example.com/in-seattle-wa/">Seattle</a></td></tr></table><p>Old copy.</p>';
+$stored = '<h3>All Cities in Washington (470)</h3><table class="breanm-city-table"><tr><td><a href="https://example.com/in-seattle-wa/">Seattle</a></td><td><a href="https://example.com/in-spokane-wa/">Spokane</a></td></tr></table><p>Old copy.</p>';
 $hub    = agents_add_page( 'in-washington', $stored );
 $GLOBALS['wp']['page']     = true;
 $GLOBALS['wp']['singular'] = true;
 $GLOBALS['wp']['queried']  = $hub->ID;
 $GLOBALS['wp']['post']     = $hub;
 $o  = dos_agents_hub_the_content( $stored );
-$at = array_map( static function ( $needle ) use ( $o ) { return strpos( $o, $needle ); }, array( 'breanm-hub-title', 'breanm-hub-facts', 'breanm-home__hub', 'breanm-hub-source', 'All Cities in Washington' ) );
+$at = array_map( static function ( $needle ) use ( $o ) { return strpos( $o, $needle ); }, array( 'breanm-hub-title', 'breanm-hub-facts', 'breanm-home__hub', 'breanm-hub-source', 'More cities in Washington' ) );
 check( 'order: heading, facts, city cards, source line, stored content', ! in_array( false, $at, true ) && $at === array_values( array_unique( $at ) ) && $at == array_values( ( function ( $a ) { sort( $a ); return $a; } )( $at ) ), json_encode( $at ) );
 check( 'the facts use the hub\'s own city-page count', false !== strpos( $o, 'Washington has 470 city pages on this site.' ) );
 // A second page: the content filter runs once per page per request.

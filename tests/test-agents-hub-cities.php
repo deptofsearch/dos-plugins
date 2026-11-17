@@ -212,7 +212,7 @@ $GLOBALS['wp']['singular'] = true;
 $GLOBALS['wp']['queried']  = $hub->ID;
 $GLOBALS['wp']['post']     = $hub;
 $o = dos_agents_hub_the_content( $small );
-check( 'the hub content filter merges the table', false !== strpos( $o, 'breanm-hub-title' ) && false !== strpos( $o, '/in-alpha-ri/' ) && false !== strpos( $o, 'All Cities in Rhode Island (3)' ) );
+check( 'the hub content filter merges the table', false !== strpos( $o, 'breanm-hub-title' ) && false !== strpos( $o, '/in-alpha-ri/' ) && false !== strpos( $o, 'More cities in Rhode Island (3)' ) );
 $main = (string) file_get_contents( dirname( __DIR__ ) . '/plugins/dos-agents/dos-agents.php' );
 check( 'save, rename and delete hooks', false !== strpos( $main, "add_action( 'save_post', 'dos_agents_hub_cities_on_save', 10, 2 );" ) && false !== strpos( $main, "add_action( 'post_updated', 'dos_agents_hub_cities_on_update', 10, 3 );" ) && false !== strpos( $main, "add_action( 'deleted_post', 'dos_agents_hub_cities_on_save', 10, 2 );" ) );
 

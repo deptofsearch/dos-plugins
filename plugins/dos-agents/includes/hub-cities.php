@@ -101,16 +101,14 @@ function dos_agents_hub_cities_on_update( $post_id, $after, $before ) {
 }
 
 /**
- * Adds the state's missing city pages to the hub's city table. Returns $content unchanged when the table is not
- * found, cannot be read, or already links every city page.
+ * Where the hub's city table sits in its content: array( start, end ), the offsets of "<table" and of the byte after
+ * "</table>", or null when there is none. Shared by the missing-city merge and the cities-without-cards list.
+ *
+ * Found with strpos, not one regex over the page: the largest hubs hold over 500 KB, where a lazy match up to
+ * </table> nears PCRE's backtrack limit. The class name also appears in the hub's own <style> block, so the search
+ * is for a <table> tag that carries it.
  */
-function dos_agents_hub_merge_cities( $content, $state ) {
-	if ( ! dos_agents_hub_cities_enabled() ) {
-		return $content;
-	}
-	// Found with strpos, not one regex over the page: the largest hubs hold over 500 KB, where a lazy match up to
-	// </table> nears PCRE's backtrack limit. The class name also appears in the hub's own <style> block, so the
-	// search is for a <table> tag that carries it.
+function dos_agents_hub_find_table( $content ) {
 	$content = (string) $content;
 	$start   = false;
 	for ( $at = stripos( $content, '<table' ); false !== $at; $at = stripos( $content, '<table', $at + 6 ) ) {
@@ -121,10 +119,24 @@ function dos_agents_hub_merge_cities( $content, $state ) {
 		}
 	}
 	$end = false === $start ? false : stripos( $content, '</table>', $start );
-	if ( false === $end ) {
+	return false === $end ? null : array( $start, $end + 8 );
+}
+
+/**
+ * Adds the state's missing city pages to the hub's city table. Returns $content unchanged when the table is not
+ * found, cannot be read, or already links every city page.
+ */
+function dos_agents_hub_merge_cities( $content, $state ) {
+	if ( ! dos_agents_hub_cities_enabled() ) {
 		return $content;
 	}
-	$table = substr( $content, $start, $end + 8 - $start );
+	$content = (string) $content;
+	$found   = dos_agents_hub_find_table( $content );
+	if ( null === $found ) {
+		return $content;
+	}
+	list( $start, $end ) = $found;
+	$table = substr( $content, $start, $end - $start );
 	if ( ! preg_match( '/^<table\b[^>]*>/i', $table, $open ) || ! preg_match( '/<td\b[^>]*>/i', $table, $td ) || ! preg_match( '/<a\b[^>]*\bhref=(["\'])[^"\']*\1[^>]*>/i', $table, $a ) ) {
 		return $content;
 	}

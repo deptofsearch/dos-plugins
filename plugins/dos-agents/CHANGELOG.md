@@ -16,6 +16,8 @@ State hubs: the old all-cities table now lists only the cities that have no agen
 - Nothing is written into the pages. `dos_agents_hub_rest_list` (false) puts the full table back, with the old "all N cities" wording.
 - CSS: `.breanm-hub-rest` is a bullet-less list in 4 columns (3 under 900px, 2 under 600px), items kept whole, so there is no sideways scroll at 375px.
 - The table finder was moved out of the merge into a shared `dos_agents_hub_find_table()`, so the two features locate the table the same way.
+- **Dry run on all 51 live hubs (2026-11-17):** 50 have the table and every one converts cleanly (28,556 links, 1,338 cities with agent lists dropped, 27,218 listed; each heading count equals its list); DC has no table and is printed as stored. No hub has a second `breanm-city-table`.
+- **Fixed before release (independent review):** the content-list rule `.entry-content ul` (higher specificity) was narrowing the list to 72ch with a 22px indent, so it is now excluded from that rule; the table anchor is skipped once the list is in place, so a second table could never get a second `id="all-cities"`; and a table with a link whose text comes out empty (image-only, or invalid UTF-8) is left as stored rather than printing an invisible link.
 
 ## 0.3.9
 

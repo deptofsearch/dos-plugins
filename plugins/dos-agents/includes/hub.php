@@ -85,7 +85,11 @@ function dos_agents_hub_the_content( $content ) {
 	// mark (the list carries the id), and with the filter off it marks the full table as before.
 	$rest    = null;
 	$content = dos_agents_hub_rest_list( $content, $state, $rest );
-	$content = dos_agents_hub_table_anchor( $content );
+	if ( null === $rest ) {
+		// Only when the table is still there (filter off, or no table found). With the list in place a second
+		// breanm-city-table, if a hub ever had one, would otherwise get a second id="all-cities".
+		$content = dos_agents_hub_table_anchor( $content );
+	}
 
 	return '<h1 class="breanm-hub-title">' . esc_html( $heading ) . '</h1>'
 		. dos_agents_render_hub_facts( $state, $pages )

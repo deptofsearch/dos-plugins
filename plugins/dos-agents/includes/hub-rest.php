@@ -60,6 +60,11 @@ function dos_agents_hub_rest_list( $content, $state, &$remaining = null ) {
 		}
 		$rest[] = array( trim( html_entity_decode( wp_strip_all_tags( $l[3] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ), $l[2], $i );
 	}
+	foreach ( $rest as $r ) {
+		if ( '' === $r[0] || '' === esc_html( $r[0] ) ) {
+			return $content; // An image-only link or invalid UTF-8 would print an empty, invisible link: leave the table.
+		}
+	}
 	usort(
 		$rest,
 		static function ( $x, $y ) {

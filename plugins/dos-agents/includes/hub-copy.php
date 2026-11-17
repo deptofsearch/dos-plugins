@@ -72,14 +72,32 @@ function dos_agents_hub_table_anchor( $content ) {
 /**
  * The next step under a hub's facts: "Pick a city below to compare its agents, or find yours among all 470 cities in
  * Washington." The second half links to the city table. '' when there is nothing to pick from.
+ *
+ * $rest is the number of cities in the list that replaced the table (hub-rest.php): then the sentence names those, the
+ * other cities, since the ones with an agent list are the boxes just below. With no list ($rest null) it is as before.
  */
-function dos_agents_render_hub_next( $state, $pages, $has_anchor ) {
+function dos_agents_render_hub_next( $state, $pages, $has_anchor, $rest = null ) {
 	if ( ! dos_agents_hub_copy_enabled() || ! dos_agents_index_for_state( $state ) ) {
 		return '';
 	}
 	$name = dos_agents_state_name( $state );
 	if ( null === $pages || ! $has_anchor ) {
 		return '<p class="breanm-hub-next">' . esc_html__( 'Pick a city below to compare its agents.', 'dos-agents' ) . '</p>';
+	}
+	if ( null !== $rest ) {
+		if ( $rest < 1 ) {
+			return '<p class="breanm-hub-next">' . esc_html__( 'Pick a city below to compare its agents.', 'dos-agents' ) . '</p>';
+		}
+		$link = '<a href="#all-cities">' . esc_html(
+			sprintf(
+				/* translators: 1: number of other cities, 2: state name */
+				_n( 'the other %1$s city in %2$s', 'the other %1$s cities in %2$s', $rest, 'dos-agents' ),
+				number_format_i18n( $rest ),
+				$name
+			)
+		) . '</a>';
+		/* translators: %s: link to the list of the other cities, e.g. "the other 235 cities in Utah" */
+		return '<p class="breanm-hub-next">' . sprintf( esc_html__( 'Pick a city below to compare its agents, or find yours among %s.', 'dos-agents' ), $link ) . '</p>';
 	}
 	$link = '<a href="#all-cities">' . esc_html(
 		sprintf(

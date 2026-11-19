@@ -1,0 +1,97 @@
+/*
+ * DoS SAAB Food Trucks. Colours and fonts come from the --saab-* variables the DoS SAAB Child theme
+ * sets on :root; the fallbacks are the same values, so the block looks right under plain Magazine too.
+ */
+.saab-ft {
+	--_ink: var(--saab-ink, #111111);
+	--_muted: var(--saab-muted, #444444);
+	--_soft: var(--saab-soft, #f2f2f2);
+	--_card: var(--saab-card, #e9e9e9);
+	--_line: var(--saab-line, rgba(0, 0, 0, .12));
+	--_bg: var(--saab-bg, #ffffff);
+	--_head: var(--saab-head, "Oswald", Impact, "Arial Narrow", sans-serif);
+	--_radius: var(--saab-radius, 12px);
+	color: var(--_ink);
+	margin: 2rem 0;
+}
+.saab-ft *, .saab-ft *::before, .saab-ft *::after { box-sizing: border-box; }
+.saab-ft [hidden] { display: none !important; }
+.saab-ft__sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.saab-ft a { color: var(--_ink); }
+.saab-ft a:hover { color: var(--_muted); }
+.saab-ft a:focus-visible, .saab-ft button:focus-visible { outline: 2px solid var(--_ink); outline-offset: 2px; }
+
+/* City filter */
+.saab-ft__filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.saab-ft__chip {
+	min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--_ink);
+	background: var(--_bg); color: var(--_ink); cursor: pointer;
+	font-family: var(--_head); font-size: 15px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.2;
+}
+.saab-ft__chip[aria-pressed="true"] { background: var(--_ink); color: var(--_bg); }
+.saab-ft__chip-n { opacity: .7; margin-left: 2px; }
+.saab-ft__status { margin: 0 0 12px; font-size: 15px; color: var(--_muted); min-height: 1.4em; }
+
+/* Map */
+.saab-ft__map {
+	height: 480px; border-radius: var(--_radius); overflow: hidden; border: 1px solid var(--_line);
+	background: var(--_soft); margin: 0 0 2.5rem; z-index: 0;
+}
+.saab-ft__map .leaflet-tile-pane { filter: grayscale(1) contrast(.95); }
+.saab-ft__map .leaflet-popup-content { font-size: 15px; line-height: 1.45; }
+.saab-ft__map .leaflet-popup-content b { font-family: var(--_head); text-transform: uppercase; letter-spacing: .03em; font-size: 16px; }
+.saab-ft-pin span {
+	display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%;
+	background: #111111; color: #ffffff; border: 3px solid #ffffff; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+	font: 700 15px/1 "Oswald", Impact, sans-serif;
+}
+.saab-ft-pin--event span { background: #ffffff; color: #111111; border-color: #111111; }
+
+/* Table */
+.saab-ft__h {
+	font-family: var(--_head); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin: 0 0 1rem;
+}
+.saab-ft__table-wrap { overflow-x: auto; border: 1px solid var(--_line); border-radius: var(--_radius); margin: 0 0 2.5rem; }
+.saab-ft__table { width: 100%; min-width: 560px; border-collapse: collapse; margin: 0; font-size: 16px; }
+.saab-ft__table th, .saab-ft__table td { padding: 12px 16px; text-align: left; vertical-align: middle; border: 0; border-top: 1px solid var(--_line); }
+.saab-ft__table thead th {
+	background: var(--_soft); border-top: 0; font-family: var(--_head); font-weight: 500;
+	font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+}
+.saab-ft__table tbody th { font-weight: 600; }
+.saab-ft__table td:last-child { color: var(--_muted); }
+
+/* Badges */
+.saab-ft__badge {
+	display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+	width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--_ink);
+	background: var(--_ink); color: var(--_bg); font-family: var(--_head); font-weight: 700; font-size: 15px; line-height: 1;
+}
+.saab-ft__badge--event { background: var(--_bg); color: var(--_ink); }
+
+/* Park sections */
+.saab-ft__parks { border-top: 1px solid var(--_line); }
+.saab-ft__park { display: flex; flex-wrap: wrap; gap: 28px; padding: 36px 0; border-bottom: 1px solid var(--_line); scroll-margin-top: 90px; }
+.saab-ft__photo { flex: 1 1 300px; width: 100%; max-width: 100%; height: 240px; object-fit: cover; border-radius: var(--_radius); margin: 0; }
+.saab-ft__body { flex: 999 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.saab-ft__kicker {
+	display: flex; align-items: center; gap: 12px; margin: 0;
+	font-family: var(--_head); font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--_muted);
+}
+.saab-ft .saab-ft__name {
+	margin: 0; font-family: var(--_head); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; line-height: 1.1;
+}
+.saab-ft__addr { margin: 0; font-weight: 600; }
+.saab-ft__text { margin: 0; }
+.saab-ft__pick { margin: 0; background: var(--_soft); border-radius: 8px; padding: 14px 16px; font-size: 16px; }
+.saab-ft__pick-label { font-family: var(--_head); letter-spacing: .12em; text-transform: uppercase; font-size: 14px; }
+.saab-ft__meta { margin: 0; font-size: 15px; color: var(--_muted); }
+.saab-ft__meta a { font-weight: 600; }
+.saab-ft__park--note { background: var(--_soft); border-radius: var(--_radius); border-bottom: 0; padding: 24px; margin: 24px 0 0; }
+.saab-ft__updated { margin: 1.5rem 0 0; font-size: 15px; color: var(--_muted); }
+
+@media (max-width: 640px) {
+	.saab-ft__map { height: 340px; }
+	.saab-ft__park { padding: 28px 0; gap: 18px; }
+	.saab-ft__photo { height: 200px; }
+}

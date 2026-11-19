@@ -15,6 +15,7 @@ plugins/
   dos-saab-home/      Homepage search and category cards (Shot and a Beer)
   dos-saab-toolkit/   SEO, images and restaurant pages (Shot and a Beer)
   dos-tax-votes/      Tax vote records for Washington lawmakers (Elected or Appointed)
+  dos-saab-food-trucks/ Tri-Cities food truck parks page (Shot and a Beer)
 themes/               Site themes, kept here for source control (not released)
 shared/               Code every plugin vendors a copy of (the GitHub updater)
 tools/                Scripts that support a plugin and never ship in it
@@ -35,6 +36,7 @@ tests/                Stubbed-WordPress tests, run on every release
 | DoS Shot and a Beer Home | `plugins/dos-saab-home` | `dos-saab-home-v<version>` | shotandabeer.com homepage: search that suggests restaurants, cuisines, dishes and cities from the review taxonomies, category cards, latest reviews. A front-page takeover; off restores the page. |
 | DoS SAAB Toolkit | `plugins/dos-saab-toolkit` | `dos-saab-toolkit-v<version>` | shotandabeer.com: SEO tags, responsive images, and the restaurant pages (`saab_restaurant`) the n8n syncs fill, with their dish board. Formerly `saab-toolkit`; the copy under `legacy/` is the older SEO/Images-only version the DoS Toolkit absorbed. |
 | DoS Tax Votes | `plugins/dos-tax-votes` | `dos-tax-votes-v<version>` | Elected or Appointed: `[eoa_tax_votes]`, how each Washington legislator and the governor voted on bills that raise or cut taxes, from data files written by `electedorappointed/tax-votes/export_public.py` in the Claude repo. |
+| DoS SAAB Food Trucks | `plugins/dos-saab-food-trucks` | `dos-saab-food-trucks-v<version>` | shotandabeer.com: `[saab_food_truck_parks]`, Tri-Cities food truck parks with a city filter, an OpenStreetMap map, an at-a-glance table and a section per park, from `data/parks.json`. |
 | `themes/` | `themes/*` | not released | departmentofsearch.com themes: `dos-department` (block theme) and `dos-magazine-child`. shotandabeer.com: `dos-saab-child` (Themify Magazine child, white/black/grey). |
 | `legacy/` | `legacy/*` | not released | Reference only: the plugins the Toolkit absorbed, and `dos-ohi-city-search`, the Open Houses In city search as shipped. City Search 2.0.0 replaces it. |
 

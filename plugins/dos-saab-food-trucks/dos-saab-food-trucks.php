@@ -3,7 +3,7 @@
  * Plugin Name: DoS SAAB Food Trucks
  * Plugin URI:  https://github.com/deptofsearch/dos-plugins
  * Description: Shot and a Beer: Tri-Cities food truck parks with a city filter, a map, an at-a-glance table and a section per park. Shortcode [saab_food_truck_parks].
- * Version:     0.1.0
+ * Version:     0.1.1
  * Requires at least: 6.6
  * Requires PHP: 8.1
  * Author:      Department of Search
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'DOS_SAAB_FT_VERSION', '0.1.0' );
+define( 'DOS_SAAB_FT_VERSION', '0.1.1' );
 define( 'DOS_SAAB_FT_DIR', __DIR__ );
 define( 'DOS_SAAB_FT_LEAFLET', '1.9.4' );
 

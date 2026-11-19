@@ -55,6 +55,7 @@ function dos_saab_ft_clean_park( $p ) {
 		'area'       => $s( 'area' ),
 		'name'       => $name,
 		'address'    => $s( 'address' ),
+		'geocode'    => $s( 'geocode' ),
 		'setup'      => $s( 'setup' ),
 		'body'       => $s( 'body' ),
 		'hours'      => $s( 'hours' ),
@@ -111,9 +112,23 @@ function dos_saab_ft_updated() {
 	return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $d ) ? $d : '';
 }
 
-/** Cache key for an address. */
-function dos_saab_ft_geo_key( $address ) {
-	return md5( strtolower( trim( (string) $address ) ) );
+/**
+ * Cache key for a park's lookup: its address plus its fallback search text, so changing either
+ * (say, adding a `geocode` fallback after a failed lookup) asks again at once instead of waiting
+ * out the failure.
+ */
+function dos_saab_ft_geo_key( $p ) {
+	$geocode = isset( $p['geocode'] ) ? (string) $p['geocode'] : '';
+	return md5( strtolower( trim( (string) $p['address'] ) ) . '|' . strtolower( trim( $geocode ) ) );
+}
+
+/** What to search for, in order: the address, then the park's `geocode` fallback when it has one. */
+function dos_saab_ft_geo_queries( $p ) {
+	$q = array( $p['address'] );
+	if ( isset( $p['geocode'] ) && '' !== $p['geocode'] && $p['geocode'] !== $p['address'] ) {
+		$q[] = $p['geocode'];
+	}
+	return $q;
 }
 
 /** A park's coordinates: the data file's, else a cached lookup, else null. */
@@ -125,7 +140,7 @@ function dos_saab_ft_coords( $p ) {
 		return null;
 	}
 	$cache = get_option( DOS_SAAB_FT_GEO_OPTION, array() );
-	$hit   = is_array( $cache ) ? ( $cache[ dos_saab_ft_geo_key( $p['address'] ) ] ?? null ) : null;
+	$hit   = is_array( $cache ) ? ( $cache[ dos_saab_ft_geo_key( $p ) ] ?? null ) : null;
 	if ( is_array( $hit ) && isset( $hit['lat'], $hit['lng'] ) && is_numeric( $hit['lat'] ) && is_numeric( $hit['lng'] ) ) {
 		return array( (float) $hit['lat'], (float) $hit['lng'] );
 	}
@@ -141,11 +156,12 @@ function dos_saab_ft_needs_lookup( $parks ) {
 		if ( '' === $p['address'] || null !== dos_saab_ft_coords( $p ) ) {
 			continue;
 		}
-		$hit = $cache[ dos_saab_ft_geo_key( $p['address'] ) ] ?? null;
+		$key = dos_saab_ft_geo_key( $p );
+		$hit = $cache[ $key ] ?? null;
 		if ( is_array( $hit ) && ! empty( $hit['failed'] ) && time() - (int) $hit['failed'] < DOS_SAAB_FT_RETRY_AFTER ) {
 			continue;
 		}
-		$out[ $p['address'] ] = $p;
+		$out[ $key ] = $p;
 	}
 	return array_values( $out );
 }
@@ -168,27 +184,51 @@ function dos_saab_ft_geocode_missing() {
 	}
 	$cache = get_option( DOS_SAAB_FT_GEO_OPTION, array() );
 	$cache = is_array( $cache ) ? $cache : array();
-	foreach ( array_slice( $todo, 0, 20 ) as $i => $p ) {
-		if ( $i > 0 ) {
-			sleep( 1 );
+	$sent = 0;
+	foreach ( array_slice( $todo, 0, 20 ) as $p ) {
+		$key  = dos_saab_ft_geo_key( $p );
+		$used = '';
+		foreach ( dos_saab_ft_geo_queries( $p ) as $query ) {
+			if ( $sent++ > 0 ) {
+				sleep( 1 );
+			}
+			$hit = dos_saab_ft_nominatim( $query );
+			if ( $hit ) {
+				$used          = $query;
+				$cache[ $key ] = array( 'lat' => $hit[0], 'lng' => $hit[1], 'address' => $p['address'], 'query' => $query );
+				break;
+			}
 		}
-		$url  = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' . rawurlencode( $p['address'] );
-		$resp = wp_remote_get(
-			$url,
-			array(
-				'timeout'    => 10,
-				'user-agent' => 'DoS SAAB Food Trucks/' . DOS_SAAB_FT_VERSION . ' (+' . home_url( '/' ) . ')',
-			)
-		);
-		$body = is_wp_error( $resp ) ? null : json_decode( (string) wp_remote_retrieve_body( $resp ), true );
-		$key  = dos_saab_ft_geo_key( $p['address'] );
-		if ( is_array( $body ) && isset( $body[0]['lat'], $body[0]['lon'] ) && is_numeric( $body[0]['lat'] ) && is_numeric( $body[0]['lon'] ) ) {
-			$cache[ $key ] = array( 'lat' => (float) $body[0]['lat'], 'lng' => (float) $body[0]['lon'], 'address' => $p['address'] );
-		} else {
+		if ( '' === $used ) {
 			$cache[ $key ] = array( 'failed' => time(), 'address' => $p['address'] );
 		}
 	}
 	update_option( DOS_SAAB_FT_GEO_OPTION, $cache, false );
+}
+
+/** One Nominatim search. Returns array( lat, lng ) or null. */
+function dos_saab_ft_nominatim( $query ) {
+	$url  = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' . rawurlencode( $query );
+	$resp = wp_remote_get(
+		$url,
+		array(
+			'timeout'    => 10,
+			'user-agent' => 'DoS SAAB Food Trucks/' . DOS_SAAB_FT_VERSION . ' (+' . home_url( '/' ) . ')',
+		)
+	);
+	$body = is_wp_error( $resp ) ? null : json_decode( (string) wp_remote_retrieve_body( $resp ), true );
+	if ( is_array( $body ) && isset( $body[0]['lat'], $body[0]['lon'] ) && is_numeric( $body[0]['lat'] ) && is_numeric( $body[0]['lon'] ) ) {
+		return array( (float) $body[0]['lat'], (float) $body[0]['lon'] );
+	}
+	return null;
+}
+
+/**
+ * A coordinate as a 6-decimal string. A float would be printed with the host's serialize_precision,
+ * which on shotandabeer.com gives ~40 digits per number.
+ */
+function dos_saab_ft_coord( $v ) {
+	return number_format( (float) $v, 6, '.', '' );
 }
 
 /** Google Maps directions search for an address. */
@@ -241,8 +281,8 @@ function dos_saab_ft_render( $parks, $show, $updated = '' ) {
 				'city'    => $p['city'],
 				'name'    => $p['name'],
 				'address' => $p['address'],
-				'lat'     => round( $c[0], 6 ),
-				'lng'     => round( $c[1], 6 ),
+				'lat'     => dos_saab_ft_coord( $c[0] ),
+				'lng'     => dos_saab_ft_coord( $c[1] ),
 			);
 		}
 	}
@@ -367,7 +407,7 @@ function dos_saab_ft_schema( $parks ) {
 		}
 		$c = dos_saab_ft_coords( $p );
 		if ( $c ) {
-			$place['geo'] = array( '@type' => 'GeoCoordinates', 'latitude' => round( $c[0], 6 ), 'longitude' => round( $c[1], 6 ) );
+			$place['geo'] = array( '@type' => 'GeoCoordinates', 'latitude' => dos_saab_ft_coord( $c[0] ), 'longitude' => dos_saab_ft_coord( $c[1] ) );
 		}
 		$items[] = array( '@type' => 'ListItem', 'position' => ++$pos, 'item' => $place );
 	}

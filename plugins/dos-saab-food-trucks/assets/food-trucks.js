@@ -22,6 +22,25 @@
 				maxZoom: 19,
 				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 			}).addTo(map);
+			// Parks that share a spot (same building, or a street-level lookup) fan out around it in
+			// screen pixels, so every pin stays visible and clickable at any zoom.
+			var shared = {};
+			points.forEach(function (p) {
+				var k = Number(p.lat).toFixed(4) + ',' + Number(p.lng).toFixed(4);
+				(shared[k] = shared[k] || []).push(p);
+			});
+			Object.keys(shared).forEach(function (k) {
+				var group = shared[k];
+				group.forEach(function (p, i) {
+					p.dx = 0;
+					p.dy = 0;
+					if (group.length > 1) {
+						var a = (2 * Math.PI * i) / group.length - Math.PI / 2;
+						p.dx = Math.round(22 * Math.cos(a));
+						p.dy = Math.round(22 * Math.sin(a));
+					}
+				});
+			});
 			points.forEach(function (p) {
 				var badge = document.createElement('span');
 				badge.textContent = p.n || '';
@@ -29,10 +48,10 @@
 					className: 'saab-ft-pin' + (p.event ? ' saab-ft-pin--event' : ''),
 					html: badge.outerHTML,
 					iconSize: [34, 34],
-					iconAnchor: [17, 17],
-					popupAnchor: [0, -18]
+					iconAnchor: [17 - p.dx, 17 - p.dy],
+					popupAnchor: [p.dx, p.dy - 18]
 				});
-				var marker = window.L.marker([p.lat, p.lng], { icon: icon, title: p.name, alt: p.name, keyboard: true });
+				var marker = window.L.marker([Number(p.lat), Number(p.lng)], { icon: icon, title: p.name, alt: p.name, keyboard: true });
 				marker.bindPopup(popup(p));
 				marker.addTo(map);
 				markers.push({ marker: marker, point: p });

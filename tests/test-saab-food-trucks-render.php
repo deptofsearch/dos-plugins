@@ -39,7 +39,17 @@ function wp_enqueue_style( $h ) { $GLOBALS['enqueued'][] = "style:$h"; }
 function wp_enqueue_script( $h ) { $GLOBALS['enqueued'][] = "script:$h"; }
 function wp_next_scheduled( $h ) { return $GLOBALS['scheduled'][ $h ] ?? false; }
 function wp_schedule_single_event( $t, $h ) { $GLOBALS['scheduled'][ $h ] = $t; return true; }
-function wp_remote_get( $u, $a = array() ) { $GLOBALS['http']++; return $GLOBALS['http_reply'] ?? array( 'body' => '[]' ); }
+$GLOBALS['urls'] = array();
+function wp_remote_get( $u, $a = array() ) {
+	$GLOBALS['http']++;
+	$GLOBALS['urls'][] = $u;
+	if ( isset( $GLOBALS['http_by_query'] ) ) {
+		foreach ( $GLOBALS['http_by_query'] as $q => $reply ) {
+			if ( str_ends_with( $u, '&q=' . rawurlencode( $q ) ) ) { return $reply; }
+		}
+	}
+	return $GLOBALS['http_reply'] ?? array( 'body' => '[]' );
+}
 function wp_remote_retrieve_body( $r ) { return $r['body']; }
 function is_wp_error( $r ) { return false; }
 function home_url( $p = '' ) { return 'https://example.test/'; }
@@ -74,12 +84,13 @@ echo "\n--- pins ---\n";
 $with = $parks;
 $with[0]['lat'] = 46.2;
 $with[0]['lng'] = -119.2;
-$GLOBALS['opts'][ DOS_SAAB_FT_GEO_OPTION ] = array( dos_saab_ft_geo_key( $parks[1]['address'] ) => array( 'lat' => 46.27, 'lng' => -119.17 ) );
+$GLOBALS['opts'][ DOS_SAAB_FT_GEO_OPTION ] = array( dos_saab_ft_geo_key( $parks[1] ) => array( 'lat' => 46.27, 'lng' => -119.17 ) );
 $h = dos_saab_ft_render( $with, $all, '' );
 check( 'the map appears once some park has a pin', false !== strpos( $h, 'data-saab-ft-map' ) );
 preg_match( '#<script type="application/json" data-saab-ft-points>(.*?)</script>#s', $h, $m );
 $pts = json_decode( $m[1] ?? '', true );
-check( 'pins come from the file and from the cache', is_array( $pts ) && 2 === count( $pts ) && 46.2 === $pts[0]['lat'] && 46.27 === $pts[1]['lat'] );
+check( 'pins come from the file and from the cache', is_array( $pts ) && 2 === count( $pts ) && '46.200000' === $pts[0]['lat'] && '46.270000' === $pts[1]['lat'] );
+check( 'coordinates are printed with six decimals', 1 === preg_match( '/"lat":"46\.200000","lng":"-119\.200000"/', $m[1] ) );
 check( 'parks with pins get geo in the schema', 2 === substr_count( $h, '"GeoCoordinates"' ) );
 
 echo "\n--- geocoding ---\n";
@@ -89,15 +100,33 @@ check( 'rendering never calls the geocoder', 0 === $GLOBALS['http'] );
 check( 'rendering schedules one background lookup', isset( $GLOBALS['scheduled'][ DOS_SAAB_FT_GEOCODE_HOOK ] ) );
 check( 'the map and script are enqueued', in_array( 'script:dos-saab-ft-leaflet', $GLOBALS['enqueued'], true ) && in_array( 'script:dos-saab-food-trucks', $GLOBALS['enqueued'], true ) );
 check( 'seven addresses need a lookup', 7 === count( dos_saab_ft_needs_lookup( $parks ) ) );
+$cg = $parks[5];
+check( 'Columbia Gardens has a fallback search', 'columbia-gardens' === $cg['id'] && '' !== $cg['geocode'] && array( $cg['address'], $cg['geocode'] ) === dos_saab_ft_geo_queries( $cg ) );
+check( 'a park without a fallback searches its address only', array( $parks[0]['address'] ) === dos_saab_ft_geo_queries( $parks[0] ) );
+check( 'the fallback is part of the cache key, so adding one retries at once', dos_saab_ft_geo_key( $cg ) !== dos_saab_ft_geo_key( array_merge( $cg, array( 'geocode' => '' ) ) ) );
 $GLOBALS['http_reply'] = array( 'body' => '[{"lat":"46.2","lon":"-119.2"}]' );
 dos_saab_ft_geocode_missing();
-check( 'the cron run looks up each address once', 7 === $GLOBALS['http'], (string) $GLOBALS['http'] );
+check( 'the cron run looks up each address once when the first search works', 7 === $GLOBALS['http'], (string) $GLOBALS['http'] );
 check( 'answers are cached and nothing is left to look up', 0 === count( dos_saab_ft_needs_lookup( $parks ) ) && null !== dos_saab_ft_coords( $parks[0] ) );
 $GLOBALS['opts']       = array();
 $GLOBALS['http']       = 0;
 $GLOBALS['http_reply'] = array( 'body' => '<html>rate limited</html>' );
 dos_saab_ft_geocode_missing();
 check( 'a failed lookup is remembered and not retried for a day', 0 === count( dos_saab_ft_needs_lookup( $parks ) ) && null === dos_saab_ft_coords( $parks[0] ) );
+check( 'both searches are tried for a park with a fallback', 9 === $GLOBALS['http'], (string) $GLOBALS['http'] );
+$GLOBALS['opts']          = array();
+$GLOBALS['http']          = 0;
+$GLOBALS['urls']          = array();
+$GLOBALS['http_reply']    = array( 'body' => '[]' );
+$GLOBALS['http_by_query'] = array( $cg['geocode'] => array( 'body' => '[{"lat":"46.21","lon":"-119.11"}]' ) );
+dos_saab_ft_geocode_missing();
+$c = dos_saab_ft_coords( $cg );
+check( 'the fallback search places a park whose address fails', is_array( $c ) && 46.21 === $c[0] && -119.11 === $c[1] );
+$qs = array_map( function ( $u ) { return rawurldecode( substr( $u, strpos( $u, '&q=' ) + 3 ) ); }, $GLOBALS['urls'] );
+$ia = array_search( $cg['address'], $qs, true );
+$ig = array_search( $cg['geocode'], $qs, true );
+check( 'the fallback is only searched after the address fails', false !== $ia && false !== $ig && $ig === $ia + 1 );
+unset( $GLOBALS['http_by_query'] );
 
 echo "\n--- escaping ---\n";
 $evil = dos_saab_ft_clean_park(
